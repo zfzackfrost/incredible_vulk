@@ -1,0 +1,11 @@
+#pragma once
+
+////////////////////////////////////////////////////////////////////////////
+//                                Version                                 //
+////////////////////////////////////////////////////////////////////////////
+
+#define IVULK_VERSION_MAJOR  @IncredibleVulk_VERSION_MAJOR@
+#define IVULK_VERSION_MINOR  @IncredibleVulk_VERSION_MINOR@
+#define IVULK_VERSION_PATCH  @IncredibleVulk_VERSION_PATCH@
+#define IVULK_VERSION_STRING "@IncredibleVulk_VERSION@"
+
