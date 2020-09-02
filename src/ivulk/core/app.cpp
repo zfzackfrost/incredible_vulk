@@ -85,7 +85,7 @@ namespace ivulk {
 
 		createVkFramebuffers();
 		createVkCommandPools();
-		createVkCommandBuffers();
+		// createVkCommandBuffers();
 		createVkSyncObjects();
 
 	}

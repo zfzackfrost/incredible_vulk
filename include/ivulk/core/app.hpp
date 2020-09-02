@@ -10,6 +10,7 @@
 #include <ivulk/core/app_state.hpp>
 #include <ivulk/core/swap_chain.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
+#include <ivulk/core/command_buffer.hpp>
 #include <ivulk/utils/version_data.hpp>
 
 #include <iostream>
@@ -86,7 +87,7 @@ namespace ivulk {
 		 *
 		 * Pure virtual.
 		 */
-		virtual void render(VkCommandBuffer cmdBuffer) = 0;
+		virtual void render(std::weak_ptr<CommandBuffer> cmdBuffer) = 0;
 
 		/**
 		 * @brief Perform subclass-specific update operations.
@@ -198,7 +199,7 @@ namespace ivulk {
 		void createVkLogicalDevice();
 		
 		void createVkCommandPools();
-		void createVkCommandBuffers();
+		void createVkCommandBuffers(std::size_t imageIndex);
 
 
 		void createVkSyncObjects();

@@ -255,7 +255,7 @@ namespace ivulk {
 	
 		// ====== Create/Return pipeline wrapper ====== //
 		
-		return GraphicsPipeline::create(state.vk.device, graphicsPipeline, renderPass, pipelineLayout);
+		return GraphicsPipeline::fromHandles(state.vk.device, graphicsPipeline, renderPass, pipelineLayout);
 	}
 
 	VkShaderModule App::createShaderModule(const std::vector<char>& shaderCode,

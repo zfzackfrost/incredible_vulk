@@ -29,10 +29,14 @@ protected:
 		pipeline.reset();
 	}
 
-	virtual void render(VkCommandBuffer cmdBuffer) override
+	virtual void render(std::weak_ptr<ivulk::CommandBuffer> cmdBuffer) override
 	{
-		vkCmdBindPipeline(cmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipeline());
-		vkCmdDraw(cmdBuffer, 3, 1, 0, 0);
+		if (auto cb = cmdBuffer.lock())
+		{
+			auto cb0 = cb->getCmdBuffer(0);
+			vkCmdBindPipeline(cb0, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipeline());
+			vkCmdDraw(cb0, 3, 1, 0, 0);
+		}
 	}
 
 	virtual void update(float deltaSeconds) override { }

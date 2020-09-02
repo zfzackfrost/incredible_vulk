@@ -13,11 +13,11 @@
 #include <memory>
 
 namespace ivulk {
-	template <typename Derived, typename... HandleTypes>
+	template <typename Derived, typename CreateInfo, typename... HandleTypes>
 	class VulkanResource
 	{
 	public:
-		using base_t = VulkanResource<Derived, HandleTypes...>;
+		using base_t = VulkanResource<Derived, CreateInfo, HandleTypes...>;
 		using handles_t = std::tuple<HandleTypes...>;
 
 		VulkanResource(VkDevice device, const std::tuple<HandleTypes...>&& h)
@@ -40,9 +40,15 @@ namespace ivulk {
 			return std::get<I>(handles);
 		}
 
-		static std::shared_ptr<Derived> create(VkDevice device, HandleTypes... args)
+		
+		static std::shared_ptr<Derived> fromHandles(VkDevice device, HandleTypes... args)
 		{
 			return std::shared_ptr<Derived>(new Derived(device, args...));
+		}
+
+		static std::shared_ptr<Derived> create(VkDevice device, const CreateInfo& createInfo)
+		{
+			return std::shared_ptr<Derived>(Derived::createImpl(device, createInfo));
 		}
 	protected:
 		handles_t handles;

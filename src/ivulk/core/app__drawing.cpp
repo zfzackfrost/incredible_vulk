@@ -10,7 +10,7 @@ namespace ivulk {
 
 		VkCommandPoolCreateInfo gfxPoolInfo {
 			.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-			.flags = 0,
+			.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
 			.queueFamilyIndex = qfIndices.graphics.value(),
 		};
 
@@ -25,38 +25,30 @@ namespace ivulk {
 		}
 	}
 
-	void App::createVkCommandBuffers()
+	void App::createVkCommandBuffers(std::size_t imageIndex)
 	{
-		auto& cmd = state.vk.cmd;
 		auto& fb = state.vk.swapChain.framebuffers;
-		cmd.gfxBuffers.resize(fb.size());
-
-		VkCommandBufferAllocateInfo allocInfo {
-			.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-			.commandPool = cmd.gfxPool,
-			.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-			.commandBufferCount = static_cast<uint32_t>(cmd.gfxBuffers.size()),
-		};
-
-		if (vkAllocateCommandBuffers(state.vk.device, &allocInfo, cmd.gfxBuffers.data()) != VK_SUCCESS)
+		if (!state.vk.cmd.renderCmdBufs)
 		{
-			throw std::runtime_error(
-				utils::makeErrorMessage("VK::ALLOC", "Failed to allocate Vulkan command buffers"));
+			state.vk.cmd.renderCmdBufs = CommandBuffer::create(state.vk.device,
+															   {
+																   .cmdPool = state.vk.cmd.gfxPool,
+															   });
 		}
-
+		auto cmdBufs = state.vk.cmd.renderCmdBufs;
 		// Configure render passes
 		if (auto pipeline = state.vk.pipelines.mainGfx.lock())
 		{
 			auto& scExtent = state.vk.swapChain.extent;
 			VkClearValue clearColor {0.0f, 0.0f, 0.0f, 1.0f};
-			for (std::size_t i = 0; i < cmd.gfxBuffers.size(); ++i)
 			{
+
 				VkCommandBufferBeginInfo beginInfo {
 					.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-					.flags = 0,
+					.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
 					.pInheritanceInfo = nullptr,
 				};
-				if (vkBeginCommandBuffer(cmd.gfxBuffers[i], &beginInfo) != VK_SUCCESS)
+				if (vkBeginCommandBuffer(cmdBufs->getCmdBuffer(0), &beginInfo) != VK_SUCCESS)
 				{
 					throw std::runtime_error(utils::makeErrorMessage(
 						"VK::CMD", "Failed to begin Vulkan command buffer recording"));
@@ -65,7 +57,7 @@ namespace ivulk {
 				VkRenderPassBeginInfo renderPassInfo {
 					.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 					.renderPass = pipeline->getRenderPass(),
-					.framebuffer = fb[i],
+					.framebuffer = fb[imageIndex],
 					.renderArea = {
 						.offset = {0, 0},
 						.extent = scExtent,
@@ -73,13 +65,13 @@ namespace ivulk {
 					.clearValueCount = 1,
 					.pClearValues = &clearColor,
 				};
-				vkCmdBeginRenderPass(cmd.gfxBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+				vkCmdBeginRenderPass(cmdBufs->getCmdBuffer(0), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-				render(cmd.gfxBuffers[i]);
+				render(cmdBufs);
 
-				vkCmdEndRenderPass(cmd.gfxBuffers[i]);
+				vkCmdEndRenderPass(cmdBufs->getCmdBuffer(0));
 
-				if (vkEndCommandBuffer(cmd.gfxBuffers[i]) != VK_SUCCESS)
+				if (vkEndCommandBuffer(cmdBufs->getCmdBuffer(0)) != VK_SUCCESS)
 				{
 					throw std::runtime_error(utils::makeErrorMessage(
 						"VK::CMD", "Failed to complete Vulkan command buffer recording"));
@@ -97,9 +89,18 @@ namespace ivulk {
 		vkAcquireNextImageKHR(state.vk.device, state.vk.swapChain.sc, UINT64_MAX,
 							  state.vk.sync.imageAvailableSems[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
 
-		if (state.vk.sync.imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
-			vkWaitForFences(state.vk.device, 1, &state.vk.sync.imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+		if (state.vk.sync.imagesInFlight[imageIndex] != VK_NULL_HANDLE)
+		{
+			vkWaitForFences(state.vk.device, 1, &state.vk.sync.imagesInFlight[imageIndex], VK_TRUE,
+							UINT64_MAX);
 		}
+
+		vkQueueWaitIdle(state.vk.queues.graphics);
+
+		createVkCommandBuffers(imageIndex);
+		auto cmdBufs = state.vk.cmd.renderCmdBufs;
+		auto cmdBuf0 = cmdBufs->getCmdBuffer(0);
+
 		state.vk.sync.imagesInFlight[imageIndex] = state.vk.sync.inFlightFences[m_currentFrame];
 
 		VkSemaphore signalSemaphores[] = {state.vk.sync.renderFinishedSems[m_currentFrame]};
@@ -111,13 +112,12 @@ namespace ivulk {
 			.pWaitSemaphores = waitSemaphores,
 			.pWaitDstStageMask = waitStages,
 			.commandBufferCount = 1,
-			.pCommandBuffers = &state.vk.cmd.gfxBuffers[imageIndex],
+			.pCommandBuffers = &cmdBuf0,
 			.signalSemaphoreCount = 1,
 			.pSignalSemaphores = signalSemaphores,
 		};
 
 		vkResetFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame]);
-
 		if (vkQueueSubmit(state.vk.queues.graphics, 1, &submitInfo,
 						  state.vk.sync.inFlightFences[m_currentFrame])
 			!= VK_SUCCESS)
@@ -139,6 +139,5 @@ namespace ivulk {
 		vkQueuePresentKHR(state.vk.queues.present, &presentInfo);
 
 		m_currentFrame = (m_currentFrame + 1) % m_initArgs.vk.maxFramesInFlight;
-
 	}
 } // namespace ivulk

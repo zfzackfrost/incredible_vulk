@@ -9,9 +9,13 @@
 #include <ivulk/core/vulkan_resource.hpp>
 
 #include <vulkan/vulkan.h>
+#include <stdexcept>
 
 namespace ivulk {
-	class GraphicsPipeline : public VulkanResource<GraphicsPipeline, VkPipeline, VkRenderPass, VkPipelineLayout>
+	struct GraphicsPipelineInfo final
+	{
+	};
+	class GraphicsPipeline : public VulkanResource<GraphicsPipeline, GraphicsPipelineInfo, VkPipeline, VkRenderPass, VkPipelineLayout>
 	{
 	public:
 		GraphicsPipeline(VkDevice device, VkPipeline pipeline, VkRenderPass renderPass, VkPipelineLayout pipelineLayout)
@@ -21,7 +25,12 @@ namespace ivulk {
 		VkPipeline getPipeline() { return getHandleAt<0>(); }
 		VkRenderPass getRenderPass() { return getHandleAt<1>(); }
 		VkPipelineLayout getPipelineLayout() { return getHandleAt<2>(); }
-
+		
+		GraphicsPipeline* createImpl(VkDevice device,  GraphicsPipelineInfo info)
+		{
+			throw std::runtime_error("Not implemented");
+		}
+		
 		void destroyImpl()
 		{
 			vkDestroyPipeline(getDevice(), getPipeline(), nullptr);
