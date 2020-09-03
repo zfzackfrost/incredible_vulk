@@ -1,3 +1,7 @@
+macro(FAIL_GitSubmodules)
+    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endmacro()
+
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${IncredibleVulk_SOURCE_DIR}/.git")
     # Update submodules as needed
@@ -14,5 +18,8 @@ if(GIT_FOUND AND EXISTS "${IncredibleVulk_SOURCE_DIR}/.git")
 endif()
 
 if(NOT EXISTS "${IncredibleVulk_SOURCE_DIR}/extern/SDL2/CMakeLists.txt")
-    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+    FAIL_GitSubmodules()
+endif()
+if(NOT EXISTS "${IncredibleVulk_SOURCE_DIR}/extern/glm/CMakeLists.txt")
+    FAIL_GitSubmodules()
 endif()

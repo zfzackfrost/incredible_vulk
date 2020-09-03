@@ -9,12 +9,15 @@ include(GitSubmodules)
 #                        Build Configuration                         #
 ######################################################################
 
+option(IVULK_DOWNLOAD_MISSING "Download missing dependencies. Otherwise build will fail with missing dependencies." ON)
 option(IVULK_BUILD_EXAMPLES "Build Incredible Vulk example applications." ON)
 
 ######################################################################
 #                            Dependencies                            #
 ######################################################################
 
+include(LoadBoost)
+include(LoadGLM)
 include(LoadVulkanSDK)
 
 # =================== SDL2 ==================== #

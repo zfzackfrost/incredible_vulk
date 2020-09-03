@@ -2,4 +2,4 @@
 #                            Add Examples                            #
 ######################################################################
 
-add_subdirectory(just_vulkan)
+add_subdirectory(triangle)

@@ -37,7 +37,11 @@ namespace ivulk {
 		return buffer;
 	}
 
-	std::shared_ptr<GraphicsPipeline> App::createVkGraphicsPipeline(const std::vector<fs::path>& shaderPaths)
+	std::shared_ptr<GraphicsPipeline>
+	App::createVkGraphicsPipeline(const std::vector<fs::path>& shaderPaths,
+								  const VkVertexInputBindingDescription bindingDescr,
+								  const std::vector<VkVertexInputAttributeDescription>& attribDescrs)
+
 	{
 		VkPipelineLayout pipelineLayout;
 		VkRenderPass renderPass;
@@ -81,10 +85,10 @@ namespace ivulk {
 
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo {
 			.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-			.vertexBindingDescriptionCount = 0,
-			.pVertexBindingDescriptions = nullptr,
-			.vertexAttributeDescriptionCount = 0,
-			.pVertexAttributeDescriptions = nullptr,
+			.vertexBindingDescriptionCount = 1,
+			.pVertexBindingDescriptions = &bindingDescr,
+			.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribDescrs.size()),
+			.pVertexAttributeDescriptions = attribDescrs.data(),
 		};
 
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly {
@@ -151,7 +155,7 @@ namespace ivulk {
 				| VK_COLOR_COMPONENT_A_BIT,
 		};
 
-		VkPipelineColorBlendStateCreateInfo colorBlending{};
+		VkPipelineColorBlendStateCreateInfo colorBlending {};
 		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 		colorBlending.logicOpEnable = VK_FALSE;
 		colorBlending.logicOp = VK_LOGIC_OP_COPY; // Optional
@@ -171,15 +175,17 @@ namespace ivulk {
 			.pushConstantRangeCount = 0,
 			.pPushConstantRanges = nullptr,
 		};
-	
-		if (vkCreatePipelineLayout(state.vk.device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+
+		if (vkCreatePipelineLayout(state.vk.device, &pipelineLayoutInfo, nullptr, &pipelineLayout)
+			!= VK_SUCCESS)
 		{
-			throw std::runtime_error(utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan pipeline layout"));
+			throw std::runtime_error(
+				utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan pipeline layout"));
 		}
 
 		// ============ Create Render Pass ============ //
-		
-		VkAttachmentDescription colorAttachment{};
+
+		VkAttachmentDescription colorAttachment {};
 		colorAttachment.format = state.vk.swapChain.format;
 		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -189,16 +195,16 @@ namespace ivulk {
 		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-		VkAttachmentReference colorAttachmentRef{};
+		VkAttachmentReference colorAttachmentRef {};
 		colorAttachmentRef.attachment = 0;
 		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		VkSubpassDescription subpass{};
+		VkSubpassDescription subpass {};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = 1;
 		subpass.pColorAttachments = &colorAttachmentRef;
 
-		VkSubpassDependency dependency{};
+		VkSubpassDependency dependency {};
 		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 		dependency.dstSubpass = 0;
 		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -206,7 +212,7 @@ namespace ivulk {
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
-		VkRenderPassCreateInfo renderPassInfo{};
+		VkRenderPassCreateInfo renderPassInfo {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		renderPassInfo.attachmentCount = 1;
 		renderPassInfo.pAttachments = &colorAttachment;
@@ -215,14 +221,15 @@ namespace ivulk {
 		renderPassInfo.dependencyCount = 1;
 		renderPassInfo.pDependencies = &dependency;
 
-		if (vkCreateRenderPass(state.vk.device, &renderPassInfo, nullptr, &renderPass)	!= VK_SUCCESS)
+		if (vkCreateRenderPass(state.vk.device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS)
 		{
-			throw std::runtime_error(utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan render pass"));
+			throw std::runtime_error(
+				utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan render pass"));
 		}
 
 		// ============= Create Pipeline ============== //
-		
-		VkGraphicsPipelineCreateInfo pipelineInfo{};
+
+		VkGraphicsPipelineCreateInfo pipelineInfo {};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 		pipelineInfo.stageCount = shaderStages.size();
 		pipelineInfo.pStages = shaderStages.data();
@@ -240,9 +247,12 @@ namespace ivulk {
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 		pipelineInfo.basePipelineIndex = -1;
 
-		if (vkCreateGraphicsPipelines(state.vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+		if (vkCreateGraphicsPipelines(state.vk.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr,
+									  &graphicsPipeline)
+			!= VK_SUCCESS)
 		{
-			throw std::runtime_error(utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan graphics pipeline"));
+			throw std::runtime_error(
+				utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan graphics pipeline"));
 		}
 
 		// ========== Destroy shader modules ========== //
@@ -252,9 +262,8 @@ namespace ivulk {
 		};
 		std::for_each(shaderModules.begin(), shaderModules.end(), shaderModuleDeleter);
 
-	
 		// ====== Create/Return pipeline wrapper ====== //
-		
+
 		return GraphicsPipeline::fromHandles(state.vk.device, graphicsPipeline, renderPass, pipelineLayout);
 	}
 

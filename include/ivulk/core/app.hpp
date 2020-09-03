@@ -8,16 +8,16 @@
 #pragma once
 
 #include <ivulk/core/app_state.hpp>
-#include <ivulk/core/swap_chain.hpp>
-#include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/command_buffer.hpp>
+#include <ivulk/core/graphics_pipeline.hpp>
+#include <ivulk/core/swap_chain.hpp>
 #include <ivulk/utils/version_data.hpp>
 
+#include <filesystem>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
-#include <optional>
-#include <filesystem>
 
 namespace ivulk {
 
@@ -43,6 +43,16 @@ namespace ivulk {
 		 * @brief Run the application.
 		 */
 		void run();
+
+		/**
+		 * @brief Static access to the the currently running application
+		 */
+		static App* current();
+		
+		/**
+		 * @brief Get the current app state.
+		 */
+		AppState getState() const;
 
 	protected:
 		/**
@@ -112,7 +122,7 @@ namespace ivulk {
 		 * Pure Virtual.
 		 */
 		virtual int32_t rateDeviceSuitability(VkPhysicalDevice device) = 0;
-		
+
 		/**
 		 * @brief The application state
 		 */
@@ -130,11 +140,13 @@ namespace ivulk {
 		 */
 		virtual std::filesystem::path getAssetsDir() = 0;
 
-
 		/**
 		 * @brief Create a graphics pipeline using the shaders at the specified asset paths.
 		 */
-		std::shared_ptr<GraphicsPipeline> createVkGraphicsPipeline(const std::vector<std::filesystem::path>& shaderPaths);
+		std::shared_ptr<GraphicsPipeline>
+		createVkGraphicsPipeline(const std::vector<std::filesystem::path>& shaderPaths,
+								 const VkVertexInputBindingDescription bindingDescr,
+								 const std::vector<VkVertexInputAttributeDescription>& attribDescrs);
 
 	private:
 		InitArgs m_initArgs;
@@ -169,7 +181,7 @@ namespace ivulk {
 		std::vector<const char*> getRequiredVkExtensions();
 		std::vector<const char*> getRequiredVkDeviceExtensions();
 		std::vector<const char*> getRequiredVkLayers();
-		
+
 		bool checkDeviceExtensions(VkPhysicalDevice device);
 
 		void pickVkPhysicalDevice();
@@ -181,26 +193,26 @@ namespace ivulk {
 		VkExtent2D chooseVkSwapExtent(const VkSurfaceCapabilitiesKHR& capabilties);
 		void createVkSwapChain();
 		void createVkFramebuffers();
-		
+
 		void createVkImageViews();
 
-		VkShaderModule createShaderModule(const std::vector<char>& shaderCode, const std::filesystem::path& assetPath);
+		VkShaderModule createShaderModule(const std::vector<char>& shaderCode,
+										  const std::filesystem::path& assetPath);
 
 		VkDebugUtilsMessengerCreateInfoEXT makeVkDebugMessengerCreateInfo(bool includeVerbose = false);
 		void createVkDebugMessenger();
 
 		static VKAPI_ATTR VkBool32 VKAPI_CALL
 		debugCallbackVk(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-					  VkDebugUtilsMessageTypeFlagsEXT messageType,
-					  const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+						VkDebugUtilsMessageTypeFlagsEXT messageType,
+						const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 
 		QueueFamilyIndices findVkQueueFamilies(VkPhysicalDevice device);
 
 		void createVkLogicalDevice();
-		
+
 		void createVkCommandPools();
 		void createVkCommandBuffers(std::size_t imageIndex);
-
 
 		void createVkSyncObjects();
 

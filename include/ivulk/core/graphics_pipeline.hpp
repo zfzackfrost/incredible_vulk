@@ -25,6 +25,9 @@ namespace ivulk {
 		VkPipeline getPipeline() { return getHandleAt<0>(); }
 		VkRenderPass getRenderPass() { return getHandleAt<1>(); }
 		VkPipelineLayout getPipelineLayout() { return getHandleAt<2>(); }
+
+	private:
+		friend base_t;
 		
 		GraphicsPipeline* createImpl(VkDevice device,  GraphicsPipelineInfo info)
 		{

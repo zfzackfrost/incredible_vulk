@@ -15,6 +15,9 @@
 #include <stdexcept>
 
 namespace ivulk {
+
+	App* s_currentApp = nullptr;
+
 	App::App(int argc, char* argv[])
 		: state {}
 	{
@@ -27,9 +30,21 @@ namespace ivulk {
 
 	void App::run()
 	{
+		if (current() != nullptr)
+			throw std::runtime_error(utils::makeErrorMessage("APP", "Only one app can run at a time!"));
+
+		s_currentApp = this;
 		appInitialize();
 		mainLoop();
 		appCleanup();
+		s_currentApp = nullptr;
+	}
+
+	App* App::current() { return s_currentApp; }
+
+	AppState App::getState() const
+	{
+		return state;
 	}
 
 	bool App::getPrintDbg() const { return m_initArgs.bDebugPrint; }
@@ -87,7 +102,6 @@ namespace ivulk {
 		createVkCommandPools();
 		// createVkCommandBuffers();
 		createVkSyncObjects();
-
 	}
 
 	void App::appCleanup()
@@ -96,7 +110,7 @@ namespace ivulk {
 		cleanup();
 
 		// =================== Cleanup Vulkan =================== //
-		
+
 		for (auto sem : state.vk.sync.imageAvailableSems)
 			vkDestroySemaphore(state.vk.device, sem, nullptr);
 		for (auto sem : state.vk.sync.renderFinishedSems)
@@ -105,7 +119,8 @@ namespace ivulk {
 			vkDestroyFence(state.vk.device, fen, nullptr);
 
 		vkDestroyCommandPool(state.vk.device, state.vk.cmd.gfxPool, nullptr);
-		for (auto framebuffer : state.vk.swapChain.framebuffers) {
+		for (auto framebuffer : state.vk.swapChain.framebuffers)
+		{
 			vkDestroyFramebuffer(state.vk.device, framebuffer, nullptr);
 		}
 		for (const auto& imgV : state.vk.swapChain.imageViews)
