@@ -8,24 +8,29 @@
 #pragma once
 #include <ivulk/core/vulkan_resource.hpp>
 
+#include <ivulk/utils/keywords.hpp>
 #include <ivulk/utils/messages.hpp>
 
+#include <glm/glm.hpp>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 #include <vulkan/vulkan.h>
 
 namespace ivulk {
-	struct CommandBufferCreateInfo
+	class Buffer;
+	class GraphicsPipeline;
+	struct CommandBuffersCreateInfo
 	{
 		VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		VkCommandPool cmdPool = VK_NULL_HANDLE;
 		uint32_t count = 1;
 	};
-	class CommandBuffer : public VulkanResource<CommandBuffer, CommandBufferCreateInfo, VkCommandPool,
-												std::vector<VkCommandBuffer>>
+	class CommandBuffers : public VulkanResource<CommandBuffers, CommandBuffersCreateInfo, VkCommandPool,
+												 std::vector<VkCommandBuffer>>
 	{
 	public:
-		CommandBuffer(VkDevice device, VkCommandPool pool, std::vector<VkCommandBuffer> buffers)
+		CommandBuffers(VkDevice device, VkCommandPool pool, std::vector<VkCommandBuffer> buffers)
 			: base_t(device, handles_t {pool, buffers})
 		{ }
 
@@ -33,7 +38,66 @@ namespace ivulk {
 		VkCommandBuffer getCmdBuffer(std::size_t i) { return getHandleAt<1>()[i]; }
 		std::vector<VkCommandBuffer> getCmdBuffers() { return getHandleAt<1>(); }
 
-		static CommandBuffer* createImpl(VkDevice device, CommandBufferCreateInfo createInfo)
+		// clang-format off
+		BOOST_PARAMETER_MEMBER_FUNCTION((void), start, tag, 
+			(required
+				(index, *)
+			)
+			(optional
+				(flags, *, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
+			)
+		)
+		// clang-format on
+		{
+			startImpl(index, flags);
+		}
+
+		void finish();
+
+		// clang-format off
+		BOOST_PARAMETER_MEMBER_FUNCTION((void), draw, tag, 
+			(optional
+				(buffer,        *, std::weak_ptr<Buffer>())
+				(vertices,      *,                      0u)
+				(instances,     *,                      1u)
+				(firstVertex,   *,                      0u)
+				(firstInstance, *,                      0u)
+			)
+		)
+		// clang-format on
+		{
+			drawImpl(buffer, vertices, instances, firstVertex, firstInstance);
+		}
+
+		// clang-format off
+		BOOST_PARAMETER_MEMBER_FUNCTION((void), clearAttachments, tag, 
+			(required
+				(pipeline, *)
+			)
+			(optional
+				(color, *, glm::vec4(0,0,0,1))
+			)
+		)
+		// clang-format on
+		{
+			clearAttachmentsImpl(pipeline, color);
+		}
+
+		// clang-format off
+		BOOST_PARAMETER_MEMBER_FUNCTION((void), bindPipeline, tag, 
+			(required
+				(pipeline, *)
+			)
+		)
+		// clang-format on
+		{
+			bindPipelineImpl(pipeline);
+		}
+
+	private:
+		friend base_t;
+
+		static CommandBuffers* createImpl(VkDevice device, CommandBuffersCreateInfo createInfo)
 		{
 			VkCommandBufferAllocateInfo allocInfo {
 				.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -49,10 +113,18 @@ namespace ivulk {
 					utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan command buffer(s)"));
 			}
 
-			return new CommandBuffer(device, createInfo.cmdPool, commandBuffers);
+			return new CommandBuffers(device, createInfo.cmdPool, commandBuffers);
 		}
 
-		void destroyImpl() {
-		}
+		void destroyImpl() { }
+
+		void startImpl(std::size_t index, VkCommandBufferUsageFlags flags);
+		void drawImpl(std::weak_ptr<Buffer> buffer, uint32_t vertices, uint32_t instances,
+					  uint32_t firstVertex, uint32_t firstInstance);
+		void clearAttachmentsImpl(std::weak_ptr<GraphicsPipeline> pipeline, glm::vec4 color);
+
+		void bindPipelineImpl(std::weak_ptr<GraphicsPipeline> pipeline);
+
+		std::optional<std::size_t> m_currentIdx = {};
 	};
 } // namespace ivulk

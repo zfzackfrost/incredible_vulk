@@ -86,7 +86,7 @@ namespace ivulk {
 			{
 				VkCommandPool gfxPool;
 				std::vector<VkCommandBuffer> gfxBuffers;
-				std::shared_ptr<CommandBuffer> renderCmdBufs;
+				std::shared_ptr<CommandBuffers> renderCmdBufs;
 			} cmd;
 		} vk;
 	};

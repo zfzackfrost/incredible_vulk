@@ -34,8 +34,8 @@ namespace ivulk {
 
 	enum class E_BufferMemoryMode : uint8_t
 	{
-		CPUShared = 0,
-		GPUOnly = 1,
+		CPUShared = 0u,
+		GPUOnly = 1u,
 	};
 
 	struct BufferInfo final
@@ -54,6 +54,7 @@ namespace ivulk {
 
 		VkBuffer getBuffer() { return getHandleAt<0>(); }
 		VkDeviceMemory getDeviceMemory() { return getHandleAt<1>(); }
+		uint32_t getCount() { return m_count; }
 
 		template <typename T>
 		void fillBuffer(T* elems, std::size_t num)
@@ -63,10 +64,13 @@ namespace ivulk {
 			vkMapMemory(getDevice(), getDeviceMemory(), 0, sz, 0, &data);
 			std::memcpy(data, elems, sz);
 			vkUnmapMemory(getDevice(), getDeviceMemory());
+			m_count = num;
 		}
 
 	private:
 		friend base_t;
+
+		uint32_t m_count = 0;
 
 		static Buffer* createImpl(VkDevice device, BufferInfo info)
 		{
@@ -111,7 +115,8 @@ namespace ivulk {
 			return new Buffer(device, buffer, deviceMem);
 		}
 
-		void destroyImpl() { 
+		void destroyImpl()
+		{
 			vkDestroyBuffer(getDevice(), getBuffer(), nullptr);
 			auto deviceMem = getDeviceMemory();
 			if (deviceMem != VK_NULL_HANDLE)

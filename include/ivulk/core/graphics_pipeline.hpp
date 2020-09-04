@@ -8,32 +8,38 @@
 #pragma once
 #include <ivulk/core/vulkan_resource.hpp>
 
-#include <vulkan/vulkan.h>
+#include <vector>
 #include <stdexcept>
+#include <vulkan/vulkan.h>
 
 namespace ivulk {
-	struct GraphicsPipelineInfo final
-	{
-	};
-	class GraphicsPipeline : public VulkanResource<GraphicsPipeline, GraphicsPipelineInfo, VkPipeline, VkRenderPass, VkPipelineLayout>
+	class GraphicsPipeline : public VulkanResource<GraphicsPipeline, NullResourceInfo, VkPipeline,
+												   VkRenderPass, VkPipelineLayout>
 	{
 	public:
-		GraphicsPipeline(VkDevice device, VkPipeline pipeline, VkRenderPass renderPass, VkPipelineLayout pipelineLayout)
+		GraphicsPipeline(VkDevice device, VkPipeline pipeline, VkRenderPass renderPass,
+						 VkPipelineLayout pipelineLayout)
 			: base_t(device, handles_t {pipeline, renderPass, pipelineLayout})
+			, m_colorAttIndices {}
 		{ }
 
 		VkPipeline getPipeline() { return getHandleAt<0>(); }
 		VkRenderPass getRenderPass() { return getHandleAt<1>(); }
 		VkPipelineLayout getPipelineLayout() { return getHandleAt<2>(); }
 
+		std::vector<uint32_t> getColorAttIndices() { return m_colorAttIndices; }
+
 	private:
 		friend base_t;
-		
-		GraphicsPipeline* createImpl(VkDevice device,  GraphicsPipelineInfo info)
+		friend class App;
+
+		std::vector<uint32_t> m_colorAttIndices;
+
+		static GraphicsPipeline* createImpl(VkDevice, NullResourceInfo)
 		{
-			throw std::runtime_error("Not implemented");
+			throw std::logic_error("Not Implemented!");
 		}
-		
+
 		void destroyImpl()
 		{
 			vkDestroyPipeline(getDevice(), getPipeline(), nullptr);

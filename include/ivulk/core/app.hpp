@@ -97,7 +97,7 @@ namespace ivulk {
 		 *
 		 * Pure virtual.
 		 */
-		virtual void render(std::weak_ptr<CommandBuffer> cmdBuffer) = 0;
+		virtual void render(std::weak_ptr<CommandBuffers> cmdBuffer) = 0;
 
 		/**
 		 * @brief Perform subclass-specific update operations.

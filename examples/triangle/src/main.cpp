@@ -1,13 +1,15 @@
 #include <ivulk/core/app.hpp>
+#include <ivulk/core/buffer.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/vertex.hpp>
-#include <ivulk/core/buffer.hpp>
 #include <ivulk/utils/table_print.hpp>
 
 #include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <stdexcept>
+
+using namespace ivulk;
 
 // clang-format off
 IVULK_VERTEX_STRUCT(SimpleVertex, 
@@ -45,16 +47,16 @@ const std::vector<SimpleVertex> triangleVerts = {
 	},
 };
 
-class TriangleApp : public ivulk::App
+class TriangleApp : public App
 {
 public:
 	TriangleApp(int argc, char* argv[])
-		: ivulk::App(argc, argv)
+		: App(argc, argv)
 	{ }
 
 protected:
-	std::shared_ptr<ivulk::GraphicsPipeline> pipeline;
-	std::shared_ptr<ivulk::Buffer> vertexBuffer;
+	std::shared_ptr<GraphicsPipeline> pipeline;
+	std::shared_ptr<Buffer> vertexBuffer;
 
 	virtual void initialize() override
 	{
@@ -64,38 +66,35 @@ protected:
 				"shaders/simple.frag.spv",
 			},
 			SimpleVertex::getBindingDescription(), SimpleVertex::getAttributeDescriptions());
-		state.vk.pipelines.mainGfx = std::weak_ptr<ivulk::GraphicsPipeline>(pipeline);
+		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
 
 		const auto sz = sizeof(triangleVerts[0]) * triangleVerts.size();
-		vertexBuffer = ivulk::Buffer::create(state.vk.device, {
-			.size = sz,
-			.usage = ivulk::E_BufferUsage::Vertex,
-		});
+		vertexBuffer = Buffer::create(state.vk.device,
+									  {
+										  .size = sz,
+										  .usage = E_BufferUsage::Vertex,
+									  });
 		vertexBuffer->fillBuffer(triangleVerts.data(), triangleVerts.size());
 	}
 
-	virtual void cleanup() override { 
+	virtual void cleanup() override
+	{
 		pipeline.reset();
 		vertexBuffer.reset();
 	}
 
-	virtual void render(std::weak_ptr<ivulk::CommandBuffer> cmdBuffer) override
+	virtual void render(CommandBuffers::Ref cmdBuffer) override
 	{
 		if (auto cb = cmdBuffer.lock())
 		{
-			auto vb = vertexBuffer->getBuffer();
-			auto cb0 = cb->getCmdBuffer(0);
-			vkCmdBindPipeline(cb0, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->getPipeline());
-
-			VkBuffer buffers[] = {vb};
-			VkDeviceSize offsets[] = {0};
-			vkCmdBindVertexBuffers(cb0, 0, 1, buffers, offsets);
-
-			vkCmdDraw(cb0, static_cast<uint32_t>(triangleVerts.size()), 1, 0, 0);
+			cb->clearAttachments(pipeline, glm::vec4 {0.01, 0.01, 0.01, 1.0});
+			cb->bindPipeline(pipeline);
+			cb->draw(_buffer = vertexBuffer);
 		}
 	}
 
-	virtual void update(float deltaSeconds) override { }
+	virtual void update(float deltaSeconds) override 
+	{ }
 
 	virtual InitArgs getInitArgs() const override
 	{

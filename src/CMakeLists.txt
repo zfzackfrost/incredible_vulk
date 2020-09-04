@@ -8,6 +8,7 @@ list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__drawing.cpp
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__graphics_pipeline.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__swap_chain.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__sync.cpp")
+list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/command_buffer.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/utils/messages.cpp")
 
 

@@ -30,7 +30,7 @@ namespace ivulk {
 		auto& fb = state.vk.swapChain.framebuffers;
 		if (!state.vk.cmd.renderCmdBufs)
 		{
-			state.vk.cmd.renderCmdBufs = CommandBuffer::create(state.vk.device,
+			state.vk.cmd.renderCmdBufs = CommandBuffers::create(state.vk.device,
 															   {
 																   .cmdPool = state.vk.cmd.gfxPool,
 															   });
@@ -42,17 +42,7 @@ namespace ivulk {
 			auto& scExtent = state.vk.swapChain.extent;
 			VkClearValue clearColor {0.0f, 0.0f, 0.0f, 1.0f};
 			{
-
-				VkCommandBufferBeginInfo beginInfo {
-					.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-					.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
-					.pInheritanceInfo = nullptr,
-				};
-				if (vkBeginCommandBuffer(cmdBufs->getCmdBuffer(0), &beginInfo) != VK_SUCCESS)
-				{
-					throw std::runtime_error(utils::makeErrorMessage(
-						"VK::CMD", "Failed to begin Vulkan command buffer recording"));
-				}
+				cmdBufs->start(0);
 
 				VkRenderPassBeginInfo renderPassInfo {
 					.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -71,11 +61,7 @@ namespace ivulk {
 
 				vkCmdEndRenderPass(cmdBufs->getCmdBuffer(0));
 
-				if (vkEndCommandBuffer(cmdBufs->getCmdBuffer(0)) != VK_SUCCESS)
-				{
-					throw std::runtime_error(utils::makeErrorMessage(
-						"VK::CMD", "Failed to complete Vulkan command buffer recording"));
-				}
+				cmdBufs->finish();
 			}
 		}
 	}

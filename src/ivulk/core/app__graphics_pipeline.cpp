@@ -264,7 +264,12 @@ namespace ivulk {
 
 		// ====== Create/Return pipeline wrapper ====== //
 
-		return GraphicsPipeline::fromHandles(state.vk.device, graphicsPipeline, renderPass, pipelineLayout);
+		auto pipeline = GraphicsPipeline::fromHandles(state.vk.device, graphicsPipeline, renderPass, pipelineLayout);
+
+		// Set pipline attachment indices
+		pipeline->m_colorAttIndices = {0};
+
+		return pipeline;
 	}
 
 	VkShaderModule App::createShaderModule(const std::vector<char>& shaderCode,
