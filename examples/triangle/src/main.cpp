@@ -6,8 +6,11 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <stdexcept>
+
+#include <glm/gtc/constants.hpp>
 
 using namespace ivulk;
 
@@ -52,13 +55,17 @@ class TriangleApp : public App
 public:
 	TriangleApp(int argc, char* argv[])
 		: App(argc, argv)
-	{ }
+	{
+		frameNum = 0;
+		elapsedTime = 0.0f;
+		timeSinceStatus = std::numeric_limits<float>::max();
+		clearColorA = {1, 1, 0, 1};
+		clearColorB = {0, 0.075, 1, 1};
+		clearColor = clearColorA;
+	}
 
 protected:
-	std::shared_ptr<GraphicsPipeline> pipeline;
-	std::shared_ptr<Buffer> vertexBuffer;
-
-	virtual void initialize() override
+	virtual void initialize(bool swapchainOnly) override
 	{
 		pipeline = createVkGraphicsPipeline(
 			{
@@ -67,6 +74,9 @@ protected:
 			},
 			SimpleVertex::getBindingDescription(), SimpleVertex::getAttributeDescriptions());
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
+
+		// Skip anything that doesn't depend on the swapchain, if requested
+		if (swapchainOnly) return;
 
 		const auto sz = sizeof(triangleVerts[0]) * triangleVerts.size();
 		vertexBuffer = Buffer::create(state.vk.device,
@@ -77,9 +87,13 @@ protected:
 		vertexBuffer->fillBuffer(triangleVerts.data(), triangleVerts.size());
 	}
 
-	virtual void cleanup() override
+	virtual void cleanup(bool swapchainOnly) override
 	{
 		pipeline.reset();
+
+		// Skip anything that doesn't depend on the swapchain, if requested
+		if (swapchainOnly) return;
+
 		vertexBuffer.reset();
 	}
 
@@ -87,14 +101,33 @@ protected:
 	{
 		if (auto cb = cmdBuffer.lock())
 		{
-			cb->clearAttachments(pipeline, glm::vec4 {0.01, 0.01, 0.01, 1.0});
+			cb->clearAttachments(pipeline, clearColor);
 			cb->bindPipeline(pipeline);
 			cb->draw(_buffer = vertexBuffer);
 		}
 	}
 
-	virtual void update(float deltaSeconds) override 
-	{ }
+	virtual void update(float deltaSeconds) override
+	{
+		elapsedTime += deltaSeconds;
+		timeSinceStatus += deltaSeconds;
+
+		// Print stats every 5 seconds
+		if (timeSinceStatus >= 5.0f)
+		{
+			std::cout << "Frame Delta: " << deltaSeconds << " seconds" << std::endl;
+			timeSinceStatus = 0.0f;
+		}
+
+		constexpr float period = 5.0f;
+		float alpha = glm::sin((elapsedTime / period) * glm::two_pi<float>());
+
+		alpha = alpha * 0.5 + 0.5;
+
+		clearColor = glm::mix(clearColorA, clearColorB, alpha);
+
+		frameNum++;
+	}
 
 	virtual InitArgs getInitArgs() const override
 	{
@@ -134,6 +167,18 @@ protected:
 		auto execDir = execPath.parent_path();
 		return execDir / "assets";
 	}
+
+	std::shared_ptr<GraphicsPipeline> pipeline;
+	std::shared_ptr<Buffer> vertexBuffer;
+
+	std::size_t frameNum;
+
+	glm::vec4 clearColor;
+	glm::vec4 clearColorA;
+	glm::vec4 clearColorB;
+
+	float elapsedTime;
+	float timeSinceStatus;
 };
 
 int main(int argc, char* argv[])

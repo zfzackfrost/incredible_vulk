@@ -29,7 +29,7 @@ namespace ivulk {
 	}
 	VkPresentModeKHR App::chooseVkPresentMode(const std::vector<VkPresentModeKHR>& supportedModes)
 	{
-		auto idealMatcher = [](VkPresentModeKHR mode) -> bool { return mode == VK_PRESENT_MODE_MAILBOX_KHR; };
+		auto idealMatcher = [](VkPresentModeKHR mode) -> bool { return mode == VK_PRESENT_MODE_IMMEDIATE_KHR; };
 		auto ideal = std::find_if(supportedModes.begin(), supportedModes.end(), idealMatcher);
 		if (ideal != supportedModes.end())
 			return *ideal;
@@ -44,11 +44,14 @@ namespace ivulk {
 		}
 		else
 		{
+			int w,h;
+			SDL_Vulkan_GetDrawableSize(state.sdl.window, &w, &h);
+
 			auto clamp_ui = [](uint32_t x, uint32_t mn, uint32_t mx) {
 				return (x < mn) ? (mn) : (x > mx ? mx : x);
 			};
-			VkExtent2D actualExtent {static_cast<uint32_t>(m_initArgs.window.width),
-									 static_cast<uint32_t>(m_initArgs.window.height)};
+			VkExtent2D actualExtent {static_cast<uint32_t>(w),
+									 static_cast<uint32_t>(h)};
 			actualExtent.width = clamp_ui(actualExtent.width, capabilties.minImageExtent.width,
 										  capabilties.maxImageExtent.width);
 			actualExtent.height = clamp_ui(actualExtent.height, capabilties.minImageExtent.height,
@@ -229,5 +232,33 @@ namespace ivulk {
 				"VK::STATE", "Failed to create Vulkan framebuffers: No main graphics pipeline set"));
 		}
 	}
+
+	void App::cleanupVkSwapChain()
+	{
+		cleanup(true);
+		for (auto framebuffer : state.vk.swapChain.framebuffers)
+		{
+			vkDestroyFramebuffer(state.vk.device, framebuffer, nullptr);
+		}
+		for (const auto& imgV : state.vk.swapChain.imageViews)
+			vkDestroyImageView(state.vk.device, imgV, nullptr);
+		vkDestroySwapchainKHR(state.vk.device, state.vk.swapChain.sc, nullptr);
+	}
+
+	void App::recreateVkSwapChain()
+	{
+		vkDeviceWaitIdle(state.vk.device);
+
+		cleanupVkSwapChain();
+
+		createVkSwapChain();
+		createVkImageViews();
+
+		// Run subclass initialization before creating framebuffers
+		initialize(true);
+
+		createVkFramebuffers();
+	}
+
 
 } // namespace ivulk

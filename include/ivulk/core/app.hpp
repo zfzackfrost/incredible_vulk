@@ -81,16 +81,23 @@ namespace ivulk {
 		/**
 		 * @brief Perform subclass-specific initialization.
 		 *
+		 * @param swapchainOnly Skip iniitializing anything that doesn't depend on the swapchain/
+		 *                      This is `false` for first-time initialization, and `true` when 
+		 *                      recreating the swapchain.
+		 *
 		 * Pure virtual.
 		 */
-		virtual void initialize() = 0;
+		virtual void initialize(bool swapchainOnly = false) = 0;
 
 		/**
 		 * @brief Perform subclass-specific cleanup.
 		 *
+		 * @param swapchainOnly Skip cleanup of anything that doesn't depend on the swapchain.
+		 *                      This is `false` for main application cleanup, and `true` when 
+		 *                      recreating the swapchain.
 		 * Pure virtual.
 		 */
-		virtual void cleanup() = 0;
+		virtual void cleanup(bool swapchainOnly = false) = 0;
 
 		/**
 		 * @brief Perform subclass-specific rendering operations.
@@ -192,6 +199,8 @@ namespace ivulk {
 		VkPresentModeKHR chooseVkPresentMode(const std::vector<VkPresentModeKHR>& supportedModes);
 		VkExtent2D chooseVkSwapExtent(const VkSurfaceCapabilitiesKHR& capabilties);
 		void createVkSwapChain();
+		void cleanupVkSwapChain();
+		void recreateVkSwapChain();
 		void createVkFramebuffers();
 
 		void createVkImageViews();

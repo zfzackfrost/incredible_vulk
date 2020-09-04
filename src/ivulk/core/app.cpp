@@ -13,6 +13,7 @@
 #include <iostream>
 #include <map>
 #include <stdexcept>
+#include <chrono>
 
 namespace ivulk {
 
@@ -51,6 +52,10 @@ namespace ivulk {
 
 	void App::mainLoop()
 	{
+		using namespace std::chrono;
+		auto now = steady_clock::now();
+		auto lastFrameTime = now;
+		
 		// Loop until user requests quit...
 		while (!state.evt.shouldQuit)
 		{
@@ -66,7 +71,17 @@ namespace ivulk {
 				}
 			}
 
+
+			// Render frame
 			drawFrame();
+
+			// Update application state
+			{
+				now = steady_clock::now();
+				duration<float, std::ratio<1, 1>> deltaSeconds = (now - lastFrameTime);
+				update(deltaSeconds.count());
+				lastFrameTime = now;
+			}
 		}
 
 		vkDeviceWaitIdle(state.vk.device);

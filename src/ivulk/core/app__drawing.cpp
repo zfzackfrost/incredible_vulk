@@ -31,9 +31,9 @@ namespace ivulk {
 		if (!state.vk.cmd.renderCmdBufs)
 		{
 			state.vk.cmd.renderCmdBufs = CommandBuffers::create(state.vk.device,
-															   {
-																   .cmdPool = state.vk.cmd.gfxPool,
-															   });
+																{
+																	.cmdPool = state.vk.cmd.gfxPool,
+																});
 		}
 		auto cmdBufs = state.vk.cmd.renderCmdBufs;
 		// Configure render passes
@@ -72,8 +72,15 @@ namespace ivulk {
 						UINT64_MAX);
 		uint32_t imageIndex;
 
-		vkAcquireNextImageKHR(state.vk.device, state.vk.swapChain.sc, UINT64_MAX,
-							  state.vk.sync.imageAvailableSems[m_currentFrame], VK_NULL_HANDLE, &imageIndex);
+		auto result = vkAcquireNextImageKHR(state.vk.device, state.vk.swapChain.sc, UINT64_MAX,
+											state.vk.sync.imageAvailableSems[m_currentFrame], VK_NULL_HANDLE,
+											&imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			recreateVkSwapChain();
+			return;
+		}
 
 		if (state.vk.sync.imagesInFlight[imageIndex] != VK_NULL_HANDLE)
 		{
@@ -109,7 +116,7 @@ namespace ivulk {
 			!= VK_SUCCESS)
 		{
 			throw std::runtime_error(
-				utils::makeErrorMessage("VK::CMD", "Failed to Vulkan submit draw command buffer"));
+				utils::makeErrorMessage("VK::CMD", "Failed to submit Vulkan draw command buffer"));
 		}
 
 		VkSwapchainKHR swapChains[] = {state.vk.swapChain.sc};
