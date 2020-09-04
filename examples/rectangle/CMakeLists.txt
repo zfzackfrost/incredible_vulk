@@ -2,7 +2,7 @@
 #                              Project                               #
 ######################################################################
 
-project(ex_triangle)
+project(ex_rectangle)
 
 ######################################################################
 #                              Sources                               #
@@ -15,15 +15,15 @@ list(APPEND IVULK_SOURCES "${PROJECT_SOURCE_DIR}/src/main.cpp")
 #                         Executable Target                          #
 ######################################################################
 
-add_executable(ex_triangle ${IVULK_SOURCES})
+add_executable(ex_rectangle ${IVULK_SOURCES})
 
 # ============== Configure Target ============== #
 
-target_compile_features(ex_triangle PUBLIC cxx_std_17)
-set_target_properties(ex_triangle PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(ex_rectangle PUBLIC cxx_std_17)
+set_target_properties(ex_rectangle PROPERTIES CXX_EXTENSIONS OFF)
 
 # ================ Dependencies ================ #
 
-target_link_libraries(ex_triangle PUBLIC ivulk)
+target_link_libraries(ex_rectangle PUBLIC ivulk)
 
-ConfigureContent(ex_triangle ${PROJECT_SOURCE_DIR}/assets/shaders)
+ConfigureContent(ex_rectangle ${PROJECT_SOURCE_DIR}/assets/shaders)

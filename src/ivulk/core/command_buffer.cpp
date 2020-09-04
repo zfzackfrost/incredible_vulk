@@ -30,22 +30,32 @@ namespace ivulk {
 				utils::makeErrorMessage("VK::CMD", "Failed to finish command buffer recording"));
 	}
 
-	void CommandBuffers::drawImpl(std::weak_ptr<Buffer> buffer, uint32_t vertices, uint32_t instances,
+	void CommandBuffers::drawImpl(std::weak_ptr<Buffer> vertexBuffer, std::weak_ptr<Buffer> indexBuffer, uint32_t vertices, uint32_t instances,
 								  uint32_t firstVertex, uint32_t firstInstance)
 	{
 		if (!m_currentIdx.has_value())
 			throw std::runtime_error(utils::makeErrorMessage("VK::CMD", "Command buffer recording not started"));
 
-		auto vertCount = vertices;
-		if (auto buf = buffer.lock())
+		auto count = vertices;
+		bool isIndexed = false;
+		if (auto vbuf = vertexBuffer.lock())
 		{
-			VkBuffer buffers[] = {buf->getBuffer()};
+			VkBuffer buffers[] = {vbuf->getBuffer()};
 			VkDeviceSize offsets[] = {0};
 			vkCmdBindVertexBuffers(getCmdBuffer(*m_currentIdx), 0, 1, buffers, offsets);
-			if (vertCount == 0)
-				vertCount = buf->getCount();
+			if (count == 0)
+				count = vbuf->getCount();
+			if (auto ibuf = indexBuffer.lock())
+			{
+				vkCmdBindIndexBuffer(getCmdBuffer(*m_currentIdx), ibuf->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+				isIndexed = true;
+				count = ibuf->getCount();
+			}
 		}
-		vkCmdDraw(getCmdBuffer(*m_currentIdx), vertCount, instances, firstVertex, firstInstance);
+		if (isIndexed)
+			vkCmdDrawIndexed(getCmdBuffer(*m_currentIdx), count, 1, 0, 0, 0);
+		else
+			vkCmdDraw(getCmdBuffer(*m_currentIdx), count, instances, firstVertex, firstInstance);
 	}
 
 	void CommandBuffers::clearAttachmentsImpl(std::weak_ptr<GraphicsPipeline> pipeline, glm::vec4 color)

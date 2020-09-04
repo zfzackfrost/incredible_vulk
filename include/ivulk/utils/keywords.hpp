@@ -10,7 +10,8 @@
 #include <boost/parameter.hpp>
 
 namespace ivulk {
-	BOOST_PARAMETER_NAME(buffer)
+	BOOST_PARAMETER_NAME(indexBuffer)
+	BOOST_PARAMETER_NAME(vertexBuffer)
 	BOOST_PARAMETER_NAME(firstInstance)
 	BOOST_PARAMETER_NAME(firstVertex)
 	BOOST_PARAMETER_NAME(flags)

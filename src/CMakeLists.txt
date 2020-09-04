@@ -8,7 +8,9 @@ list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__drawing.cpp
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__graphics_pipeline.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__swap_chain.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__sync.cpp")
+list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/buffer.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/command_buffer.cpp")
+list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/vma.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/utils/messages.cpp")
 
 
@@ -30,4 +32,5 @@ target_link_libraries(ivulk PUBLIC ivulk_config)
 target_link_libraries(ivulk PUBLIC SDL2-static SDL2main)
 target_link_libraries(ivulk PUBLIC Vulkan::Vulkan)
 target_link_libraries(ivulk PUBLIC glm)
+target_link_libraries(ivulk PUBLIC Vma)
 target_link_libraries(ivulk PUBLIC Boost::headers Boost::filesystem)

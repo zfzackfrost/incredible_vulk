@@ -57,7 +57,8 @@ namespace ivulk {
 		// clang-format off
 		BOOST_PARAMETER_MEMBER_FUNCTION((void), draw, tag, 
 			(optional
-				(buffer,        *, std::weak_ptr<Buffer>())
+				(vertexBuffer,  *, std::weak_ptr<Buffer>())
+				(indexBuffer,   *, std::weak_ptr<Buffer>())
 				(vertices,      *,                      0u)
 				(instances,     *,                      1u)
 				(firstVertex,   *,                      0u)
@@ -66,7 +67,7 @@ namespace ivulk {
 		)
 		// clang-format on
 		{
-			drawImpl(buffer, vertices, instances, firstVertex, firstInstance);
+			drawImpl(vertexBuffer, indexBuffer, vertices, instances, firstVertex, firstInstance);
 		}
 
 		// clang-format off
@@ -119,7 +120,7 @@ namespace ivulk {
 		void destroyImpl() { }
 
 		void startImpl(std::size_t index, VkCommandBufferUsageFlags flags);
-		void drawImpl(std::weak_ptr<Buffer> buffer, uint32_t vertices, uint32_t instances,
+		void drawImpl(std::weak_ptr<Buffer> vertexBuffer, std::weak_ptr<Buffer> indexBuffer, uint32_t vertices, uint32_t instances,
 					  uint32_t firstVertex, uint32_t firstInstance);
 		void clearAttachmentsImpl(std::weak_ptr<GraphicsPipeline> pipeline, glm::vec4 color);
 

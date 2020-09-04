@@ -21,50 +21,70 @@ IVULK_VERTEX_STRUCT(SimpleVertex,
 );
 // clang-format on
 
-const std::vector<SimpleVertex> triangleVerts = {
-	// First triangle
-	{
-		.pos = {-0.5f, -0.5f},
-		.color = {1.0f, 0.0f, 0.0f},
-	},
-	{
-		.pos = {0.5f, 0.5f},
-		.color = {1.0f, 1.0f, 0.0f},
-	},
-	{
-		.pos = {-0.5f, 0.5f},
-		.color = {0.0f, 0.0f, 1.0f},
-	},
-	// Second triangle
-	{
-		.pos = {-0.5f, -0.5f},
-		.color = {1.0f, 0.0f, 0.0f},
-	},
-	{
-		.pos = {0.5f, -0.5f},
-		.color = {1.0f, 1.0f, 1.0f},
-	},
-	{
-		.pos = {0.5f, 0.5f},
-		.color = {1.0f, 1.0f, 0.0f},
-	},
+const std::vector<SimpleVertex> verts = {
+	SimpleVertex {.pos = {-0.5f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f}, .color = {0.0f, 1.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, 0.5f}, .color = {0.0f, 0.0f, 1.0f}},
+	SimpleVertex {.pos = {-0.5f, 0.5f}, .color = {1.0f, 1.0f, 1.0f}},
 };
 
-class TriangleApp : public App
+const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
+
+class RectangleApp : public App
 {
 public:
-	TriangleApp(int argc, char* argv[])
+	RectangleApp(int argc, char* argv[])
 		: App(argc, argv)
 	{
 		frameNum = 0;
 		elapsedTime = 0.0f;
 		timeSinceStatus = std::numeric_limits<float>::max();
-		clearColorA = {1, 1, 0, 1};
-		clearColorB = {0, 0.075, 1, 1};
+		clearColorA = {1, 0.65, 0, 1};
+		clearColorB = {0, 0.355, 1, 1};
 		clearColor = clearColorA;
 	}
 
 protected:
+	void createIndexBuffer()
+	{
+		const auto sz = sizeof(indices[0]) * indices.size();
+		auto stagingBuffer = Buffer::create(state.vk.device,
+											{
+												.size = sz,
+												.usage = E_BufferUsage::TransferSrc,
+												.memoryMode = E_MemoryMode::CpuToGpu,
+											});
+		stagingBuffer->fillBuffer(indices.data(), sz, indices.size());
+
+		indexBuffer = Buffer::create(state.vk.device,
+									 {
+										 .size = sz,
+										 .usage = E_BufferUsage::TransferDst | E_BufferUsage::Index,
+										 .memoryMode = E_MemoryMode::GpuOnly,
+									 });
+		indexBuffer->copyFromBuffer(stagingBuffer, sz);
+	}
+
+	void createVertexBuffer()
+	{
+		const auto sz = sizeof(verts[0]) * verts.size();
+		auto stagingBuffer = Buffer::create(state.vk.device,
+											{
+												.size = sz,
+												.usage = E_BufferUsage::TransferSrc,
+												.memoryMode = E_MemoryMode::CpuToGpu,
+											});
+		stagingBuffer->fillBuffer(verts.data(), sz, verts.size());
+
+		vertexBuffer = Buffer::create(state.vk.device,
+									  {
+										  .size = sz,
+										  .usage = E_BufferUsage::TransferDst | E_BufferUsage::Vertex,
+										  .memoryMode = E_MemoryMode::GpuOnly,
+									  });
+		vertexBuffer->copyFromBuffer(stagingBuffer, sz);
+	}
+
 	virtual void initialize(bool swapchainOnly) override
 	{
 		pipeline = createVkGraphicsPipeline(
@@ -76,15 +96,11 @@ protected:
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested
-		if (swapchainOnly) return;
+		if (swapchainOnly)
+			return;
 
-		const auto sz = sizeof(triangleVerts[0]) * triangleVerts.size();
-		vertexBuffer = Buffer::create(state.vk.device,
-									  {
-										  .size = sz,
-										  .usage = E_BufferUsage::Vertex,
-									  });
-		vertexBuffer->fillBuffer(triangleVerts.data(), triangleVerts.size());
+		createVertexBuffer();
+		createIndexBuffer();
 	}
 
 	virtual void cleanup(bool swapchainOnly) override
@@ -92,9 +108,11 @@ protected:
 		pipeline.reset();
 
 		// Skip anything that doesn't depend on the swapchain, if requested
-		if (swapchainOnly) return;
+		if (swapchainOnly)
+			return;
 
 		vertexBuffer.reset();
+		indexBuffer.reset();
 	}
 
 	virtual void render(CommandBuffers::Ref cmdBuffer) override
@@ -103,7 +121,7 @@ protected:
 		{
 			cb->clearAttachments(pipeline, clearColor);
 			cb->bindPipeline(pipeline);
-			cb->draw(_buffer = vertexBuffer);
+			cb->draw(_vertexBuffer = vertexBuffer, _indexBuffer = indexBuffer);
 		}
 	}
 
@@ -132,7 +150,7 @@ protected:
 	virtual InitArgs getInitArgs() const override
 	{
 		return {
-			.appName = "Triangle Demo",
+			.appName = "Rectangle Demo",
 			.bDebugPrint = true,
 			.window = {
 				.width = 800,
@@ -168,8 +186,9 @@ protected:
 		return execDir / "assets";
 	}
 
-	std::shared_ptr<GraphicsPipeline> pipeline;
-	std::shared_ptr<Buffer> vertexBuffer;
+	GraphicsPipeline::Ptr pipeline;
+	Buffer::Ptr vertexBuffer;
+	Buffer::Ptr indexBuffer;
 
 	std::size_t frameNum;
 
@@ -185,7 +204,7 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		TriangleApp {argc, argv}.run();
+		RectangleApp {argc, argv}.run();
 	}
 	catch (std::exception& e)
 	{

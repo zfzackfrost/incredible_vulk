@@ -220,6 +220,9 @@ namespace ivulk {
 
 		void createVkLogicalDevice();
 
+
+		void createVmaAllocator();
+
 		void createVkCommandPools();
 		void createVkCommandBuffers(std::size_t imageIndex);
 

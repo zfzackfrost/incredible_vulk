@@ -3,6 +3,12 @@ project(IncredibleVulk VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
+# ================ Directories ================= #
+
+set(IVULK_EXTERN_DIR "${PROJECT_SOURCE_DIR}/extern")
+
+# =========== Update Git Submodules ============ #
+
 include(GitSubmodules)
 
 ######################################################################
@@ -19,6 +25,7 @@ option(IVULK_BUILD_EXAMPLES "Build Incredible Vulk example applications." ON)
 include(LoadBoost)
 include(LoadGLM)
 include(LoadVulkanSDK)
+include(LoadVMA)
 
 # =================== SDL2 ==================== #
 

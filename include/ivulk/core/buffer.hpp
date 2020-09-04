@@ -9,8 +9,10 @@
 #include <ivulk/core/app.hpp>
 #include <ivulk/core/vulkan_resource.hpp>
 #include <ivulk/utils/messages.hpp>
+#include <ivulk/core/vma.hpp>
 
 #include <stdexcept>
+#include <optional>
 #include <vulkan/vulkan.h>
 
 #include <cstring>
@@ -32,115 +34,46 @@ namespace ivulk {
 		};
 	}
 
-	enum class E_BufferMemoryMode : uint8_t
-	{
-		CPUShared = 0u,
-		GPUOnly = 1u,
-	};
+	namespace E_MemoryMode {
+			constexpr VmaMemoryUsage Unknown = VMA_MEMORY_USAGE_UNKNOWN;
+			constexpr VmaMemoryUsage GpuOnly = VMA_MEMORY_USAGE_GPU_ONLY;
+			constexpr VmaMemoryUsage CpuOnly = VMA_MEMORY_USAGE_CPU_ONLY;
+			constexpr VmaMemoryUsage CpuToGpu = VMA_MEMORY_USAGE_CPU_TO_GPU;
+			constexpr VmaMemoryUsage GpuToCpu = VMA_MEMORY_USAGE_GPU_TO_CPU;
+			constexpr VmaMemoryUsage CpuCopy = VMA_MEMORY_USAGE_CPU_COPY;
+			constexpr VmaMemoryUsage GpuLazy = VMA_MEMORY_USAGE_GPU_LAZILY_ALLOCATED;
+	} // namespace E_BufferMemoryMode
 
 	struct BufferInfo final
 	{
 		VkDeviceSize size = 0;
-		VkBufferUsageFlags usage = 0;
 		VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		E_BufferMemoryMode memoryMode = E_BufferMemoryMode::CPUShared;
+		VkBufferUsageFlags usage = 0;
+		VmaMemoryUsage memoryMode = E_MemoryMode::Unknown;
 	};
-	class Buffer : public VulkanResource<Buffer, BufferInfo, VkBuffer, VkDeviceMemory>
+
+	class Buffer : public VulkanResource<Buffer, BufferInfo, VkBuffer, VmaAllocation>
 	{
 	public:
-		Buffer(VkDevice device, VkBuffer buf, VkDeviceMemory mem)
-			: base_t(device, handles_t {buf, mem})
+		Buffer(VkDevice device, VkBuffer buf, VmaAllocation alloc)
+			: base_t(device, handles_t {buf, alloc})
 		{ }
 
 		VkBuffer getBuffer() { return getHandleAt<0>(); }
-		VkDeviceMemory getDeviceMemory() { return getHandleAt<1>(); }
+		VmaAllocation getAllocation() { return getHandleAt<1>(); }
 		uint32_t getCount() { return m_count; }
 
-		template <typename T>
-		void fillBuffer(T* elems, std::size_t num)
-		{
-			const auto sz = sizeof(T) * num;
-			void* data;
-			vkMapMemory(getDevice(), getDeviceMemory(), 0, sz, 0, &data);
-			std::memcpy(data, elems, sz);
-			vkUnmapMemory(getDevice(), getDeviceMemory());
-			m_count = num;
-		}
+		void fillBuffer(const void* data, VkDeviceSize sz, std::optional<uint32_t> newCount = {});
+
+		void copyFromBuffer(Buffer::Ref srcBuf, VkDeviceSize size);
 
 	private:
 		friend base_t;
 
 		uint32_t m_count = 0;
 
-		static Buffer* createImpl(VkDevice device, BufferInfo info)
-		{
-			VkBufferCreateInfo createInfo {
-				.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-				.size = info.size,
-				.usage = info.usage,
-				.sharingMode = info.sharingMode,
-			};
-			VkBuffer buffer;
-			VkDeviceMemory deviceMem = VK_NULL_HANDLE;
-
-			if (vkCreateBuffer(device, &createInfo, nullptr, &buffer) != VK_SUCCESS)
-				throw std::runtime_error(
-					utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan buffer"));
-
-			VkMemoryRequirements memReq;
-			vkGetBufferMemoryRequirements(device, buffer, &memReq);
-
-			constexpr VkMemoryPropertyFlags CPU_SHARED_FLAGS = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-			constexpr VkMemoryPropertyFlags GPU_ONLY_FLAGS = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-				| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-
-			VkMemoryPropertyFlags memFlags = (info.memoryMode == E_BufferMemoryMode::CPUShared)
-				? CPU_SHARED_FLAGS
-				: GPU_ONLY_FLAGS;
-
-			const VkMemoryAllocateInfo allocInfo {
-				.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-				.allocationSize = memReq.size,
-				.memoryTypeIndex = findMemoryType(memReq.memoryTypeBits, memFlags),
-			};
-			if (vkAllocateMemory(device, &allocInfo, nullptr, &deviceMem) != VK_SUCCESS)
-				throw std::runtime_error(
-					utils::makeErrorMessage("VK::MEM", "Failed to allocate memory for Vulkan buffer"));
-
-			if (vkBindBufferMemory(device, buffer, deviceMem, 0) != VK_SUCCESS)
-				throw std::runtime_error(
-					utils::makeErrorMessage("VK::BUF", "Failed to bind memory to new Vulkan buffer"));
-
-			return new Buffer(device, buffer, deviceMem);
-		}
-
-		void destroyImpl()
-		{
-			vkDestroyBuffer(getDevice(), getBuffer(), nullptr);
-			auto deviceMem = getDeviceMemory();
-			if (deviceMem != VK_NULL_HANDLE)
-				vkFreeMemory(getDevice(), deviceMem, nullptr);
-		}
-
-		static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
-		{
-			auto state = App::current()->getState();
-
-			VkPhysicalDeviceMemoryProperties memProps;
-			vkGetPhysicalDeviceMemoryProperties(state.vk.physicalDevice, &memProps);
-
-			for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i)
-			{
-				if ((typeFilter & (1u << i))
-					&& (memProps.memoryTypes[i].propertyFlags & properties) == properties)
-				{
-					return i;
-				}
-			}
-
-			throw std::runtime_error(
-				utils::makeErrorMessage("VK::MEM", "Failed to find suitable memory type for buffer."));
-		}
+		static Buffer* createImpl(VkDevice device, BufferInfo info);
+		void destroyImpl();
+		static uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	};
 } // namespace ivulk

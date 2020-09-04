@@ -9,11 +9,11 @@
 
 #include <vector>
 
+#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <map>
 #include <stdexcept>
-#include <chrono>
 
 namespace ivulk {
 
@@ -43,10 +43,7 @@ namespace ivulk {
 
 	App* App::current() { return s_currentApp; }
 
-	AppState App::getState() const
-	{
-		return state;
-	}
+	AppState App::getState() const { return state; }
 
 	bool App::getPrintDbg() const { return m_initArgs.bDebugPrint; }
 
@@ -55,7 +52,7 @@ namespace ivulk {
 		using namespace std::chrono;
 		auto now = steady_clock::now();
 		auto lastFrameTime = now;
-		
+
 		// Loop until user requests quit...
 		while (!state.evt.shouldQuit)
 		{
@@ -70,7 +67,6 @@ namespace ivulk {
 					}
 				}
 			}
-
 
 			// Render frame
 			drawFrame();
@@ -107,15 +103,18 @@ namespace ivulk {
 		createVkSurface();
 		pickVkPhysicalDevice();
 		createVkLogicalDevice();
+
+		// Create allocator
+		createVmaAllocator();
+
 		createVkSwapChain();
 		createVkImageViews();
+		createVkCommandPools();
 
 		// Run subclass initialization before creating framebuffers
 		initialize();
 
 		createVkFramebuffers();
-		createVkCommandPools();
-		// createVkCommandBuffers();
 		createVkSyncObjects();
 	}
 
@@ -126,6 +125,7 @@ namespace ivulk {
 
 		// =================== Cleanup Vulkan =================== //
 
+		// Destroy sync objects
 		for (auto sem : state.vk.sync.imageAvailableSems)
 			vkDestroySemaphore(state.vk.device, sem, nullptr);
 		for (auto sem : state.vk.sync.renderFinishedSems)
@@ -133,17 +133,33 @@ namespace ivulk {
 		for (auto fen : state.vk.sync.inFlightFences)
 			vkDestroyFence(state.vk.device, fen, nullptr);
 
+		// Destroy command pools
 		vkDestroyCommandPool(state.vk.device, state.vk.cmd.gfxPool, nullptr);
+
+		// Destroy swapchain framebuffers
 		for (auto framebuffer : state.vk.swapChain.framebuffers)
-		{
 			vkDestroyFramebuffer(state.vk.device, framebuffer, nullptr);
-		}
+
+		// Destroy swapchain image views
 		for (const auto& imgV : state.vk.swapChain.imageViews)
 			vkDestroyImageView(state.vk.device, imgV, nullptr);
+
+		// Destroy VMA allocator
+		vmaDestroyAllocator(state.vk.allocator);
+
+		// Destroy swapchain
 		vkDestroySwapchainKHR(state.vk.device, state.vk.swapChain.sc, nullptr);
+
+		// Destroy logical device
 		vkDestroyDevice(state.vk.device, nullptr);
+
+		// Destroy surface
 		vkDestroySurfaceKHR(state.vk.instance, state.vk.surface, nullptr);
+
+		// Destroy debug messenger
 		utils::ivkDestroyDebugUtilsMessengerEXT(state.vk.instance, state.vk.debugMessenger, nullptr);
+
+		// ... Finally destroy the instance
 		vkDestroyInstance(state.vk.instance, nullptr);
 
 		// ==================== Cleanup SDL2 ==================== //
@@ -565,6 +581,16 @@ namespace ivulk {
 		// Get queue handles
 		vkGetDeviceQueue(state.vk.device, indices.graphics.value(), 0, &state.vk.queues.graphics);
 		vkGetDeviceQueue(state.vk.device, indices.present.value(), 0, &state.vk.queues.present);
+	}
+
+	void App::createVmaAllocator()
+	{
+		VmaAllocatorCreateInfo createInfo {.physicalDevice = state.vk.physicalDevice,
+										   .device = state.vk.device,
+										   .instance = state.vk.instance};
+		if (vmaCreateAllocator(&createInfo, &state.vk.allocator) != VK_SUCCESS)
+			throw std::runtime_error(
+				utils::makeErrorMessage("VK::MEM", "Failed to create VMA allocator for Vulkan"));
 	}
 
 } // namespace ivulk

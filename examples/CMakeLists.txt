@@ -2,4 +2,4 @@
 #                            Add Examples                            #
 ######################################################################
 
-add_subdirectory(triangle)
+add_subdirectory(rectangle)

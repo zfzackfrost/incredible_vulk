@@ -10,6 +10,7 @@
 #include <ivulk/core/queue_families.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/command_buffer.hpp>
+#include <ivulk/core/vma.hpp>
 
 #include <SDL2/SDL.h>
 #include <vulkan/vulkan.h>
@@ -49,6 +50,7 @@ namespace ivulk {
 			VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 			VkDevice device = VK_NULL_HANDLE;
 			std::vector<const char*> requiredLayers;
+			VmaAllocator allocator = VK_NULL_HANDLE;
 
 			struct
 			{
