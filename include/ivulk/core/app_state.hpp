@@ -67,6 +67,11 @@ namespace ivulk {
 
 			struct
 			{
+				VkDescriptorPool pool;
+			} descriptor;
+
+			struct
+			{
 				VkQueue graphics = VK_NULL_HANDLE;
 				VkQueue present = VK_NULL_HANDLE;
 			} queues;

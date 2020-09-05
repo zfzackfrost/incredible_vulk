@@ -243,6 +243,8 @@ namespace ivulk {
 		for (const auto& imgV : state.vk.swapChain.imageViews)
 			vkDestroyImageView(state.vk.device, imgV, nullptr);
 		vkDestroySwapchainKHR(state.vk.device, state.vk.swapChain.sc, nullptr);
+
+		vkDestroyDescriptorPool(state.vk.device, state.vk.descriptor.pool, nullptr);
 	}
 
 	void App::recreateVkSwapChain()
@@ -253,7 +255,7 @@ namespace ivulk {
 
 		createVkSwapChain();
 		createVkImageViews();
-
+		createVkDescriptorPool();
 		// Run subclass initialization before creating framebuffers
 		initialize(true);
 

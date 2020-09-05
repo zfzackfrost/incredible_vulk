@@ -68,8 +68,9 @@ namespace ivulk {
 
 	void App::drawFrame()
 	{
-		vkWaitForFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame], VK_TRUE,
-						UINT64_MAX);
+		vkQueueWaitIdle(state.vk.queues.graphics);
+
+		m_currentFrame = 0;
 		uint32_t imageIndex;
 
 		auto result = vkAcquireNextImageKHR(state.vk.device, state.vk.swapChain.sc, UINT64_MAX,
@@ -87,8 +88,6 @@ namespace ivulk {
 			vkWaitForFences(state.vk.device, 1, &state.vk.sync.imagesInFlight[imageIndex], VK_TRUE,
 							UINT64_MAX);
 		}
-
-		vkQueueWaitIdle(state.vk.queues.graphics);
 
 		createVkCommandBuffers(imageIndex);
 		auto cmdBufs = state.vk.cmd.renderCmdBufs;
@@ -132,5 +131,7 @@ namespace ivulk {
 		vkQueuePresentKHR(state.vk.queues.present, &presentInfo);
 
 		m_currentFrame = (m_currentFrame + 1) % m_initArgs.vk.maxFramesInFlight;
+
+		vkQueueWaitIdle(state.vk.queues.present);
 	}
 } // namespace ivulk

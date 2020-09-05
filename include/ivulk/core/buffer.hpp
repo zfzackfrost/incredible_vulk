@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include <ivulk/core/app.hpp>
 #include <ivulk/core/vulkan_resource.hpp>
 #include <ivulk/utils/messages.hpp>
 #include <ivulk/core/vma.hpp>
@@ -62,6 +61,7 @@ namespace ivulk {
 		VkBuffer getBuffer() { return getHandleAt<0>(); }
 		VmaAllocation getAllocation() { return getHandleAt<1>(); }
 		uint32_t getCount() { return m_count; }
+		VkDeviceSize getSize() { return m_size; }
 
 		void fillBuffer(const void* data, VkDeviceSize sz, std::optional<uint32_t> newCount = {});
 
@@ -70,6 +70,7 @@ namespace ivulk {
 	private:
 		friend base_t;
 
+		VkDeviceSize m_size = 0;
 		uint32_t m_count = 0;
 
 		static Buffer* createImpl(VkDevice device, BufferInfo info);

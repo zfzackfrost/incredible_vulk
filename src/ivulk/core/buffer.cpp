@@ -25,7 +25,11 @@ namespace ivulk {
 			throw std::runtime_error(utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan buffer"));
 		}
 
-		return new Buffer(device, buffer, alloc);
+
+		// Return value
+		auto* ret = new Buffer(device, buffer, alloc);
+		ret->m_size = info.size;
+		return ret;
 	}
 
 	void Buffer::destroyImpl() { 

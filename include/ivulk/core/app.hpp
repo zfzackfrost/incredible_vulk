@@ -9,6 +9,7 @@
 
 #include <ivulk/core/app_state.hpp>
 #include <ivulk/core/command_buffer.hpp>
+#include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/swap_chain.hpp>
 #include <ivulk/utils/version_data.hpp>
@@ -20,6 +21,8 @@
 #include <vector>
 
 namespace ivulk {
+	
+	class UniformBufferObject;
 
 	/**
 	 * @brief Application base class.
@@ -153,7 +156,8 @@ namespace ivulk {
 		std::shared_ptr<GraphicsPipeline>
 		createVkGraphicsPipeline(const std::vector<std::filesystem::path>& shaderPaths,
 								 const VkVertexInputBindingDescription bindingDescr,
-								 const std::vector<VkVertexInputAttributeDescription>& attribDescrs);
+								 const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
+								 const std::vector<UniformBufferObject::Ref>& ubos);
 
 	private:
 		InitArgs m_initArgs;
@@ -205,6 +209,7 @@ namespace ivulk {
 
 		void createVkImageViews();
 
+		void createVkDescriptorPool();
 		VkShaderModule createShaderModule(const std::vector<char>& shaderCode,
 										  const std::filesystem::path& assetPath);
 

@@ -30,7 +30,7 @@ namespace ivulk {
 		 */
 		using Ref = std::weak_ptr<Derived>;
 
-		using base_t = VulkanResource<Derived, CreateInfo, HandleTypes...>;
+		using base_t    = VulkanResource<Derived, CreateInfo, HandleTypes...>;
 		using handles_t = std::tuple<HandleTypes...>;
 
 		VulkanResource(VkDevice device, const std::tuple<HandleTypes...>&& h)
@@ -40,7 +40,13 @@ namespace ivulk {
 
 		virtual ~VulkanResource() { destroy(); }
 
-		void destroy() { static_cast<Derived*>(this)->destroyImpl(); }
+		void destroy()
+		{
+			if (m_destroyed)
+				return;
+			static_cast<Derived*>(this)->destroyImpl();
+			m_destroyed = true;
+		}
 
 		template <std::size_t I>
 		auto getHandleAt()
@@ -65,5 +71,6 @@ namespace ivulk {
 
 	private:
 		VkDevice m_device;
+		bool m_destroyed = false;
 	};
 } // namespace ivulk

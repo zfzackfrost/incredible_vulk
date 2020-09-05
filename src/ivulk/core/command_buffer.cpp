@@ -1,3 +1,4 @@
+#include <ivulk/core/app.hpp>
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/command_buffer.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
@@ -100,6 +101,12 @@ namespace ivulk {
 		if (auto pl = pipeline.lock())
 		{
 			vkCmdBindPipeline(getCmdBuffer(*m_currentIdx), VK_PIPELINE_BIND_POINT_GRAPHICS, pl->getPipeline());
+
+			if (pl->getDescriptorSets().size() > 0)
+			{
+				auto descrSet = pl->getDescriptorSetAt(*m_currentIdx);
+				vkCmdBindDescriptorSets(getCmdBuffer(*m_currentIdx), VK_PIPELINE_BIND_POINT_GRAPHICS, pl->getPipelineLayout(), 0, 1, &descrSet, 0, nullptr);
+			}
 		}
 	}
 

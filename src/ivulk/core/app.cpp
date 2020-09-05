@@ -110,6 +110,7 @@ namespace ivulk {
 		createVkSwapChain();
 		createVkImageViews();
 		createVkCommandPools();
+		createVkDescriptorPool();
 
 		// Run subclass initialization before creating framebuffers
 		initialize();
@@ -132,23 +133,14 @@ namespace ivulk {
 			vkDestroySemaphore(state.vk.device, sem, nullptr);
 		for (auto fen : state.vk.sync.inFlightFences)
 			vkDestroyFence(state.vk.device, fen, nullptr);
+		
+		cleanupVkSwapChain();
 
 		// Destroy command pools
 		vkDestroyCommandPool(state.vk.device, state.vk.cmd.gfxPool, nullptr);
 
-		// Destroy swapchain framebuffers
-		for (auto framebuffer : state.vk.swapChain.framebuffers)
-			vkDestroyFramebuffer(state.vk.device, framebuffer, nullptr);
-
-		// Destroy swapchain image views
-		for (const auto& imgV : state.vk.swapChain.imageViews)
-			vkDestroyImageView(state.vk.device, imgV, nullptr);
-
 		// Destroy VMA allocator
 		vmaDestroyAllocator(state.vk.allocator);
-
-		// Destroy swapchain
-		vkDestroySwapchainKHR(state.vk.device, state.vk.swapChain.sc, nullptr);
 
 		// Destroy logical device
 		vkDestroyDevice(state.vk.device, nullptr);

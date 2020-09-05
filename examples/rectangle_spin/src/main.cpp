@@ -1,8 +1,14 @@
+#define GLM_FORCE_RADIANS
+#include <glm/gtc/matrix_transform.hpp>
+
 #include <ivulk/core/app.hpp>
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
+#include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/vertex.hpp>
 #include <ivulk/utils/table_print.hpp>
+
+
 
 #include <cstdlib>
 #include <iostream>
@@ -13,6 +19,14 @@
 #include <glm/gtc/constants.hpp>
 
 using namespace ivulk;
+
+
+struct UboData
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
 
 // clang-format off
 IVULK_VERTEX_STRUCT(SimpleVertex, 
@@ -28,15 +42,14 @@ const std::vector<SimpleVertex> verts = {
 	SimpleVertex {.pos = {-0.5f, 0.5f}, .color = {1.0f, 1.0f, 1.0f}},
 };
 
-const std::vector<uint32_t> indices = {2, 1, 0, 0, 3, 2};
+const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
 
-class RectangleApp : public App
+class RectangleSpinApp : public App
 {
 public:
-	RectangleApp(int argc, char* argv[])
+	RectangleSpinApp(int argc, char* argv[])
 		: App(argc, argv)
 	{
-		frameNum        = 0;
 		elapsedTime     = 0.0f;
 		timeSinceStatus = std::numeric_limits<float>::max();
 		clearColorA     = {1, 0.65, 0, 1};
@@ -87,14 +100,17 @@ protected:
 
 	virtual void initialize(bool swapchainOnly) override
 	{
+		ubo = UniformBufferObject::create(state.vk.device, {
+			.size = sizeof(UboData)
+		});
 		pipeline = createVkGraphicsPipeline(
 			{
-				"shaders/simple.vert.spv",
-				"shaders/simple.frag.spv",
+				"shaders/simple_3d.vert.spv",
+				"shaders/simple_3d.frag.spv",
 			},
 			SimpleVertex::getBindingDescription(),
 			SimpleVertex::getAttributeDescriptions(),
-			{});
+			{ubo});
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested
@@ -103,6 +119,7 @@ protected:
 
 		createVertexBuffer();
 		createIndexBuffer();
+
 	}
 
 	virtual void cleanup(bool swapchainOnly) override
@@ -115,6 +132,7 @@ protected:
 
 		vertexBuffer.reset();
 		indexBuffer.reset();
+		ubo.reset();
 	}
 
 	virtual void render(CommandBuffers::Ref cmdBuffer) override
@@ -146,13 +164,24 @@ protected:
 
 		clearColor = glm::mix(clearColorA, clearColorB, alpha);
 
-		frameNum++;
+		// ================= Matrices ================== //
+		
+		float aspect = static_cast<float>(state.vk.swapChain.extent.width) / static_cast<float>(state.vk.swapChain.extent.height);
+
+		uboData.model = glm::rotate(glm::mat4(1.0f), elapsedTime * glm::radians(80.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		uboData.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0,0,1));
+
+		uboData.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
+		uboData.proj[1][1] *= -1.0f;
+
+		ubo->setUniforms(uboData);
 	}
 
 	virtual InitArgs getInitArgs() const override
 	{
 		return {
-			.appName = "Rectangle Demo",
+			.appName = "Spinning Rectangle Demo",
 			.bDebugPrint = true,
 			.window = {
 				.width = 800,
@@ -183,7 +212,8 @@ protected:
 	virtual std::filesystem::path getAssetsDir() override
 	{
 		std::filesystem::path execPath {state.cmdArgs[0]};
-		execPath     = std::filesystem::absolute(execPath);
+		execPath = std::filesystem::absolute(execPath);
+
 		auto execDir = execPath.parent_path();
 		return execDir / "assets";
 	}
@@ -192,7 +222,9 @@ protected:
 	Buffer::Ptr vertexBuffer;
 	Buffer::Ptr indexBuffer;
 
-	std::size_t frameNum;
+
+	UniformBufferObject::Ptr ubo;
+	UboData uboData;
 
 	glm::vec4 clearColor;
 	glm::vec4 clearColorA;
@@ -200,13 +232,15 @@ protected:
 
 	float elapsedTime;
 	float timeSinceStatus;
+
+
 };
 
 int main(int argc, char* argv[])
 {
 	try
 	{
-		RectangleApp {argc, argv}.run();
+		RectangleSpinApp {argc, argv}.run();
 	}
 	catch (std::exception& e)
 	{
