@@ -133,6 +133,6 @@ StatementMacros:
   - TYPE_BODY
 TabWidth:        4
 UseCRLF:         false
-UseTab:          ForContinuationAndIndentation
+UseTab:          ForContinuationAndIndentation 
 ...
 

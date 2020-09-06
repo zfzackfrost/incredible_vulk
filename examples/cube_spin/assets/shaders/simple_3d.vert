@@ -6,14 +6,18 @@ layout (location = 1) in vec3 vColor;
 
 layout(location = 0) out vec3 vertexColor;
 
-layout (binding = 0) uniform UniformBufferObject {
-    vec3 tint;
+struct Matrices {
     mat4 model;
     mat4 view;
     mat4 proj;
+};
+
+layout (binding = 0) uniform UniformBufferObject {
+    vec3 tint;
+    Matrices matrices;
 } ubo;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * ubo.model * vPosition;
-    vertexColor = vColor;
+    gl_Position = ubo.matrices.proj * ubo.matrices.view * ubo.matrices.model * vPosition;
+    vertexColor = vColor * ubo.tint;
 }

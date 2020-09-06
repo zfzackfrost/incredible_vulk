@@ -8,5 +8,5 @@ indent_size = 4
 [*.{toml,json,yml,yaml}]
 indent_size = 2
 
-[*.{cpp,hpp,h}]
+[*.{cpp,hpp,h,hh,c}]
 indent_style = tab

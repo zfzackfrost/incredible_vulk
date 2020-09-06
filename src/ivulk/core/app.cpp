@@ -50,7 +50,7 @@ namespace ivulk {
 	void App::mainLoop()
 	{
 		using namespace std::chrono;
-		auto now = steady_clock::now();
+		auto now           = steady_clock::now();
 		auto lastFrameTime = now;
 
 		// Loop until user requests quit...
@@ -73,7 +73,7 @@ namespace ivulk {
 
 			// Update application state
 			{
-				now = steady_clock::now();
+				now                                            = steady_clock::now();
 				duration<float, std::ratio<1, 1>> deltaSeconds = (now - lastFrameTime);
 				update(deltaSeconds.count());
 				lastFrameTime = now;
@@ -133,7 +133,7 @@ namespace ivulk {
 			vkDestroySemaphore(state.vk.device, sem, nullptr);
 		for (auto fen : state.vk.sync.inFlightFences)
 			vkDestroyFence(state.vk.device, fen, nullptr);
-		
+
 		cleanupVkSwapChain();
 
 		// Destroy command pools
@@ -181,9 +181,12 @@ namespace ivulk {
 		windowFlags |= (m_initArgs.window.bBorderless) ? SDL_WINDOW_BORDERLESS : 0u;
 		windowFlags |= (m_initArgs.window.bFullscreen) ? SDL_WINDOW_FULLSCREEN : 0u;
 
-		state.sdl.window = SDL_CreateWindow(m_initArgs.appName.c_str(), SDL_WINDOWPOS_UNDEFINED,
-											SDL_WINDOWPOS_UNDEFINED, m_initArgs.window.width,
-											m_initArgs.window.height, windowFlags);
+		state.sdl.window = SDL_CreateWindow(m_initArgs.appName.c_str(),
+											SDL_WINDOWPOS_UNDEFINED,
+											SDL_WINDOWPOS_UNDEFINED,
+											m_initArgs.window.width,
+											m_initArgs.window.height,
+											windowFlags);
 
 		// Throw exception if window was not created
 		// successfully
@@ -201,30 +204,30 @@ namespace ivulk {
 	void App::createVkInstance()
 	{
 		auto requiredExtensions = getRequiredVkExtensions();
-		auto requiredLayers = getRequiredVkLayers();
+		auto requiredLayers     = getRequiredVkLayers();
 
 		const VkApplicationInfo appInfo {
-			.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-			.pNext = nullptr,
-			.pApplicationName = m_initArgs.appName.c_str(),
+			.sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+			.pNext              = nullptr,
+			.pApplicationName   = m_initArgs.appName.c_str(),
 			.applicationVersion = m_initArgs.appVersion.toVkVersion(),
-			.pEngineName = "Incredible Vulk",
+			.pEngineName        = "Incredible Vulk",
 			.engineVersion = VK_MAKE_VERSION(IVULK_VERSION_MAJOR, IVULK_VERSION_MINOR, IVULK_VERSION_PATCH),
-			.apiVersion = VK_API_VERSION_1_0,
+			.apiVersion    = VK_API_VERSION_1_0,
 		};
 
 		VkInstanceCreateInfo createInfo {
-			.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-			.pApplicationInfo = &appInfo,
-			.enabledLayerCount = static_cast<uint32_t>(requiredLayers.size()),
-			.ppEnabledLayerNames = requiredLayers.data(),
-			.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size()),
+			.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+			.pApplicationInfo        = &appInfo,
+			.enabledLayerCount       = static_cast<uint32_t>(requiredLayers.size()),
+			.ppEnabledLayerNames     = requiredLayers.data(),
+			.enabledExtensionCount   = static_cast<uint32_t>(requiredExtensions.size()),
 			.ppEnabledExtensionNames = requiredExtensions.data(),
 		};
 		if (m_initArgs.vk.bEnableValidation)
 		{
 			auto debugCreateInfo = makeVkDebugMessengerCreateInfo();
-			createInfo.pNext = &debugCreateInfo;
+			createInfo.pNext     = &debugCreateInfo;
 		}
 
 		if (vkCreateInstance(&createInfo, nullptr, &state.vk.instance) != VK_SUCCESS)
@@ -304,12 +307,12 @@ namespace ivulk {
 	bool App::isDeviceSuitable(VkPhysicalDevice device)
 	{
 		QueueFamilyIndices indices = findVkQueueFamilies(device);
-		bool extensionsSupported = checkDeviceExtensions(device);
-		bool swapChainOk = false;
+		bool extensionsSupported   = checkDeviceExtensions(device);
+		bool swapChainOk           = false;
 		if (extensionsSupported)
 		{
 			SwapChainInfo scInfo = querySwapChainInfo(device);
-			swapChainOk = !scInfo.formats.empty() && !scInfo.presentModes.empty();
+			swapChainOk          = !scInfo.formats.empty() && !scInfo.presentModes.empty();
 		}
 		return indices.isComplete() && extensionsSupported && swapChainOk;
 	}
@@ -328,7 +331,9 @@ namespace ivulk {
 			"Name",
 			"Spec",
 		});
-		std::transform(extensions.begin(), extensions.end(), std::back_inserter(tbl),
+		std::transform(extensions.begin(),
+					   extensions.end(),
+					   std::back_inserter(tbl),
 					   [](VkExtensionProperties extProps) -> utils::TableRow {
 						   auto ver = utils::VersionData::fromVkVersion(extProps.specVersion);
 						   return {
@@ -386,11 +391,15 @@ namespace ivulk {
 			"Impl",
 			"Description",
 		});
-		std::transform(layers.begin(), layers.end(), std::back_inserter(tbl),
+		std::transform(layers.begin(),
+					   layers.end(),
+					   std::back_inserter(tbl),
 					   [](VkLayerProperties lyrProps) -> utils::TableRow {
 						   auto verSpec = utils::VersionData::fromVkVersion(lyrProps.specVersion);
 						   auto verImpl = utils::VersionData::fromVkVersion(lyrProps.implementationVersion);
-						   return {std::string(lyrProps.layerName), verSpec.toString(), verImpl.toString(),
+						   return {std::string(lyrProps.layerName),
+								   verSpec.toString(),
+								   verImpl.toString(),
 								   std::string(lyrProps.description)};
 					   });
 		tbl.enableHeadingRow().leadingSpaces(3);
@@ -422,11 +431,12 @@ namespace ivulk {
 		{
 			for (auto& layerName : requiredLayers)
 			{
-				auto found = std::find_if(layers.begin(), layers.end(),
+				auto found = std::find_if(layers.begin(),
+										  layers.end(),
 										  [layerName](const VkLayerProperties& lyrProps) {
 											  return std::strcmp(layerName, lyrProps.layerName) == 0;
 										  })
-					!= layers.end();
+							 != layers.end();
 				if (!found)
 				{
 					std::string description = "Required Vulkan layer is not supported: `";
@@ -442,16 +452,16 @@ namespace ivulk {
 	VkDebugUtilsMessengerCreateInfoEXT App::makeVkDebugMessengerCreateInfo(bool includeVerbose)
 	{
 		return {
-			.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+			.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
 			.messageSeverity = (includeVerbose ? VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT : 0u)
-				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT
+							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
+							   | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
 			.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
-				| VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+						   | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
+						   | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
 			.pfnUserCallback = debugCallbackVk,
-			.pUserData = nullptr,
+			.pUserData       = nullptr,
 		};
 	}
 
@@ -461,8 +471,8 @@ namespace ivulk {
 			return;
 		VkDebugUtilsMessengerCreateInfoEXT createInfo = makeVkDebugMessengerCreateInfo(false);
 
-		if (utils::ivkCreateDebugUtilsMessengerEXT(state.vk.instance, &createInfo, nullptr,
-												   &state.vk.debugMessenger)
+		if (utils::ivkCreateDebugUtilsMessengerEXT(
+				state.vk.instance, &createInfo, nullptr, &state.vk.debugMessenger)
 			!= VK_SUCCESS)
 		{
 			throw std::runtime_error(
@@ -470,9 +480,11 @@ namespace ivulk {
 		}
 	}
 
-	VKAPI_ATTR VkBool32 VKAPI_CALL App::debugCallbackVk(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType,
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
+	VKAPI_ATTR VkBool32 VKAPI_CALL
+	App::debugCallbackVk(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+						 VkDebugUtilsMessageTypeFlagsEXT messageType,
+						 const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+						 void* pUserData)
 	{
 		std::cout << pCallbackData->pMessage << std::endl;
 		return VK_FALSE;
@@ -517,21 +529,21 @@ namespace ivulk {
 
 	void App::createVkLogicalDevice()
 	{
-		float queuePriority = 1.0f;
+		float queuePriority        = 1.0f;
 		QueueFamilyIndices indices = findVkQueueFamilies(state.vk.physicalDevice);
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
 		// Collect queue create infos
 		{
 			VkDeviceQueueCreateInfo createInfoBase {
-				.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-				.queueCount = 1,
+				.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+				.queueCount       = 1,
 				.pQueuePriorities = &queuePriority,
 			};
 			auto uniqueQueueFamilies = indices.getUniqueFamilies();
 			for (const auto& i : uniqueQueueFamilies)
 			{
-				auto createInfo = createInfoBase;
+				auto createInfo             = createInfoBase;
 				createInfo.queueFamilyIndex = i;
 				queueCreateInfos.push_back(createInfo);
 			}
@@ -542,16 +554,16 @@ namespace ivulk {
 		VkPhysicalDeviceFeatures deviceFeatures {};
 
 		VkDeviceCreateInfo createInfo {
-			.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-			.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size()),
-			.pQueueCreateInfos = queueCreateInfos.data(),
-			.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size()),
+			.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+			.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size()),
+			.pQueueCreateInfos       = queueCreateInfos.data(),
+			.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size()),
 			.ppEnabledExtensionNames = deviceExtensions.data(),
-			.pEnabledFeatures = &deviceFeatures,
+			.pEnabledFeatures        = &deviceFeatures,
 		};
 		if (m_initArgs.vk.bEnableValidation)
 		{
-			createInfo.enabledLayerCount = static_cast<uint32_t>(state.vk.requiredLayers.size());
+			createInfo.enabledLayerCount   = static_cast<uint32_t>(state.vk.requiredLayers.size());
 			createInfo.ppEnabledLayerNames = state.vk.requiredLayers.data();
 		}
 		else
@@ -578,8 +590,8 @@ namespace ivulk {
 	void App::createVmaAllocator()
 	{
 		VmaAllocatorCreateInfo createInfo {.physicalDevice = state.vk.physicalDevice,
-										   .device = state.vk.device,
-										   .instance = state.vk.instance};
+										   .device         = state.vk.device,
+										   .instance       = state.vk.instance};
 		if (vmaCreateAllocator(&createInfo, &state.vk.allocator) != VK_SUCCESS)
 			throw std::runtime_error(
 				utils::makeErrorMessage("VK::MEM", "Failed to create VMA allocator for Vulkan"));

@@ -180,10 +180,10 @@ protected:
 		return result;
 	}
 
-	virtual std::filesystem::path getAssetsDir() override
+	virtual boost::filesystem::path getAssetsDir() override
 	{
-		std::filesystem::path execPath {state.cmdArgs[0]};
-		execPath     = std::filesystem::absolute(execPath);
+		boost::filesystem::path execPath {state.cmdArgs[0]};
+		execPath = boost::filesystem::absolute(boost::filesystem::system_complete(execPath));
 		auto execDir = execPath.parent_path();
 		return execDir / "assets";
 	}

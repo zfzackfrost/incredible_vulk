@@ -12,7 +12,7 @@
 using namespace boost::adaptors;
 
 namespace ivulk {
-	namespace fs = std::filesystem;
+	namespace fs = boost::filesystem;
 
 	const std::map<fs::path, VkShaderStageFlagBits> shaderExtensionToStage = {
 		{".vert", VK_SHADER_STAGE_VERTEX_BIT},
@@ -369,7 +369,7 @@ namespace ivulk {
 	}
 
 	VkShaderModule App::createShaderModule(const std::vector<char>& shaderCode,
-										   const std::filesystem::path& assetPath)
+										   const boost::filesystem::path& assetPath)
 	{
 		VkShaderModuleCreateInfo createInfo {
 			.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

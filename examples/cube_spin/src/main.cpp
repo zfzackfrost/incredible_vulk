@@ -15,16 +15,20 @@
 
 using namespace ivulk;
 
+struct UboMatrices
+{
+	LAYOUT_MAT4 glm::mat4 model = glm::mat4(1.0f);
+	LAYOUT_MAT4 glm::mat4 view  = glm::mat4(1.0f);
+	LAYOUT_MAT4 glm::mat4 proj  = glm::mat4(1.0f);
+};
 struct UboData
 {
-	glm::vec3 tint;
-	alignas(16) glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+	LAYOUT_VEC3 glm::vec3 tint;
+	LAYOUT_STRUCT UboMatrices matrices;
 };
 
 // clang-format off
-IVULK_VERTEX_STRUCT(SimpleVertex, 
+IVULK_VERTEX_STRUCT(SimpleVertex,
 	((glm::vec3, pos, 0))
 	((glm::vec3, color, 1))
 );
@@ -70,12 +74,12 @@ const std::vector<SimpleVertex> verts = {
 
 const std::vector<uint32_t> indices = {
 	// clang-format off
-	0, 1, 2, 2, 3, 0, 
-	4, 5, 6, 6, 7, 4, 
-	8, 9, 10, 10, 11, 8, 
-	12, 13, 14, 14, 15, 12,
-	16, 17, 18, 18, 19, 16,
-	20, 21, 22, 22, 23, 20,
+    0, 1, 2, 2, 3, 0,
+    4, 5, 6, 6, 7, 4,
+    8, 9, 10, 10, 11, 8,
+    12, 13, 14, 14, 15, 12,
+    16, 17, 18, 18, 19, 16,
+    20, 21, 22, 22, 23, 20,
 	// clang-format on
 };
 
@@ -201,15 +205,16 @@ protected:
 		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
 					   / static_cast<float>(state.vk.swapChain.extent.height);
 
-		uboData.model = glm::rotate(
-			glm::mat4(1.0f), elapsedTime * glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		uboData.matrices.model = glm::rotate(glm::mat4(uboData.matrices.model),
+											 deltaSeconds * glm::radians(180.0f),
+											 glm::vec3(0.0f, 0.0f, 1.0f));
 
-		uboData.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
+		uboData.matrices.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
 
-		uboData.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
-		uboData.proj[1][1] *= -1.0f;
+		uboData.matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
+		uboData.matrices.proj[1][1] *= -1.0f;
 
-		uboData.tint = glm::vec3(0.5);
+		uboData.tint = glm::vec3(0.08);
 
 		ubo->setUniforms(uboData);
 	}
@@ -239,16 +244,13 @@ protected:
 		int32_t result = 0;
 		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 			result += 1000;
-		result += deviceProperties.limits.maxImageDimension2D;
-		if (deviceFeatures.tessellationShader)
-			result += 350;
 		return result;
 	}
 
-	virtual std::filesystem::path getAssetsDir() override
+	virtual boost::filesystem::path getAssetsDir() override
 	{
-		std::filesystem::path execPath {state.cmdArgs[0]};
-		execPath = std::filesystem::absolute(execPath);
+		boost::filesystem::path execPath {state.cmdArgs[0]};
+		execPath = boost::filesystem::absolute(boost::filesystem::system_complete(execPath));
 
 		auto execDir = execPath.parent_path();
 		return execDir / "assets";
