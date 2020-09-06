@@ -7,13 +7,13 @@
 
 #pragma once
 
+#include <ivulk/glm.hpp>
 #include <vulkan/vulkan.h>
 
 #include <boost/preprocessor.hpp>
 
 #include <array>
 
-#include <glm/glm.hpp>
 
 #define _IVULK_VERTEX_ATTRIB_EACH(r, data, elem) BOOST_PP_TUPLE_ELEM(0, elem) BOOST_PP_TUPLE_ELEM(1, elem);
 

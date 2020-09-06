@@ -7,6 +7,7 @@ layout (location = 1) in vec3 vColor;
 layout(location = 0) out vec3 vertexColor;
 
 layout (binding = 0) uniform UniformBufferObject {
+    vec3 tint;
     mat4 model;
     mat4 view;
     mat4 proj;

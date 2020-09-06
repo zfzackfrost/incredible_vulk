@@ -3,4 +3,4 @@
 ######################################################################
 
 add_subdirectory(rectangle)
-add_subdirectory(rectangle_spin)
+add_subdirectory(cube_spin)

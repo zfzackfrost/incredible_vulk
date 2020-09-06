@@ -1,5 +1,4 @@
-#define GLM_FORCE_RADIANS
-#include <glm/gtc/matrix_transform.hpp>
+#include <ivulk/glm.hpp>
 
 #include <ivulk/core/app.hpp>
 #include <ivulk/core/buffer.hpp>
@@ -8,46 +7,82 @@
 #include <ivulk/core/vertex.hpp>
 #include <ivulk/utils/table_print.hpp>
 
-
-
 #include <cstdlib>
 #include <iostream>
 #include <limits>
 #include <memory>
 #include <stdexcept>
 
-#include <glm/gtc/constants.hpp>
-
 using namespace ivulk;
-
 
 struct UboData
 {
-	glm::mat4 model;
+	glm::vec3 tint;
+	alignas(16) glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 proj;
 };
 
 // clang-format off
 IVULK_VERTEX_STRUCT(SimpleVertex, 
-	((glm::vec2, pos, 0))
+	((glm::vec3, pos, 0))
 	((glm::vec3, color, 1))
 );
 // clang-format on
 
 const std::vector<SimpleVertex> verts = {
-	SimpleVertex {.pos = {-0.5f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},
-	SimpleVertex {.pos = {0.5f, -0.5f}, .color = {0.0f, 1.0f, 0.0f}},
-	SimpleVertex {.pos = {0.5f, 0.5f}, .color = {0.0f, 0.0f, 1.0f}},
-	SimpleVertex {.pos = {-0.5f, 0.5f}, .color = {1.0f, 1.0f, 1.0f}},
+	// -Z
+	SimpleVertex {.pos = {-0.5f, 0.5f, -0.5f}, .color = {1.0f, 1.0f, 1.0f}},
+	SimpleVertex {.pos = {0.5f, 0.5f, -0.5f}, .color = {0.0f, 0.0f, 1.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f, -0.5f}, .color = {0.0f, 1.0f, 0.0f}},
+	SimpleVertex {.pos = {-0.5f, -0.5f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},
+
+	// +Z
+	SimpleVertex {.pos = {-0.5f, -0.5f, 0.5f}, .color = {1.0f, 0.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f, 0.5f}, .color = {0.0f, 1.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, 0.5f, 0.5f}, .color = {0.0f, 0.0f, 1.0f}},
+	SimpleVertex {.pos = {-0.5f, 0.5f, 0.5f}, .color = {1.0f, 1.0f, 1.0f}},
+
+	// -X
+	SimpleVertex {.pos = {-0.5f, -0.5f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},
+	SimpleVertex {.pos = {-0.5f, -0.5f, 0.5f}, .color = {0.0f, 1.0f, 0.0f}},
+	SimpleVertex {.pos = {-0.5f, 0.5f, 0.5f}, .color = {0.0f, 0.0f, 1.0f}},
+	SimpleVertex {.pos = {-0.5f, 0.5f, -0.5f}, .color = {1.0f, 1.0f, 1.0f}},
+
+	// +X
+	SimpleVertex {.pos = {0.5f, 0.5f, -0.5f}, .color = {1.0f, 1.0f, 1.0f}},
+	SimpleVertex {.pos = {0.5f, 0.5f, 0.5f}, .color = {0.0f, 0.0f, 1.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f, 0.5f}, .color = {0.0f, 1.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},
+
+	// -Y
+	SimpleVertex {.pos = {-0.5f, -0.5f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f, -0.5f}, .color = {0.0f, 1.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f, 0.5f}, .color = {0.0f, 0.0f, 1.0f}},
+	SimpleVertex {.pos = {-0.5f, -0.5f, 0.5f}, .color = {1.0f, 1.0f, 1.0f}},
+
+	// +Y
+	SimpleVertex {.pos = {-0.5f, 0.5f, 0.5f}, .color = {1.0f, 1.0f, 1.0f}},
+	SimpleVertex {.pos = {0.5f, 0.5f, 0.5f}, .color = {0.0f, 0.0f, 1.0f}},
+	SimpleVertex {.pos = {0.5f, 0.5f, -0.5f}, .color = {0.0f, 1.0f, 0.0f}},
+	SimpleVertex {.pos = {-0.5f, 0.5f, -0.5f}, .color = {1.0f, 0.0f, 0.0f}},
 };
 
-const std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
+const std::vector<uint32_t> indices = {
+	// clang-format off
+	0, 1, 2, 2, 3, 0, 
+	4, 5, 6, 6, 7, 4, 
+	8, 9, 10, 10, 11, 8, 
+	12, 13, 14, 14, 15, 12,
+	16, 17, 18, 18, 19, 16,
+	20, 21, 22, 22, 23, 20,
+	// clang-format on
+};
 
-class RectangleSpinApp : public App
+class CubeSpinApp : public App
 {
 public:
-	RectangleSpinApp(int argc, char* argv[])
+	CubeSpinApp(int argc, char* argv[])
 		: App(argc, argv)
 	{
 		elapsedTime     = 0.0f;
@@ -100,9 +135,7 @@ protected:
 
 	virtual void initialize(bool swapchainOnly) override
 	{
-		ubo = UniformBufferObject::create(state.vk.device, {
-			.size = sizeof(UboData)
-		});
+		ubo      = UniformBufferObject::create(state.vk.device, {.size = sizeof(UboData)});
 		pipeline = createVkGraphicsPipeline(
 			{
 				"shaders/simple_3d.vert.spv",
@@ -119,7 +152,6 @@ protected:
 
 		createVertexBuffer();
 		createIndexBuffer();
-
 	}
 
 	virtual void cleanup(bool swapchainOnly) override
@@ -165,15 +197,19 @@ protected:
 		clearColor = glm::mix(clearColorA, clearColorB, alpha);
 
 		// ================= Matrices ================== //
-		
-		float aspect = static_cast<float>(state.vk.swapChain.extent.width) / static_cast<float>(state.vk.swapChain.extent.height);
 
-		uboData.model = glm::rotate(glm::mat4(1.0f), elapsedTime * glm::radians(80.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
+					   / static_cast<float>(state.vk.swapChain.extent.height);
 
-		uboData.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0,0,1));
+		uboData.model = glm::rotate(
+			glm::mat4(1.0f), elapsedTime * glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		uboData.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
 
 		uboData.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
 		uboData.proj[1][1] *= -1.0f;
+
+		uboData.tint = glm::vec3(0.5);
 
 		ubo->setUniforms(uboData);
 	}
@@ -222,7 +258,6 @@ protected:
 	Buffer::Ptr vertexBuffer;
 	Buffer::Ptr indexBuffer;
 
-
 	UniformBufferObject::Ptr ubo;
 	UboData uboData;
 
@@ -232,15 +267,13 @@ protected:
 
 	float elapsedTime;
 	float timeSinceStatus;
-
-
 };
 
 int main(int argc, char* argv[])
 {
 	try
 	{
-		RectangleSpinApp {argc, argv}.run();
+		CubeSpinApp {argc, argv}.run();
 	}
 	catch (std::exception& e)
 	{
