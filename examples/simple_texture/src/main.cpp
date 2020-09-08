@@ -97,13 +97,10 @@ protected:
 		}
 
 		pipeline = createGraphicsPipeline({
+			.vertex = SimpleVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/texture.vert.spv",
 				.frag = "shaders/texture.frag.spv",
-			},
-			.vertex = {
-				.binding = SimpleVertex::getBindingDescription(),
-				.attributes = SimpleVertex::getAttributeDescriptions(),
 			},
 			.descriptor = {
 				.textureBindings = {

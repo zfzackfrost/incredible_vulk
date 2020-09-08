@@ -156,13 +156,10 @@ protected:
 		ubo      = UniformBufferObject::create(state.vk.device, {.size = sizeof(UboData)});
 
 		pipeline = createGraphicsPipeline({
+			.vertex = SimpleVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/cube.vert.spv",
 				.frag = "shaders/cube.frag.spv",
-			},
-			.vertex = {
-				.binding = SimpleVertex::getBindingDescription(),
-				.attributes = SimpleVertex::getAttributeDescriptions(),
 			},
 			.descriptor = {
 				.uboBindings = {

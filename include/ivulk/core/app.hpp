@@ -13,6 +13,7 @@
 #include <ivulk/core/swap_chain.hpp>
 #include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/texture.hpp>
+#include <ivulk/core/vertex.hpp>
 #include <ivulk/utils/version_data.hpp>
 
 #include <boost/filesystem.hpp>
@@ -68,6 +69,8 @@ namespace ivulk {
 
 		struct CreateGraphicsPipelineParams
 		{
+			PipelineVertexInfo vertex;
+
 			struct
 			{
 				std::optional<boost::filesystem::path> vert = {};
@@ -77,12 +80,6 @@ namespace ivulk {
 				std::optional<boost::filesystem::path> geom = {};
 				std::optional<boost::filesystem::path> comp = {};
 			} shaderPath;
-
-			struct
-			{
-				VkVertexInputBindingDescription binding = {};
-				std::vector<VkVertexInputAttributeDescription> attributes = {};
-			} vertex;
 
 			struct
 			{

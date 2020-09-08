@@ -88,13 +88,10 @@ protected:
 	virtual void initialize(bool swapchainOnly) override
 	{
 		pipeline = createGraphicsPipeline({
+			.vertex = SimpleVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/simple.vert.spv",
 				.frag = "shaders/simple.frag.spv",
-			},
-			.vertex = {
-				.binding = SimpleVertex::getBindingDescription(),
-				.attributes = SimpleVertex::getAttributeDescriptions(),
 			},
 		});
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
