@@ -61,38 +61,16 @@ namespace ivulk {
 		AppState getState() const;
 
 		/**
+         * @brief Helper method to check if debug printing was enabled in the init args.
+         */
+		bool getPrintDbg() const;
+
+		/**
          * @brief Get the path to the assets directory
          *
          * Pure Virtual
          */
 		virtual boost::filesystem::path getAssetsDir() = 0;
-
-		struct CreateGraphicsPipelineParams
-		{
-			PipelineVertexInfo vertex;
-
-			struct
-			{
-				std::optional<boost::filesystem::path> vert = {};
-				std::optional<boost::filesystem::path> frag = {};
-				std::optional<boost::filesystem::path> tese = {};
-				std::optional<boost::filesystem::path> tesc = {};
-				std::optional<boost::filesystem::path> geom = {};
-				std::optional<boost::filesystem::path> comp = {};
-			} shaderPath;
-
-			struct
-			{
-				std::vector<PipelineUniformBufferBinding> uboBindings = {};
-				std::vector<PipelineTextureBinding> textureBindings = {};
-			} descriptor;
-		};
-
-		/**
-         * @brief Create a graphics pipeline using the shaders at the specified asset paths.
-         */
-		std::shared_ptr<GraphicsPipeline>
-		createGraphicsPipeline(const CreateGraphicsPipelineParams params);
 
 	protected:
 		/**
@@ -175,10 +153,6 @@ namespace ivulk {
          */
 		AppState state;
 
-		/**
-         * @brief Helper method to check if debug printing was enabled in the init args.
-         */
-		bool getPrintDbg() const;
 
 
 	private:
@@ -232,8 +206,6 @@ namespace ivulk {
 		void createVkImageViews();
 
 		void createVkDescriptorPool();
-		VkShaderModule createShaderModule(const std::vector<char>& shaderCode,
-										  const boost::filesystem::path& assetPath);
 
 		VkDebugUtilsMessengerCreateInfoEXT makeVkDebugMessengerCreateInfo(bool includeVerbose = false);
 		void createVkDebugMessenger();

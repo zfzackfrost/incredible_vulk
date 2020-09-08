@@ -8,14 +8,41 @@
 #pragma once
 #include <ivulk/core/vulkan_resource.hpp>
 
+#include <ivulk/core/uniform_buffer.hpp>
+#include <ivulk/core/texture.hpp>
+#include <ivulk/core/vertex.hpp>
+
 #include <stdexcept>
 #include <vector>
+#include <optional>
 #include <vulkan/vulkan.h>
 
+#include <boost/filesystem.hpp>
+
 namespace ivulk {
+	struct GraphicsPipelineInfo final
+	{
+		PipelineVertexInfo vertex;
+
+		struct
+		{
+			std::optional<boost::filesystem::path> vert = {};
+			std::optional<boost::filesystem::path> frag = {};
+			std::optional<boost::filesystem::path> tese = {};
+			std::optional<boost::filesystem::path> tesc = {};
+			std::optional<boost::filesystem::path> geom = {};
+			std::optional<boost::filesystem::path> comp = {};
+		} shaderPath;
+
+		struct
+		{
+			std::vector<PipelineUniformBufferBinding> uboBindings = {};
+			std::vector<PipelineTextureBinding> textureBindings = {};
+		} descriptor;
+	};
 
 	class GraphicsPipeline : public VulkanResource<GraphicsPipeline,
-												   NullResourceInfo,
+												   GraphicsPipelineInfo,
 												   VkPipeline,
 												   VkRenderPass,
 												   VkPipelineLayout,
@@ -23,16 +50,6 @@ namespace ivulk {
 												   std::vector<VkDescriptorSet>>
 	{
 	public:
-		GraphicsPipeline(VkDevice device,
-						 VkPipeline pipeline,
-						 VkRenderPass renderPass,
-						 VkPipelineLayout pipelineLayout,
-						 VkDescriptorSetLayout descrSetLayout,
-						 std::vector<VkDescriptorSet> descrSets)
-			: base_t(device,
-					 handles_t {pipeline, renderPass, pipelineLayout, descrSetLayout, descrSets})
-			, m_colorAttIndices {}
-		{ }
 
 		VkPipeline getPipeline() { return getHandleAt<0>(); }
 		VkRenderPass getRenderPass() { return getHandleAt<1>(); }
@@ -46,18 +63,24 @@ namespace ivulk {
 	private:
 		friend base_t;
 		friend class App;
+		
+		GraphicsPipeline(VkDevice device,
+						 VkPipeline pipeline,
+						 VkRenderPass renderPass,
+						 VkPipelineLayout pipelineLayout,
+						 VkDescriptorSetLayout descrSetLayout,
+						 std::vector<VkDescriptorSet> descrSets);
 
 		std::vector<uint32_t> m_colorAttIndices;
 
-		static GraphicsPipeline* createImpl(VkDevice, NullResourceInfo);
+		static GraphicsPipeline* createImpl(VkDevice device, GraphicsPipelineInfo info);
 
-		void destroyImpl()
-		{
-			vkDestroyPipeline(getDevice(), getPipeline(), nullptr);
-			vkDestroyPipelineLayout(getDevice(), getPipelineLayout(), nullptr);
-			vkDestroyRenderPass(getDevice(), getRenderPass(), nullptr);
-			vkDestroyDescriptorSetLayout(getDevice(), getDescriptorSetLayout(), nullptr);
-		}
+		void destroyImpl();
+
+
+		static std::vector<char> readSPIRVFile(const boost::filesystem::path& fpath);
+		static VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& shaderCode,
+											   const boost::filesystem::path& assetPath);
 	};
 
 } // namespace ivulk

@@ -96,7 +96,7 @@ protected:
 			sampler = Sampler::create(state.vk.device, {});
 		}
 
-		pipeline = createGraphicsPipeline({
+		pipeline = GraphicsPipeline::create(state.vk.device, {
 			.vertex = SimpleVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/texture.vert.spv",

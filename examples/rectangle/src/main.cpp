@@ -87,7 +87,7 @@ protected:
 
 	virtual void initialize(bool swapchainOnly) override
 	{
-		pipeline = createGraphicsPipeline({
+		pipeline = GraphicsPipeline::create(state.vk.device, {
 			.vertex = SimpleVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/simple.vert.spv",
