@@ -11,6 +11,7 @@
 #include <ivulk/core/shader_stage.hpp>
 
 #include <typeindex>
+#include <iomanip>
 
 namespace ivulk {
 	struct UniformBufferObjectInfo final
@@ -18,7 +19,7 @@ namespace ivulk {
 		VkDeviceSize size             = 0u;
 		VmaMemoryUsage memoryMode     = E_MemoryMode::CpuToGpu;
 		VkShaderStageFlags stageFlags = E_ShaderStage::AllGraphics;
-		uint32_t binding = 0u;
+		uint32_t defaultBinding       = 0u;
 	};
 
 	class UniformBufferObject : public VulkanResource<UniformBufferObject,
@@ -28,7 +29,7 @@ namespace ivulk {
 													  VkDescriptorSetLayoutBinding>
 	{
 	public:
-		Buffer::Ref getBuffer() { return getHandleAt<0>(); }
+		VkBuffer getBuffer() { return getHandleAt<0>()->getBuffer(); }
 		VkDeviceSize getSize() { return getHandleAt<1>(); }
 		VkDescriptorSetLayoutBinding getDescriptorSetLayoutBinding(uint32_t bindingIndex)
 		{
@@ -47,7 +48,7 @@ namespace ivulk {
 					"VK::UNIFORM",
 					"Supplied buffer data does not match the size of the `UniformBufferObject`"));
 			}
-			if (auto buf = getBuffer().lock())
+			if (auto buf = getHandleAt<0>())
 			{
 				BufferData data[] = {bufData};
 				buf->fillBuffer(data, SZ);
@@ -62,7 +63,8 @@ namespace ivulk {
 							VkDeviceSize sz,
 							VkDescriptorSetLayoutBinding descrBinding)
 			: base_t(device, handles_t {buffer, sz, descrBinding})
-		{ }
+		{
+		}
 
 		static UniformBufferObject* createImpl(VkDevice device, UniformBufferObjectInfo createInfo)
 		{
@@ -73,18 +75,18 @@ namespace ivulk {
 											 .memoryMode = createInfo.memoryMode,
 										 });
 			VkDescriptorSetLayoutBinding descrBinding {
-				.binding         = createInfo.binding,
+				.binding         = createInfo.defaultBinding,
 				.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 				.descriptorCount = 1,
-				.stageFlags = createInfo.stageFlags,
+				.stageFlags      = createInfo.stageFlags,
 			};
 			return new UniformBufferObject(device, buffer, createInfo.size, descrBinding);
 		}
 
 		void destroyImpl()
 		{
-			if (auto buf = getBuffer().lock())
-				buf->destroy();
+			if (auto b = getHandleAt<0>())
+				b->destroy();
 		}
 	};
 } // namespace ivulk

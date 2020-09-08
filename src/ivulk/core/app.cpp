@@ -551,7 +551,16 @@ namespace ivulk {
 
 		auto deviceExtensions = getRequiredVkDeviceExtensions();
 
+		// ============= Collect features ============== //
+		
+		VkPhysicalDeviceFeatures supportedFeatures;
+		vkGetPhysicalDeviceFeatures(state.vk.physicalDevice, &supportedFeatures);
+
 		VkPhysicalDeviceFeatures deviceFeatures {};
+		deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
+
+		// =========== Create logical device =========== //
+		
 
 		VkDeviceCreateInfo createInfo {
 			.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,

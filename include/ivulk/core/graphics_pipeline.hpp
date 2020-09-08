@@ -13,6 +13,7 @@
 #include <vulkan/vulkan.h>
 
 namespace ivulk {
+
 	class GraphicsPipeline : public VulkanResource<GraphicsPipeline,
 												   NullResourceInfo,
 												   VkPipeline,

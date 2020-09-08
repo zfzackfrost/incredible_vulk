@@ -12,6 +12,7 @@
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/swap_chain.hpp>
 #include <ivulk/core/uniform_buffer.hpp>
+#include <ivulk/core/texture.hpp>
 #include <ivulk/utils/version_data.hpp>
 
 #include <boost/filesystem.hpp>
@@ -57,6 +58,13 @@ namespace ivulk {
          * @brief Get the current app state.
          */
 		AppState getState() const;
+
+		/**
+         * @brief Get the path to the assets directory
+         *
+         * Pure Virtual
+         */
+		virtual boost::filesystem::path getAssetsDir() = 0;
 
 	protected:
 		/**
@@ -145,20 +153,14 @@ namespace ivulk {
 		bool getPrintDbg() const;
 
 		/**
-         * @brief Get the path to the assets directory
-         *
-         * Pure Virtual
-         */
-		virtual boost::filesystem::path getAssetsDir() = 0;
-
-		/**
          * @brief Create a graphics pipeline using the shaders at the specified asset paths.
          */
 		std::shared_ptr<GraphicsPipeline>
 		createVkGraphicsPipeline(const std::vector<boost::filesystem::path>& shaderPaths,
 								 const VkVertexInputBindingDescription bindingDescr,
 								 const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
-								 const std::vector<UniformBufferObject::Ref>& ubos);
+								 const std::vector<UniformBufferObject::Ref>& ubos,
+								 const std::vector<PipelineTextureBinding>& textures = {});
 
 	private:
 		InitArgs m_initArgs;

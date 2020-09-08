@@ -45,7 +45,8 @@ namespace ivulk {
 	App::createVkGraphicsPipeline(const std::vector<fs::path>& shaderPaths,
 								  const VkVertexInputBindingDescription bindingDescr,
 								  const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
-								  const std::vector<UniformBufferObject::Ref>& ubos)
+								  const std::vector<UniformBufferObject::Ref>& ubos,
+								  const std::vector<PipelineTextureBinding>& textures)
 
 	{
 
@@ -53,17 +54,22 @@ namespace ivulk {
 
 		VkDescriptorSetLayout descrSetLayout = VK_NULL_HANDLE;
 		std::vector<VkDescriptorSet> descrSets;
-		if (!ubos.empty())
+		std::vector<VkDescriptorSetLayoutBinding> bindings;
 		{
-			std::vector<VkDescriptorSetLayoutBinding> bindings(ubos.size());
 			std::transform(ubos.begin(),
 						   ubos.end(),
-						   bindings.begin(),
+						   std::back_inserter(bindings),
 						   [](UniformBufferObject::Ref ubo, int32_t i = -1) mutable {
 							   ++i;
 							   if (auto b = ubo.lock())
 								   return b->getDescriptorSetLayoutBinding(i);
 							   return VkDescriptorSetLayoutBinding {};
+						   });
+			std::transform(textures.begin(),
+						   textures.end(),
+						   std::back_inserter(bindings),
+						   [](PipelineTextureBinding tex) {
+							   return tex.getDescriptorSetLayoutBinding();
 						   });
 			VkDescriptorSetLayoutCreateInfo descrSetLayoutInfo {
 				.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -92,6 +98,12 @@ namespace ivulk {
 			}
 
 			// Configure descriptors for UBOs
+			std::vector<VkWriteDescriptorSet> writes;
+			std::vector<VkDescriptorBufferInfo> bufferInfos;
+			bufferInfos.reserve(ubos.size() * state.vk.swapChain.images.size());
+			std::vector<VkDescriptorImageInfo> imageInfos;
+			imageInfos.reserve(textures.size() * state.vk.swapChain.images.size());
+
 			for (uint32_t i = 0; i < state.vk.swapChain.images.size(); ++i)
 			{
 				for (const auto& iter : ubos | indexed())
@@ -100,35 +112,55 @@ namespace ivulk {
 					auto uboPtr = iter.value();
 					if (auto ubo = uboPtr.lock())
 					{
-						VkBuffer buffer = VK_NULL_HANDLE;
-						VkDeviceSize sz = 0;
-						if (auto b = ubo->getBuffer().lock())
-						{
-							buffer = b->getBuffer();
-							sz     = b->getSize();
-						}
+						VkBuffer buffer = ubo->getBuffer();
+						VkDeviceSize sz = ubo->getSize();
 						VkDescriptorBufferInfo bufferInfo {
 							.buffer = buffer,
 							.offset = 0,
 							.range  = sz,
 						};
+						bufferInfos.push_back(bufferInfo);
 
 						VkWriteDescriptorSet descriptorWrite {
-							.sType  = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-							.dstSet = descrSets[i],
-							.dstBinding = static_cast<uint32_t>(j),
-							.dstArrayElement = 0,
-							.descriptorCount = 1,
-							.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-							.pImageInfo = nullptr,
-							.pBufferInfo = &bufferInfo,
+							.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+							.dstSet           = descrSets[i],
+							.dstBinding       = static_cast<uint32_t>(j),
+							.dstArrayElement  = 0,
+							.descriptorCount  = 1,
+							.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+							.pImageInfo       = nullptr,
+							.pBufferInfo      = &bufferInfos[bufferInfos.size() - 1],
 							.pTexelBufferView = nullptr,
 						};
 
-						vkUpdateDescriptorSets(state.vk.device, 1, &descriptorWrite, 0, nullptr);
+						writes.push_back(descriptorWrite);
 					}
 				}
+
+				for (const auto& tex : textures)
+				{
+					VkDescriptorImageInfo imageInfo {
+						.sampler = tex.getSampler(),
+						.imageView = tex.getImageView(),
+						.imageLayout= VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					};
+					imageInfos.push_back(imageInfo);
+
+					VkWriteDescriptorSet descriptorWrite {
+						.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+						.dstSet           = descrSets[i],
+						.dstBinding       = tex.binding,
+						.dstArrayElement  = 0,
+						.descriptorCount  = 1,
+						.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+						.pImageInfo       = &imageInfos[imageInfos.size() - 1],
+						.pBufferInfo      = nullptr, 
+						.pTexelBufferView = nullptr,
+					};
+					writes.push_back(descriptorWrite);
+				}
 			}
+			vkUpdateDescriptorSets(state.vk.device, writes.size(), writes.data(), 0, nullptr);
 		}
 
 		// ###################### Pipeline ####################### //
@@ -394,16 +426,22 @@ namespace ivulk {
 
 	void App::createVkDescriptorPool()
 	{
+		std::array<VkDescriptorPoolSize, 2> poolSizes;
+
 		VkDescriptorPoolSize poolSize {
 			.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			.descriptorCount = static_cast<uint32_t>(state.vk.swapChain.images.size()),
 		};
+		poolSizes[0] = poolSize;
+		poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		poolSizes[1] = poolSize;
+	
 
 		VkDescriptorPoolCreateInfo poolInfo {
 			.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 			.maxSets       = static_cast<uint32_t>(state.vk.swapChain.images.size()),
-			.poolSizeCount = 1,
-			.pPoolSizes    = &poolSize,
+			.poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
+			.pPoolSizes    = poolSizes.data(),
 		};
 
 		if (vkCreateDescriptorPool(state.vk.device, &poolInfo, nullptr, &state.vk.descriptor.pool)

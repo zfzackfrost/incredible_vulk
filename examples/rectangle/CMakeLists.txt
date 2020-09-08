@@ -26,4 +26,4 @@ set_target_properties(ex_rectangle PROPERTIES CXX_EXTENSIONS OFF)
 
 target_link_libraries(ex_rectangle PUBLIC ivulk)
 
-ConfigureContent(ex_rectangle ${PROJECT_SOURCE_DIR}/assets/shaders)
+ConfigureContent(ex_rectangle _assets assets)

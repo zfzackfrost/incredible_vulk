@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/functions.hpp>
 
 #define LAYOUT_SCALAR alignas(4)
 #define LAYOUT_FLOAT LAYOUT_SCALAR

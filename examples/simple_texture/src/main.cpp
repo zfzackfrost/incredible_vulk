@@ -1,12 +1,9 @@
-#include <ivulk/glm.hpp>
-
 #include <ivulk/core/app.hpp>
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/image.hpp>
 #include <ivulk/core/sampler.hpp>
 #include <ivulk/core/texture.hpp>
-#include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/vertex.hpp>
 
 #include <cstdlib>
@@ -15,83 +12,33 @@
 #include <memory>
 #include <stdexcept>
 
+#include <glm/gtc/constants.hpp>
+
 using namespace ivulk;
 
-struct UboMatrices
-{
-	LAYOUT_MAT4 glm::mat4 model = glm::mat4(1.0f);
-	LAYOUT_MAT4 glm::mat4 view  = glm::mat4(1.0f);
-	LAYOUT_MAT4 glm::mat4 proj  = glm::mat4(1.0f);
-};
-struct UboData
-{
-	LAYOUT_VEC3 glm::vec3 tint;
-	LAYOUT_STRUCT UboMatrices matrices;
-};
-
 // clang-format off
-IVULK_VERTEX_STRUCT(SimpleVertex,
-	((glm::vec3, pos, 0))
+IVULK_VERTEX_STRUCT(SimpleVertex, 
+	((glm::vec2, pos, 0))
 	((glm::vec2, texCoords, 1))
-	((glm::vec3, color, 2))
 );
 // clang-format on
 
 const std::vector<SimpleVertex> verts = {
-	// -Z
-	{.pos = {-0.5f, 0.5f, -0.5f}, .texCoords = {0, 1}, .color = {1.0f, 1.0f, 1.0f}},
-	{.pos = {0.5f, 0.5f, -0.5f}, .texCoords = {1, 1}, .color = {0.0f, 0.0f, 1.0f}},
-	{.pos = {0.5f, -0.5f, -0.5f}, .texCoords = {1, 0}, .color = {0.0f, 1.0f, 0.0f}},
-	{.pos = {-0.5f, -0.5f, -0.5f}, .texCoords = {0, 0}, .color = {1.0f, 0.0f, 0.0f}},
-
-	// +Z
-	{.pos = {-0.5f, -0.5f, 0.5f}, .texCoords = {0, 0}, .color = {1.0f, 0.0f, 0.0f}},
-	{.pos = {0.5f, -0.5f, 0.5f}, .texCoords = {1, 0}, .color = {0.0f, 1.0f, 0.0f}},
-	{.pos = {0.5f, 0.5f, 0.5f}, .texCoords = {1, 1}, .color = {0.0f, 0.0f, 1.0f}},
-	{.pos = {-0.5f, 0.5f, 0.5f}, .texCoords = {0, 1}, .color = {1.0f, 1.0f, 1.0f}},
-
-	// -X
-	{.pos = {-0.5f, -0.5f, -0.5f}, .texCoords = {0, 0}, .color = {1.0f, 0.0f, 0.0f}},
-	{.pos = {-0.5f, -0.5f, 0.5f}, .texCoords = {0, 1}, .color = {0.0f, 1.0f, 0.0f}},
-	{.pos = {-0.5f, 0.5f, 0.5f}, .texCoords = {1, 1}, .color = {0.0f, 0.0f, 1.0f}},
-	{.pos = {-0.5f, 0.5f, -0.5f}, .texCoords = {1, 0}, .color = {1.0f, 1.0f, 1.0f}},
-
-	// +X
-	{.pos = {0.5f, 0.5f, -0.5f}, .texCoords = {1, 0}, .color = {1.0f, 1.0f, 1.0f}},
-	{.pos = {0.5f, 0.5f, 0.5f}, .texCoords = {1, 1}, .color = {0.0f, 0.0f, 1.0f}},
-	{.pos = {0.5f, -0.5f, 0.5f}, .texCoords = {0, 1}, .color = {0.0f, 1.0f, 0.0f}},
-	{.pos = {0.5f, -0.5f, -0.5f}, .texCoords = {0, 0}, .color = {1.0f, 0.0f, 0.0f}},
-
-	// -Y
-	{.pos = {-0.5f, -0.5f, -0.5f}, .texCoords = {0, 0}, .color = {1.0f, 0.0f, 0.0f}},
-	{.pos = {0.5f, -0.5f, -0.5f}, .texCoords = {1, 0}, .color = {0.0f, 1.0f, 0.0f}},
-	{.pos = {0.5f, -0.5f, 0.5f}, .texCoords = {1, 1}, .color = {0.0f, 0.0f, 1.0f}},
-	{.pos = {-0.5f, -0.5f, 0.5f}, .texCoords = {0, 1}, .color = {1.0f, 1.0f, 1.0f}},
-
-	// +Y
-	{.pos = {-0.5f, 0.5f, 0.5f}, .texCoords = {0, 1}, .color = {1.0f, 1.0f, 1.0f}},
-	{.pos = {0.5f, 0.5f, 0.5f}, .texCoords = {1, 1}, .color = {0.0f, 0.0f, 1.0f}},
-	{.pos = {0.5f, 0.5f, -0.5f}, .texCoords = {1, 0}, .color = {0.0f, 1.0f, 0.0f}},
-	{.pos = {-0.5f, 0.5f, -0.5f}, .texCoords = {0, 0}, .color = {1.0f, 0.0f, 0.0f}},
+	SimpleVertex {.pos = {-0.5f, -0.5f}, .texCoords = {0.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, -0.5f}, .texCoords = {1.0f, 0.0f}},
+	SimpleVertex {.pos = {0.5f, 0.5f}, .texCoords = {1.0f, 1.0f}},
+	SimpleVertex {.pos = {-0.5f, 0.5f}, .texCoords = {0.0f, 1.0f}},
 };
 
-const std::vector<uint32_t> indices = {
-	// clang-format off
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4,
-    8, 9, 10, 10, 11, 8,
-    12, 13, 14, 14, 15, 12,
-    16, 17, 18, 18, 19, 16,
-    20, 21, 22, 22, 23, 20,
-	// clang-format on
-};
+const std::vector<uint32_t> indices = {2, 1, 0, 0, 3, 2};
 
-class CubeSpinApp : public App
+class RectangleTexApp : public App
 {
 public:
-	CubeSpinApp(int argc, char* argv[])
+	RectangleTexApp(int argc, char* argv[])
 		: App(argc, argv)
 	{
+		frameNum        = 0;
 		elapsedTime     = 0.0f;
 		timeSinceStatus = std::numeric_limits<float>::max();
 		clearColorA     = {1, 0.65, 0, 1};
@@ -144,31 +91,24 @@ protected:
 	{
 		if (!swapchainOnly)
 		{
-			sampler           = Sampler::create(state.vk.device, {});
-			crateBaseColorTex = Image::create(state.vk.device,
-											  {
-												  .load {
-													  .bEnable = true,
-													  .path    = "textures/Crate/Crate_basecolor.png",
-												  },
-											  });
+			tex = Image::create(state.vk.device,
+					{.load = {.bEnable = true, .path = "textures/forest.png"}});
+
+			sampler = Sampler::create(state.vk.device, {});
 		}
-		ubo      = UniformBufferObject::create(state.vk.device, {.size = sizeof(UboData)});
+
 		pipeline = createVkGraphicsPipeline(
 			{
-				"shaders/cube.vert.spv",
-				"shaders/cube.frag.spv",
+				"shaders/texture.vert.spv",
+				"shaders/texture.frag.spv",
 			},
 			SimpleVertex::getBindingDescription(),
 			SimpleVertex::getAttributeDescriptions(),
-			{ubo},
-			{
-				{
-					.image   = crateBaseColorTex,
-					.sampler = sampler,
-					.binding = 1u,
-				},
-			});
+			{}, {{
+				.image = tex,
+				.sampler = sampler,
+				.binding = 1u,
+			}});
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested
@@ -177,6 +117,7 @@ protected:
 
 		createVertexBuffer();
 		createIndexBuffer();
+
 	}
 
 	virtual void cleanup(bool swapchainOnly) override
@@ -189,8 +130,7 @@ protected:
 
 		vertexBuffer.reset();
 		indexBuffer.reset();
-		ubo.reset();
-		crateBaseColorTex.reset();
+		tex.reset();
 		sampler.reset();
 	}
 
@@ -221,31 +161,15 @@ protected:
 
 		alpha = alpha * 0.5 + 0.5;
 
-		// clearColor = glm::mix(clearColorA, clearColorB, alpha);
+		clearColor = glm::mix(clearColorA, clearColorB, alpha);
 
-		// ================= Matrices ================== //
-
-		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
-					   / static_cast<float>(state.vk.swapChain.extent.height);
-
-		uboData.matrices.model = glm::rotate(glm::mat4(uboData.matrices.model),
-											 deltaSeconds * glm::radians(180.0f),
-											 glm::vec3(0.0f, 0.0f, 1.0f));
-
-		uboData.matrices.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
-
-		uboData.matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
-		uboData.matrices.proj[1][1] *= -1.0f;
-
-		uboData.tint = glm::vec3(glm::mix(0.08f, 2.5f, alpha));
-
-		ubo->setUniforms(uboData);
+		frameNum++;
 	}
 
 	virtual InitArgs getInitArgs() const override
 	{
 		return {
-			.appName = "Spinning Rectangle Demo",
+			.appName = "Textured Rectangle Demo",
 			.bDebugPrint = true,
 			.window = {
 				.width = 800,
@@ -267,14 +191,16 @@ protected:
 		int32_t result = 0;
 		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 			result += 1000;
+		result += deviceProperties.limits.maxImageDimension2D;
+		if (deviceFeatures.tessellationShader)
+			result += 350;
 		return result;
 	}
 
 	virtual boost::filesystem::path getAssetsDir() override
 	{
 		boost::filesystem::path execPath {state.cmdArgs[0]};
-		execPath = boost::filesystem::absolute(boost::filesystem::system_complete(execPath));
-
+		execPath     = boost::filesystem::absolute(boost::filesystem::system_complete(execPath));
 		auto execDir = execPath.parent_path();
 		return execDir / "assets";
 	}
@@ -282,12 +208,10 @@ protected:
 	GraphicsPipeline::Ptr pipeline;
 	Buffer::Ptr vertexBuffer;
 	Buffer::Ptr indexBuffer;
-
-	Image::Ptr crateBaseColorTex;
+	Image::Ptr tex;
 	Sampler::Ptr sampler;
 
-	UniformBufferObject::Ptr ubo;
-	UboData uboData;
+	std::size_t frameNum;
 
 	glm::vec4 clearColor;
 	glm::vec4 clearColorA;
@@ -301,7 +225,7 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		CubeSpinApp {argc, argv}.run();
+		RectangleTexApp {argc, argv}.run();
 	}
 	catch (std::exception& e)
 	{

@@ -26,6 +26,10 @@ include(LoadBoost)
 include(LoadGLM)
 include(LoadVulkanSDK)
 include(LoadVMA)
+include(LoadSTB)
+
+# CMake utilities
+include(ProcessContent)
 
 # =================== SDL2 ==================== #
 
