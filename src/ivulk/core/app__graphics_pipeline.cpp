@@ -42,11 +42,11 @@ namespace ivulk {
 	}
 
 	std::shared_ptr<GraphicsPipeline>
-	App::createVkGraphicsPipeline(const std::vector<fs::path>& shaderPaths,
-								  const VkVertexInputBindingDescription bindingDescr,
-								  const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
-								  const std::vector<PipelineUniformBufferBinding>& ubos,
-								  const std::vector<PipelineTextureBinding>& textures)
+	App::createGraphicsPipeline(const std::vector<fs::path>& shaderPaths,
+								const VkVertexInputBindingDescription bindingDescr,
+								const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
+								const std::vector<PipelineUniformBufferBinding>& ubos,
+								const std::vector<PipelineTextureBinding>& textures)
 
 	{
 

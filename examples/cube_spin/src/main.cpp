@@ -154,7 +154,7 @@ protected:
 											  });
 		}
 		ubo      = UniformBufferObject::create(state.vk.device, {.size = sizeof(UboData)});
-		pipeline = createVkGraphicsPipeline(
+		pipeline = createGraphicsPipeline(
 			{
 				"shaders/cube.vert.spv",
 				"shaders/cube.frag.spv",

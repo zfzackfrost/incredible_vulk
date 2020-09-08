@@ -97,7 +97,7 @@ protected:
 			sampler = Sampler::create(state.vk.device, {});
 		}
 
-		pipeline = createVkGraphicsPipeline(
+		pipeline = createGraphicsPipeline(
 			{
 				"shaders/texture.vert.spv",
 				"shaders/texture.frag.spv",

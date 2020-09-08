@@ -70,11 +70,11 @@ namespace ivulk {
          * @brief Create a graphics pipeline using the shaders at the specified asset paths.
          */
 		std::shared_ptr<GraphicsPipeline>
-		createVkGraphicsPipeline(const std::vector<boost::filesystem::path>& shaderPaths,
-								 const VkVertexInputBindingDescription bindingDescr,
-								 const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
-								 const std::vector<PipelineUniformBufferBinding>& ubos,
-								 const std::vector<PipelineTextureBinding>& textures = {});
+		createGraphicsPipeline(const std::vector<boost::filesystem::path>& shaderPaths,
+							   const VkVertexInputBindingDescription bindingDescr,
+							   const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
+							   const std::vector<PipelineUniformBufferBinding>& ubos,
+							   const std::vector<PipelineTextureBinding>& textures = {});
 
 	protected:
 		/**

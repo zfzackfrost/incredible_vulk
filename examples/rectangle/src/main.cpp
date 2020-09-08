@@ -87,7 +87,7 @@ protected:
 
 	virtual void initialize(bool swapchainOnly) override
 	{
-		pipeline = createVkGraphicsPipeline(
+		pipeline = createGraphicsPipeline(
 			{
 				"shaders/simple.vert.spv",
 				"shaders/simple.frag.spv",
