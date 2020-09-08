@@ -91,24 +91,31 @@ protected:
 	{
 		if (!swapchainOnly)
 		{
-			tex = Image::create(state.vk.device,
-					{.load = {.bEnable = true, .path = "textures/forest.png"}});
+			tex = Image::create(state.vk.device, {.load = {.bEnable = true, .path = "textures/forest.png"}});
 
 			sampler = Sampler::create(state.vk.device, {});
 		}
 
-		pipeline = createGraphicsPipeline(
-			{
-				"shaders/texture.vert.spv",
-				"shaders/texture.frag.spv",
+		pipeline = createGraphicsPipeline({
+			.shaderPath = {
+				.vert = "shaders/texture.vert.spv",
+				.frag = "shaders/texture.frag.spv",
 			},
-			SimpleVertex::getBindingDescription(),
-			SimpleVertex::getAttributeDescriptions(),
-			{}, {{
-				.image = tex,
-				.sampler = sampler,
-				.binding = 1u,
-			}});
+			.vertex = {
+				.binding = SimpleVertex::getBindingDescription(),
+				.attributes = SimpleVertex::getAttributeDescriptions(),
+			},
+			.descriptor = {
+				.textureBindings = {
+					{
+						.image = tex,
+						.sampler = sampler,
+						.binding = 1u,
+					},
+				},
+			},
+		});
+
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested
@@ -117,7 +124,6 @@ protected:
 
 		createVertexBuffer();
 		createIndexBuffer();
-
 	}
 
 	virtual void cleanup(bool swapchainOnly) override

@@ -154,26 +154,32 @@ protected:
 											  });
 		}
 		ubo      = UniformBufferObject::create(state.vk.device, {.size = sizeof(UboData)});
-		pipeline = createGraphicsPipeline(
-			{
-				"shaders/cube.vert.spv",
-				"shaders/cube.frag.spv",
+
+		pipeline = createGraphicsPipeline({
+			.shaderPath = {
+				.vert = "shaders/cube.vert.spv",
+				.frag = "shaders/cube.frag.spv",
 			},
-			SimpleVertex::getBindingDescription(),
-			SimpleVertex::getAttributeDescriptions(),
-			{
-				{
-					.ubo     = ubo,
-					.binding = 0u,
+			.vertex = {
+				.binding = SimpleVertex::getBindingDescription(),
+				.attributes = SimpleVertex::getAttributeDescriptions(),
+			},
+			.descriptor = {
+				.uboBindings = {
+					{
+						.ubo     = ubo,
+						.binding = 0u,
+					},
+				},
+				.textureBindings = {
+					{
+						.image = crateBaseColorTex,
+						.sampler = sampler,
+						.binding = 1u,
+					},
 				},
 			},
-			{
-				{
-					.image   = crateBaseColorTex,
-					.sampler = sampler,
-					.binding = 1u,
-				},
-			});
+		});
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested

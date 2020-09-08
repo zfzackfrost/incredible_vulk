@@ -41,14 +41,15 @@ namespace ivulk {
 		return buffer;
 	}
 
-	std::shared_ptr<GraphicsPipeline>
-	App::createGraphicsPipeline(const std::vector<fs::path>& shaderPaths,
-								const VkVertexInputBindingDescription bindingDescr,
-								const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
-								const std::vector<PipelineUniformBufferBinding>& ubos,
-								const std::vector<PipelineTextureBinding>& textures)
+	std::shared_ptr<GraphicsPipeline> App::createGraphicsPipeline(const CreateGraphicsPipelineParams params)
 
 	{
+		// ============ Extract parameters ============= //
+
+		auto attribDescrs = params.vertex.attributes;
+		auto bindingDescr = params.vertex.binding;
+		auto textures     = params.descriptor.textureBindings;
+		auto ubos         = params.descriptor.uboBindings;
 
 		// ============== Descriptor Set =============== //
 
@@ -163,19 +164,32 @@ namespace ivulk {
 
 		using shadermodule_info_t = std::tuple<fs::path, VkShaderStageFlagBits, VkShaderModule>;
 		std::vector<shadermodule_info_t> shaderModules;
-		shaderModules.reserve(shaderPaths.size());
+		shaderModules.reserve(6);
 
-		auto pathToShaderModule = [&assetsDir, this](const fs::path& p) -> shadermodule_info_t {
-			auto shaderExt = p.stem().extension();
-			auto stage     = (shaderExtensionToStage.count(shaderExt)) ? shaderExtensionToStage.at(shaderExt)
-																   : VK_SHADER_STAGE_ALL;
+		auto pathToShaderModule = [&assetsDir, this](const fs::path& p,
+													 VkShaderStageFlagBits stage) -> shadermodule_info_t {
+			auto shaderExt    = p.stem().extension();
 			auto shaderP      = assetsDir / p;
 			auto shaderCode   = readBinaryFile(shaderP);
 			auto shaderModule = createShaderModule(shaderCode, p);
 			return {shaderP, stage, shaderModule};
 		};
-		std::transform(
-			shaderPaths.begin(), shaderPaths.end(), std::back_inserter(shaderModules), pathToShaderModule);
+		if (params.shaderPath.vert.has_value())
+			shaderModules.push_back(pathToShaderModule(*params.shaderPath.vert, VK_SHADER_STAGE_VERTEX_BIT));
+		if (params.shaderPath.frag.has_value())
+			shaderModules.push_back(
+				pathToShaderModule(*params.shaderPath.frag, VK_SHADER_STAGE_FRAGMENT_BIT));
+		if (params.shaderPath.tese.has_value())
+			shaderModules.push_back(
+				pathToShaderModule(*params.shaderPath.tese, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT));
+		if (params.shaderPath.tesc.has_value())
+			shaderModules.push_back(
+				pathToShaderModule(*params.shaderPath.tesc, VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT));
+		if (params.shaderPath.geom.has_value())
+			shaderModules.push_back(
+				pathToShaderModule(*params.shaderPath.geom, VK_SHADER_STAGE_GEOMETRY_BIT));
+		if (params.shaderPath.comp.has_value())
+			shaderModules.push_back(pathToShaderModule(*params.shaderPath.comp, VK_SHADER_STAGE_COMPUTE_BIT));
 
 		// =========== Create shader stages =========== //
 

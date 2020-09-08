@@ -66,15 +66,36 @@ namespace ivulk {
          */
 		virtual boost::filesystem::path getAssetsDir() = 0;
 
+		struct CreateGraphicsPipelineParams
+		{
+			struct
+			{
+				std::optional<boost::filesystem::path> vert = {};
+				std::optional<boost::filesystem::path> frag = {};
+				std::optional<boost::filesystem::path> tese = {};
+				std::optional<boost::filesystem::path> tesc = {};
+				std::optional<boost::filesystem::path> geom = {};
+				std::optional<boost::filesystem::path> comp = {};
+			} shaderPath;
+
+			struct
+			{
+				VkVertexInputBindingDescription binding = {};
+				std::vector<VkVertexInputAttributeDescription> attributes = {};
+			} vertex;
+
+			struct
+			{
+				std::vector<PipelineUniformBufferBinding> uboBindings = {};
+				std::vector<PipelineTextureBinding> textureBindings = {};
+			} descriptor;
+		};
+
 		/**
          * @brief Create a graphics pipeline using the shaders at the specified asset paths.
          */
 		std::shared_ptr<GraphicsPipeline>
-		createGraphicsPipeline(const std::vector<boost::filesystem::path>& shaderPaths,
-							   const VkVertexInputBindingDescription bindingDescr,
-							   const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
-							   const std::vector<PipelineUniformBufferBinding>& ubos,
-							   const std::vector<PipelineTextureBinding>& textures = {});
+		createGraphicsPipeline(const CreateGraphicsPipelineParams params);
 
 	protected:
 		/**

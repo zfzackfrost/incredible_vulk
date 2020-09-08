@@ -87,14 +87,16 @@ protected:
 
 	virtual void initialize(bool swapchainOnly) override
 	{
-		pipeline = createGraphicsPipeline(
-			{
-				"shaders/simple.vert.spv",
-				"shaders/simple.frag.spv",
+		pipeline = createGraphicsPipeline({
+			.shaderPath = {
+				.vert = "shaders/simple.vert.spv",
+				.frag = "shaders/simple.frag.spv",
 			},
-			SimpleVertex::getBindingDescription(),
-			SimpleVertex::getAttributeDescriptions(),
-			{});
+			.vertex = {
+				.binding = SimpleVertex::getBindingDescription(),
+				.attributes = SimpleVertex::getAttributeDescriptions(),
+			},
+		});
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested
