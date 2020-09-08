@@ -89,4 +89,37 @@ namespace ivulk {
 				b->destroy();
 		}
 	};
+
+	struct PipelineUniformBufferBinding final
+	{
+		UniformBufferObject::Ref ubo;
+		uint32_t binding;
+
+		VkDescriptorSetLayoutBinding getDescriptorSetLayoutBinding()
+		{
+			VkDescriptorSetLayoutBinding result;
+			if (auto r = ubo.lock())
+			{
+				result = r->getDescriptorSetLayoutBinding(binding);
+			}
+			return result;
+		}
+
+		VkBuffer getBuffer() const
+		{
+			if (auto r = ubo.lock())
+			{
+				return r->getBuffer();
+			}
+			return VK_NULL_HANDLE;
+		}
+		VkDeviceSize getSize() const
+		{
+			if (auto r = ubo.lock())
+			{
+				return r->getSize();
+			}
+			return 0u;
+		}
+	};
 } // namespace ivulk

@@ -59,4 +59,5 @@ namespace ivulk {
 			vkDestroyDescriptorSetLayout(getDevice(), getDescriptorSetLayout(), nullptr);
 		}
 	};
+
 } // namespace ivulk

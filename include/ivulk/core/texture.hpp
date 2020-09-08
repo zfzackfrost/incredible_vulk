@@ -16,7 +16,7 @@ namespace ivulk {
 	{
 		Image::Ref image;
 		Sampler::Ref sampler;
-		uint32_t binding = 1u;
+		uint32_t binding;
 
 		VkDescriptorSetLayoutBinding getDescriptorSetLayoutBinding()
 		{

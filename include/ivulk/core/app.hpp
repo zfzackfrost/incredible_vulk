@@ -159,7 +159,7 @@ namespace ivulk {
 		createVkGraphicsPipeline(const std::vector<boost::filesystem::path>& shaderPaths,
 								 const VkVertexInputBindingDescription bindingDescr,
 								 const std::vector<VkVertexInputAttributeDescription>& attribDescrs,
-								 const std::vector<UniformBufferObject::Ref>& ubos,
+								 const std::vector<PipelineUniformBufferBinding>& ubos,
 								 const std::vector<PipelineTextureBinding>& textures = {});
 
 	private:

@@ -161,7 +161,12 @@ protected:
 			},
 			SimpleVertex::getBindingDescription(),
 			SimpleVertex::getAttributeDescriptions(),
-			{ubo},
+			{
+				{
+					.ubo     = ubo,
+					.binding = 0u,
+				},
+			},
 			{
 				{
 					.image   = crateBaseColorTex,
