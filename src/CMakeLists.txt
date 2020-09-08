@@ -14,6 +14,7 @@ list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/graphics_pipelin
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/image.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/sampler.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/vma.cpp")
+list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/utils/format.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/utils/messages.cpp")
 
 

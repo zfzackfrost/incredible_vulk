@@ -1,5 +1,7 @@
 #include <ivulk/core/app.hpp>
+
 #include <ivulk/utils/messages.hpp>
+#include <ivulk/utils/format.hpp>
 
 #include <SDL2/SDL_vulkan.h>
 
@@ -203,12 +205,12 @@ namespace ivulk {
 			auto& extent = swapChain.extent;
 			for (std::size_t i = 0; i < swapChain.imageViews.size(); ++i)
 			{
-				VkImageView attachments[] = {swapChain.imageViews[i]};
+				std::vector<VkImageView> attachments = {swapChain.imageViews[i], swapChain.depthImage->getImageView()};
 				VkFramebufferCreateInfo createInfo {
 					.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 					.renderPass = pipeline->getRenderPass(),
-					.attachmentCount = 1,
-					.pAttachments = attachments,
+					.attachmentCount = static_cast<uint32_t>(attachments.size()),
+					.pAttachments = attachments.data(),
 					.width = extent.width,
 					.height = extent.height,
 					.layers = 1,
@@ -236,6 +238,9 @@ namespace ivulk {
 	void App::cleanupVkSwapChain()
 	{
 		cleanup(true);
+		if (state.vk.swapChain.depthImage)
+			state.vk.swapChain.depthImage->destroy();
+
 		for (auto framebuffer : state.vk.swapChain.framebuffers)
 		{
 			vkDestroyFramebuffer(state.vk.device, framebuffer, nullptr);
@@ -255,11 +260,28 @@ namespace ivulk {
 
 		createVkSwapChain();
 		createVkImageViews();
+		createDepthResources();
 		createVkDescriptorPool();
 		// Run subclass initialization before creating framebuffers
 		initialize(true);
 
 		createVkFramebuffers();
+	}
+
+	void App::createDepthResources()
+	{
+		auto depthFormat = utils::findDepthFormat();
+		state.vk.swapChain.depthImage = Image::create(state.vk.device, {
+			.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			.memoryMode = E_MemoryMode::GpuOnly,
+			.format = depthFormat,
+			.extent = {
+				.width = state.vk.swapChain.extent.width,
+				.height = state.vk.swapChain.extent.height,
+				.depth = 1,
+			},
+			.aspect = VK_IMAGE_ASPECT_DEPTH_BIT,
+		});
 	}
 
 

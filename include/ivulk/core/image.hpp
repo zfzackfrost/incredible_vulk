@@ -32,6 +32,7 @@ namespace ivulk {
 		VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 		VkExtent3D extent{};
 		VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 	};
 
 	class Image : public VulkanResource<Image, ImageInfo, VkImage, VmaAllocation, VkImageView>
@@ -40,9 +41,11 @@ namespace ivulk {
 		VkImage getImage() { return getHandleAt<0>(); }
 		VmaAllocation getAllocation() { return getHandleAt<1>(); }
 		VkImageView getImageView() { return getHandleAt<2>(); }
+		VkFormat getFormat() { return m_format; }
 
 	private:
 		friend base_t;
+		VkFormat m_format;
 
 		Image(VkDevice device, VkImage image, VmaAllocation allocation, VkImageView view);
 

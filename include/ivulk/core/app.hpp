@@ -202,6 +202,7 @@ namespace ivulk {
 		void cleanupVkSwapChain();
 		void recreateVkSwapChain();
 		void createVkFramebuffers();
+		void createDepthResources();
 
 		void createVkImageViews();
 

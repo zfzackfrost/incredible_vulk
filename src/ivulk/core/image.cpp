@@ -3,6 +3,7 @@
 #include <ivulk/core/app.hpp>
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/utils/commands.hpp>
+#include <ivulk/utils/format.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -28,7 +29,6 @@ namespace ivulk {
 			.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
 			.image = image,
 			.subresourceRange = {
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
 				.baseMipLevel = 0,
 				.levelCount = 1,
 				.baseArrayLayer = 0,
@@ -38,6 +38,20 @@ namespace ivulk {
 
 		VkPipelineStageFlags sourceStage;
 		VkPipelineStageFlags destinationStage;
+
+		if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+			if (utils::hasStencilComponent(format))
+			{
+				barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+			}
+		}
+		else
+		{
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		}
 
 		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 		{
@@ -56,9 +70,19 @@ namespace ivulk {
 			sourceStage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		}
+		else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED
+				 && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT
+									| VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			sourceStage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+		}
 		else
 		{
-			throw std::invalid_argument("unsupported layout transition!");
+			throw std::invalid_argument(utils::makeErrorMessage("VK::IMAGE", "Unsupported layout transition"));
 		}
 
 		// clang-format off
@@ -150,8 +174,7 @@ namespace ivulk {
 				image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 			utils::copyBufferToImage(
 				stagingBuffer->getBuffer(), image, static_cast<uint32_t>(texW), static_cast<uint32_t>(texH));
-			transitionImageLayout(
-				image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, createInfo.layout);
+			transitionImageLayout(image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, createInfo.layout);
 		}
 		else
 		{
@@ -164,7 +187,7 @@ namespace ivulk {
 			.viewType = VK_IMAGE_VIEW_TYPE_2D,
 			.format = format,
 			.subresourceRange = {
-				.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+				.aspectMask = createInfo.aspect,
 				.baseMipLevel = 0,
 				.levelCount = 1,
 				.baseArrayLayer = 0,
@@ -177,7 +200,11 @@ namespace ivulk {
 				utils::makeErrorMessage("VK::CREATE", "Failed to make Vulkan image view"));
 		}
 
-		return new Image(device, image, alloc, view);
+
+		// Create/return new `Image*`
+		auto ret = new Image(device, image, alloc, view);
+		ret->m_format = format;
+		return ret;
 	}
 
 	void Image::destroyImpl()

@@ -110,6 +110,7 @@ namespace ivulk {
 		createVkSwapChain();
 		createVkImageViews();
 		createVkCommandPools();
+		createDepthResources();
 		createVkDescriptorPool();
 
 		// Run subclass initialization before creating framebuffers

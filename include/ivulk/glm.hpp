@@ -8,11 +8,13 @@
 #pragma once
 
 #define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/functions.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #define LAYOUT_SCALAR alignas(4)
 #define LAYOUT_FLOAT LAYOUT_SCALAR

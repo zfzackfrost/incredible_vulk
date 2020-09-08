@@ -87,6 +87,7 @@ namespace ivulk {
 				std::vector<VkFramebuffer> framebuffers;
 				VkFormat format;
 				VkExtent2D extent;
+				Image::Ptr depthImage;
 			} swapChain;
 
 			struct
