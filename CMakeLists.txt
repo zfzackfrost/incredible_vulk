@@ -11,6 +11,7 @@ set(IVULK_EXTERN_DIR "${PROJECT_SOURCE_DIR}/extern")
 
 include(GitSubmodules)
 
+set(BUILD_SHARED_LIBS ON CACHE BOOL "")
 ######################################################################
 #                        Build Configuration                         #
 ######################################################################
@@ -27,6 +28,7 @@ include(LoadGLM)
 include(LoadVulkanSDK)
 include(LoadVMA)
 include(LoadSTB)
+include(LoadAssimp)
 
 # CMake utilities
 include(ProcessContent)

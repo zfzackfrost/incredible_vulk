@@ -7,3 +7,6 @@
 [submodule "extern/VulkanMemoryAllocator"]
 	path = extern/VulkanMemoryAllocator
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git
+[submodule "extern/assimp"]
+	path = extern/assimp
+	url = https://github.com/assimp/assimp.git

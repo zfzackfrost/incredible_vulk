@@ -1,5 +1,5 @@
 ######################################################################
-#                   Vulkan Memory Allocator Target                   #
+#                         STB Library Target                         #
 ######################################################################
 
 add_library(stb INTERFACE IMPORTED)
