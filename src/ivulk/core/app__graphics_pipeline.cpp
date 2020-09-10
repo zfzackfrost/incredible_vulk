@@ -29,7 +29,7 @@ namespace ivulk {
 
 		VkDescriptorPoolSize poolSize {
 			.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			.descriptorCount = static_cast<uint32_t>(state.vk.swapChain.images.size()),
+			.descriptorCount = static_cast<uint32_t>(state.vk.swapChain.images.size() * 4),
 		};
 		poolSizes[0]  = poolSize;
 		poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -37,7 +37,7 @@ namespace ivulk {
 
 		VkDescriptorPoolCreateInfo poolInfo {
 			.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-			.maxSets       = static_cast<uint32_t>(state.vk.swapChain.images.size()),
+			.maxSets       = static_cast<uint32_t>(state.vk.swapChain.images.size() * 4),
 			.poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
 			.pPoolSizes    = poolSizes.data(),
 		};

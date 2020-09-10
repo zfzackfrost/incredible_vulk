@@ -1,3 +1,7 @@
+find_package (Python3 REQUIRED COMPONENTS Interpreter)
+
+set(IVULK_TEMPLATE_TOOL_SCRIPT "${IncredibleVulk_SOURCE_DIR}/tools/templatetool.py")
+
 set(IVULK_SHADER_SOURCE_EXTENSIONS "")
 list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".frag")
 list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".vert")
@@ -32,6 +36,7 @@ endmacro()
 macro(ProcessShaderResource)
     set(TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/${AssetSubdir}/${OUT})
     get_filename_component(INPUT_DIR ${CUR_RESOURCE} DIRECTORY)
+    set(TEMP_OUT "${PROJECT_BINARY_DIR}/${AssetSubdir}/${OUT}/tmp/${FNAME}")
     set(OUT "${PROJECT_BINARY_DIR}/${AssetSubdir}/${OUT}/${FNAME}.spv")
     add_custom_command(
             COMMENT "Compiling shader file '${FNAME}'"
@@ -39,7 +44,11 @@ macro(ProcessShaderResource)
             DEPENDS ${CUR_RESOURCE}
             COMMAND ${CMAKE_COMMAND} -E make_directory
                 ${TMP_DIR}
-            COMMAND ${GLSLC_EXECUTABLE} "${CUR_RESOURCE}" -o "${OUT}" -I "${IVULK_SHADERLIB_DIR}" -I "${INPUT_DIR}"
+            COMMAND
+                ${Python3_EXECUTABLE} ${IVULK_TEMPLATE_TOOL_SCRIPT} -o "${TEMP_OUT}" -I "${IVULK_SHADERLIB_DIR}" -I "${INPUT_DIR}" "${CUR_RESOURCE}"
+            COMMAND
+                ${GLSLC_EXECUTABLE} -o "${OUT}" "${TEMP_OUT}" 
+            WORKING_DIRECTORY ${IncredibleVulk_SOURCE_DIR}
     )
 
     list(APPEND TMP_RESOURCE_LIST ${CUR_RESOURCE} ${OUT})

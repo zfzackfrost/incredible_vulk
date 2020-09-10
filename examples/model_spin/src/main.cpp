@@ -19,17 +19,31 @@
 
 using namespace ivulk;
 
-struct UboMatrices
+struct MatricesUBOData
 {
 	LAYOUT_MAT4 glm::mat4 model = glm::mat4(1.0f);
 	LAYOUT_MAT4 glm::mat4 view  = glm::mat4(1.0f);
 	LAYOUT_MAT4 glm::mat4 proj  = glm::mat4(1.0f);
 };
-struct UboData
-{
-	LAYOUT_STRUCT UboMatrices matrices;
-};
 
+struct LAYOUT_STRUCT PointLight
+{
+	LAYOUT_VEC3 glm::vec3 position;
+	LAYOUT_VEC3 glm::vec3 color;
+};
+struct LAYOUT_STRUCT DirectionLight
+{
+	LAYOUT_VEC3 glm::vec3 direction;
+	LAYOUT_VEC3 glm::vec3 color;
+};
+struct LightingUBOData
+{
+	PointLight pointLights[4];
+	LAYOUT_INT int32_t pointLightCount = 0;
+	DirectionLight dirLights[4];
+	LAYOUT_INT int32_t dirLightCount = 0;
+	LAYOUT_VEC3 glm::vec3 viewPos;
+};
 
 class ModelSpinApp : public App
 {
@@ -59,7 +73,8 @@ protected:
 												  },
 											  });
 		}
-		ubo = UniformBufferObject::create(state.vk.device, {.size = sizeof(UboData)});
+		uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBOData)});
+		uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
 
 		pipeline = GraphicsPipeline::create(state.vk.device, {
 			.vertex = StaticMeshVertex::getPipelineInfo(),
@@ -70,14 +85,11 @@ protected:
 			.descriptor = {
 				.uboBindings = {
 					{
-						.ubo     = ubo,
+						.ubo     = uboMatrices,
 						.binding = 0u,
 					},
-				},
-				.textureBindings = {
 					{
-						.image = crateBaseColorTex,
-						.sampler = sampler,
+						.ubo     = uboLighting,
 						.binding = 1u,
 					},
 				},
@@ -101,7 +113,8 @@ protected:
 			return;
 
 		model.reset();
-		ubo.reset();
+		uboMatrices.reset();
+		uboLighting.reset();
 		crateBaseColorTex.reset();
 		sampler.reset();
 	}
@@ -133,16 +146,36 @@ protected:
 		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
 					   / static_cast<float>(state.vk.swapChain.extent.height);
 
-		uboData.matrices.model = glm::rotate(glm::mat4(uboData.matrices.model),
+		matrices.model = glm::rotate(glm::mat4(matrices.model),
 											 deltaSeconds * glm::radians(180.0f),
 											 glm::vec3(0.0f, 0.0f, 1.0f));
 
-		uboData.matrices.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
+		matrices.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
 
-		uboData.matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
-		uboData.matrices.proj[1][1] *= -1.0f;
+		matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
+		matrices.proj[1][1] *= -1.0f;
 
-		ubo->setUniforms(uboData);
+		uboMatrices->setUniforms(matrices);
+
+		// ================== Lights =================== //
+
+		glm::vec3 lightOrigin;
+		{
+			constexpr float radius = 3.5f;
+			constexpr float lightCirclePeriod = 2.0f;
+			float theta = (elapsedTime / lightCirclePeriod) * glm::two_pi<float>();
+			lightOrigin.x = glm::cos(theta) * radius;
+			lightOrigin.y = glm::sin(theta) * radius;
+			lightOrigin.z = 2.45f;
+		}
+		lighting.dirLights[0].color = glm::vec3(1);
+		lighting.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, 1));
+		lighting.dirLightCount = 1;
+		lighting.viewPos = glm::vec3(2.0f, 2.0f, 2.0f);
+
+		uboLighting->setUniforms(lighting);
+
+		
 	}
 
 	virtual InitArgs getInitArgs() const override
@@ -188,8 +221,11 @@ protected:
 	Image::Ptr crateBaseColorTex;
 	Sampler::Ptr sampler;
 
-	UniformBufferObject::Ptr ubo;
-	UboData uboData;
+	UniformBufferObject::Ptr uboMatrices;
+	MatricesUBOData matrices;
+	
+	UniformBufferObject::Ptr uboLighting;
+	LightingUBOData lighting;
 
 	glm::vec4 clearColor;
 	glm::vec4 clearColorA;
@@ -197,6 +233,7 @@ protected:
 
 	float elapsedTime;
 	float timeSinceStatus;
+
 };
 
 int main(int argc, char* argv[])

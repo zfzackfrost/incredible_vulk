@@ -8,6 +8,8 @@ layout(location = 0) out vec4 fColor;
 
 layout(binding = 1) uniform sampler2D tex;
 
+{% include "texture_3d.common.glsl" %}
+
 void main() {
     vec4 s = texture(tex, texCoords);
     fColor = vec4(s.rgb * tint, s.a);

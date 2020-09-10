@@ -8,8 +8,8 @@ layout (location = 2) in vec3 vColor;
 layout(location = 0) out vec2 texCoords;
 layout(location = 1) out vec3 vertexColor;
 
-#include "cube.common.glsl"
-#include "lib/math.glsl"
+{% include "cube.common.glsl" %}
+{% include "lib/math.glsl" %}
 
 void main() {
     gl_Position = ubo.matrices.proj * ubo.matrices.view * ubo.matrices.model * vPosition;

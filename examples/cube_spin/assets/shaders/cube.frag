@@ -8,6 +8,9 @@ layout(location = 1) in vec3 vertexColor;
 
 layout (binding = 1) uniform sampler2D tex;
 
+
+{% include "cube.common.glsl" %}
+
 void main() {
     vec3 base = texture(tex, texCoords).rgb;
     fColor = vec4(vertexColor * base, 1.0);
