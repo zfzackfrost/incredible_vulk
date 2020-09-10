@@ -29,6 +29,7 @@ struct MatricesUBOData
 struct LAYOUT_STRUCT PointLight
 {
 	LAYOUT_VEC3 glm::vec3 position;
+	LAYOUT_FLOAT float radius;
 	LAYOUT_VEC3 glm::vec3 color;
 };
 struct LAYOUT_STRUCT DirectionLight
@@ -45,17 +46,15 @@ struct LightingUBOData
 	LAYOUT_VEC3 glm::vec3 viewPos;
 };
 
-class ModelSpinApp : public App
+class ModelLitApp : public App
 {
 public:
-	ModelSpinApp(int argc, char* argv[])
+	ModelLitApp(int argc, char* argv[])
 		: App(argc, argv)
 	{
 		elapsedTime     = 0.0f;
 		timeSinceStatus = std::numeric_limits<float>::max();
-		clearColorA     = {1, 0.65, 0, 1};
-		clearColorB     = {0, 0.355, 1, 1};
-		clearColor      = clearColorA;
+		clearColor      = glm::vec4(0, 0, 0, 1);
 	}
 
 protected:
@@ -101,7 +100,7 @@ protected:
 		if (swapchainOnly)
 			return;
 
-		model = StaticModel::load("models/crate.fbx");
+		model = StaticModel::load("models/crate.dae");
 	}
 
 	virtual void cleanup(bool swapchainOnly) override
@@ -146,9 +145,8 @@ protected:
 		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
 					   / static_cast<float>(state.vk.swapChain.extent.height);
 
-		matrices.model = glm::rotate(glm::mat4(matrices.model),
-											 deltaSeconds * glm::radians(180.0f),
-											 glm::vec3(0.0f, 0.0f, 1.0f));
+		matrices.model = glm::rotate(matrices.model, deltaSeconds * glm::radians(60.0f), glm::vec3(0, 0, 1));
+
 
 		matrices.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
 
@@ -159,18 +157,15 @@ protected:
 
 		// ================== Lights =================== //
 
-		glm::vec3 lightOrigin;
-		{
-			constexpr float radius = 3.5f;
-			constexpr float lightCirclePeriod = 2.0f;
-			float theta = (elapsedTime / lightCirclePeriod) * glm::two_pi<float>();
-			lightOrigin.x = glm::cos(theta) * radius;
-			lightOrigin.y = glm::sin(theta) * radius;
-			lightOrigin.z = 2.45f;
-		}
-		lighting.dirLights[0].color = glm::vec3(1);
-		lighting.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, 1));
+		lighting.dirLights[0].color = glm::vec3(0.6);
+		lighting.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, -1));
 		lighting.dirLightCount = 1;
+
+		lighting.pointLights[0].color = glm::vec3(0.2);
+		lighting.pointLights[0].position = glm::vec3(8, 5, 2.5);
+		lighting.pointLights[0].radius = 10.5f; 
+		lighting.pointLightCount = 0;
+
 		lighting.viewPos = glm::vec3(2.0f, 2.0f, 2.0f);
 
 		uboLighting->setUniforms(lighting);
@@ -181,7 +176,7 @@ protected:
 	virtual InitArgs getInitArgs() const override
 	{
 		return {
-			.appName = "Spinning Rectangle Demo",
+			.appName = "Lit Sphere Demo",
 			.bDebugPrint = true,
 			.window = {
 				.width = 800,
@@ -228,8 +223,6 @@ protected:
 	LightingUBOData lighting;
 
 	glm::vec4 clearColor;
-	glm::vec4 clearColorA;
-	glm::vec4 clearColorB;
 
 	float elapsedTime;
 	float timeSinceStatus;
@@ -240,7 +233,7 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		ModelSpinApp {argc, argv}.run();
+		ModelLitApp {argc, argv}.run();
 	}
 	catch (std::exception& e)
 	{

@@ -2,7 +2,7 @@
 #                              Project                               #
 ######################################################################
 
-project(ex_model_spin)
+project(ex_model_lit)
 
 ######################################################################
 #                              Sources                               #
@@ -15,15 +15,15 @@ list(APPEND IVULK_SOURCES "${PROJECT_SOURCE_DIR}/src/main.cpp")
 #                         Executable Target                          #
 ######################################################################
 
-add_executable(ex_model_spin ${IVULK_SOURCES})
+add_executable(ex_model_lit ${IVULK_SOURCES})
 
 # ============== Configure Target ============== #
 
-target_compile_features(ex_model_spin PUBLIC cxx_std_17)
-set_target_properties(ex_model_spin PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(ex_model_lit PUBLIC cxx_std_17)
+set_target_properties(ex_model_lit PROPERTIES CXX_EXTENSIONS OFF)
 
 # ================ Dependencies ================ #
 
-target_link_libraries(ex_model_spin PUBLIC ivulk)
+target_link_libraries(ex_model_lit PUBLIC ivulk)
 
-ConfigureContent(ex_model_spin _assets assets)
+ConfigureContent(ex_model_lit _assets assets)

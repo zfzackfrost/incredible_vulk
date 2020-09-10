@@ -63,13 +63,25 @@ vec3 getAmbientAmount()
     for (int i = 0; i < lighting.pointLightCount; ++i)
     {
         PointLight light = lighting.pointLights[i];
-        vec3 L = normalize(light.position - fsIn.position);
+        float r = light.radius;
+        vec3 L = light.position - fsIn.position;
+        float dist = length(L);
+        L /= dist;
         vec3 H = normalize(V + L);
 
-        float diff = max(dot(N, L), 0.0);
+        const float cutoff = 0.001;
+
+        // calculate basic attenuation
+        float attenuation = 1.0f / pow((dist / r) + 1, 2);
+
+        // scale and bias attenuation such that:
+        //   attenuation == 0 at extent of max influence
+        //   attenuation == 1 when d == 0
+
+        float diff = max(dot(N, L), 0.0) * attenuation;
         diffuse += diff * light.color;
 
-        float spec = pow(max(dot(N, H), 0.0), shininess);
+        float spec = pow(max(dot(N, H), 0.0), shininess) * attenuation;
         specular += spec * light.color;
     }
     for (int i = 0; i < lighting.dirLightCount; ++i)

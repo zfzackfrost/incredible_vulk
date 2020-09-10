@@ -35,6 +35,8 @@ include(ProcessContent)
 
 # =================== SDL2 ==================== #
 
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC_PIC ON CACHE BOOL "")
 add_subdirectory(extern/SDL2)
 
