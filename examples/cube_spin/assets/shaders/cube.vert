@@ -11,7 +11,8 @@ layout(location = 1) out vec3 vertexColor;
 {% include "cube.common.glsl" %}
 {% include "lib/math.glsl" %}
 
-void main() {
+void main() 
+{
     gl_Position = ubo.matrices.proj * ubo.matrices.view * ubo.matrices.model * vPosition;
     vertexColor = saturate(vColor * ubo.tint);
     texCoords = vTexCoords;

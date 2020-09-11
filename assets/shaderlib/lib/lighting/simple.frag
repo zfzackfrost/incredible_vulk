@@ -1,46 +1,60 @@
 {% extends "lib/base.glsl" %}
+{% set fn = "_" ~ ("simple_lighting_fn" | genid()) %}
+
 
 {% import "lib/lighting/common.glsl" as lighting %}
 
-{% block preamble -%}
+{% block pre -%}
 
 {{ lighting.common(1, pointLightsPerPass|default(4), dirLightsPerPass|default(4)) }}
 
+{% endblock %}
+
+{% block io -%}
+layout (location = 0) out vec4 fColor;
 layout(location = 0) in VS_OUT {
     vec3 position;
-    vec3 normal;
     vec2 texCoords; 
+    mat3 TBN;
 } fsIn;
 
-layout (location = 0) out vec4 fColor;
+{%- endblock %}
 
-float getAlpha()
+{% block post %}
+
+float getAlpha{{fn}}()
 {
     {% block alpha -%}
     return 1;
     {%- endblock %}
 }
-float getShininess()
+float getShininess{{fn}}()
 {
     {% block shininess -%}
     return 8;
     {%- endblock %}
 }
 
-vec3 getDiffuseColor()
+vec3 getNormal{{fn}}()
+{
+    {% block matNormal -%}
+    return vec3(0.5, 0.5, 1);
+    {%- endblock %}
+}
+vec3 getDiffuseColor{{fn}}()
 {
     {% block matDiffuse -%}
     return vec3(0.5);
     {%- endblock %}
 }
 
-vec3 getSpecularColor()
+vec3 getSpecularColor{{fn}}()
 {
     {% block matSpecular -%}
     return vec3(1.0);
     {%- endblock %}
 }
-vec3 getAmbientAmount()
+vec3 getAmbientAmount{{fn}}()
 {
     {% block ambientAmount -%}
     return vec3(0.05);
@@ -53,30 +67,26 @@ vec3 getAmbientAmount()
 
 {% block main -%}
     
-    vec3 N = normalize(fsIn.normal);
+    vec3 N = getNormal{{fn}}() * 2.0 - 1.0;
+    N = normalize(fsIn.TBN * N);
     vec3 V = normalize(lighting.viewPos - fsIn.position);
-    float shininess = getShininess();
+    float shininess = getShininess{{fn}}();
 
     vec3 specular = vec3(0);
     vec3 diffuse = vec3(0);
-    vec3 ambient = getAmbientAmount();
-    for (int i = 0; i < lighting.pointLightCount; ++i)
+    vec3 ambient = getAmbientAmount{{fn}}();
+    for (int i = 0; i < pointLightCount(); ++i)
     {
         PointLight light = lighting.pointLights[i];
-        float r = light.radius;
-        vec3 L = light.position - fsIn.position;
-        float dist = length(L);
-        L /= dist;
+
+        // Light direction
+        vec3 L = normalize(light.position - fsIn.position);
+
+        // Halfway vector
         vec3 H = normalize(V + L);
 
-        const float cutoff = 0.001;
-
-        // calculate basic attenuation
-        float attenuation = 1.0f / pow((dist / r) + 1, 2);
-
-        // scale and bias attenuation such that:
-        //   attenuation == 0 at extent of max influence
-        //   attenuation == 1 when d == 0
+        // calculate attenuation
+        float attenuation = pointLightAttenuation(light, fsIn.position);
 
         float diff = max(dot(N, L), 0.0) * attenuation;
         diffuse += diff * light.color;
@@ -84,7 +94,7 @@ vec3 getAmbientAmount()
         float spec = pow(max(dot(N, H), 0.0), shininess) * attenuation;
         specular += spec * light.color;
     }
-    for (int i = 0; i < lighting.dirLightCount; ++i)
+    for (int i = 0; i < dirLightCount(); ++i)
     {
         DirectionLight light = lighting.dirLights[i];
         vec3 L = normalize(-light.direction);
@@ -97,6 +107,6 @@ vec3 getAmbientAmount()
         specular += spec * light.color;
     }
     
-    fColor.rgb = ((ambient + diffuse) * getDiffuseColor()) + (specular * getSpecularColor());
-    fColor.a = getAlpha();
+    fColor.rgb = ((ambient + diffuse) * getDiffuseColor{{fn}}()) + (specular * getSpecularColor{{fn}}());
+    fColor.a = getAlpha{{fn}}();
 {%- endblock %}

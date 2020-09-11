@@ -1,5 +1,5 @@
-#ifndef IVULK_LIB_MATH
-#define IVULK_LIB_MATH
+{% import "lib/library.glsl" as lib %}
+{% call lib.new('lib_math') %}
 
 /////////////////////////////////////////////////////////////////////////////////
 //                                  Saturate                                   //
@@ -27,4 +27,4 @@ float fresnel(vec3 cameraToFrag, vec3 normalWorld, float bias, float scale, floa
     return bias + scale * pow(1.0 + dot(cameraToFrag, normalWorld), power);
 }
 
-#endif
+{% endcall %}

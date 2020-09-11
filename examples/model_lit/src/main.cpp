@@ -26,23 +26,28 @@ struct MatricesUBOData
 	LAYOUT_MAT4 glm::mat4 proj  = glm::mat4(1.0f);
 };
 
-struct LAYOUT_STRUCT PointLight
+struct PointLight
 {
-	LAYOUT_VEC3 glm::vec3 position;
-	LAYOUT_FLOAT float radius;
-	LAYOUT_VEC3 glm::vec3 color;
+	LAYOUT_VEC3 glm::vec3 position = glm::vec3(0, 0, 0);
+	LAYOUT_VEC3 glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+	
+	LAYOUT_FLOAT float constant = 1.0f;
+	LAYOUT_FLOAT float linear = 0.22f;
+	LAYOUT_FLOAT float quadratic = 0.2f;
 };
-struct LAYOUT_STRUCT DirectionLight
+struct DirectionLight
 {
 	LAYOUT_VEC3 glm::vec3 direction;
 	LAYOUT_VEC3 glm::vec3 color;
 };
 struct LightingUBOData
 {
-	PointLight pointLights[4];
+	LAYOUT_STRUCT PointLight pointLights[4];
+	LAYOUT_STRUCT DirectionLight dirLights[4];
+
 	LAYOUT_INT int32_t pointLightCount = 0;
-	DirectionLight dirLights[4];
 	LAYOUT_INT int32_t dirLightCount = 0;
+
 	LAYOUT_VEC3 glm::vec3 viewPos;
 };
 
@@ -64,11 +69,27 @@ protected:
 		if (!swapchainOnly)
 		{
 			sampler           = Sampler::create(state.vk.device, {});
-			crateBaseColorTex = Image::create(state.vk.device,
+			woodDiffuseTex = Image::create(state.vk.device,
 											  {
 												  .load {
 													  .bEnable = true,
-													  .path    = "textures/Crate/Crate_basecolor.png",
+													  .path    = "textures/Wood/Wood_diffuse512.png",
+												  },
+											  });
+			woodSpecularTex = Image::create(state.vk.device,
+											  {
+												  .load {
+													  .bEnable = true,
+													  .path    = "textures/Wood/Wood_specular256.png",
+													  .bSrgb = false,
+												  },
+											  });
+			woodNormalTex = Image::create(state.vk.device,
+											  {
+												  .load {
+													  .bEnable = true,
+													  .path    = "textures/Wood/Wood_normal512.png",
+													  .bSrgb = false,
 												  },
 											  });
 		}
@@ -78,8 +99,8 @@ protected:
 		pipeline = GraphicsPipeline::create(state.vk.device, {
 			.vertex = StaticMeshVertex::getPipelineInfo(),
 			.shaderPath = {
-				.vert = "shaders/crate.vert.spv",
-				.frag = "shaders/crate.frag.spv",
+				.vert = "shaders/sphere.vert.spv",
+				.frag = "shaders/sphere.frag.spv",
 			},
 			.descriptor = {
 				.uboBindings = {
@@ -92,6 +113,23 @@ protected:
 						.binding = 1u,
 					},
 				},
+				.textureBindings = {
+					{
+						.image = woodDiffuseTex,
+						.sampler = sampler,
+						.binding = 4u,
+					},
+					{
+						.image = woodSpecularTex,
+						.sampler = sampler,
+						.binding = 5u,
+					},
+					{
+						.image = woodNormalTex,
+						.sampler = sampler,
+						.binding = 6u,
+					},
+				}
 			},
 		});
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
@@ -100,7 +138,7 @@ protected:
 		if (swapchainOnly)
 			return;
 
-		model = StaticModel::load("models/crate.dae");
+		model = StaticModel::load("models/unitsphere.fbx");
 	}
 
 	virtual void cleanup(bool swapchainOnly) override
@@ -114,7 +152,9 @@ protected:
 		model.reset();
 		uboMatrices.reset();
 		uboLighting.reset();
-		crateBaseColorTex.reset();
+		woodDiffuseTex.reset();
+		woodNormalTex.reset();
+		woodSpecularTex.reset();
 		sampler.reset();
 	}
 
@@ -163,7 +203,6 @@ protected:
 
 		lighting.pointLights[0].color = glm::vec3(0.2);
 		lighting.pointLights[0].position = glm::vec3(8, 5, 2.5);
-		lighting.pointLights[0].radius = 10.5f; 
 		lighting.pointLightCount = 0;
 
 		lighting.viewPos = glm::vec3(2.0f, 2.0f, 2.0f);
@@ -213,7 +252,9 @@ protected:
 	GraphicsPipeline::Ptr pipeline;
 	StaticModel::Ptr model;
 
-	Image::Ptr crateBaseColorTex;
+	Image::Ptr woodDiffuseTex;
+	Image::Ptr woodSpecularTex;
+	Image::Ptr woodNormalTex;
 	Sampler::Ptr sampler;
 
 	UniformBufferObject::Ptr uboMatrices;

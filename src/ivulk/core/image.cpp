@@ -167,7 +167,7 @@ namespace ivulk {
 
 			stbi_image_free(pixels);
 
-			format = (createInfo.load.bSrgb) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UINT;
+			format = (createInfo.load.bSrgb) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
 			makeImage(image, alloc, createInfo, extent, format);
 
 			transitionImageLayout(

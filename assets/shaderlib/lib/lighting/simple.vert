@@ -3,15 +3,17 @@
 {% import "lib/mesh.glsl" as mesh %}
 {% import "lib/matrices.glsl" as matrices %}
 
-{% block preamble -%}
+{% block uniforms -%}
 {{ matrices.declareUBO(0) }}
+{%- endblock %}
 
+{% block io -%}
 {{ mesh.staticMeshAttribs() }}
 
 layout(location = 0) out VS_OUT {
     vec3 position;
-    vec3 normal;
-    vec2 texCoords; 
+    vec2 texCoords;
+    mat3 TBN;
 } vsOut;
 {%- endblock %}
 
@@ -20,5 +22,15 @@ layout(location = 0) out VS_OUT {
     gl_Position = matrices.proj * matrices.view * pos;
     vsOut.position = pos.xyz;
     vsOut.texCoords = vTexCoords;
-    vsOut.normal = mat3(transpose(inverse(matrices.model))) * vNormal;
+
+    // ====== Tangent-Bitangent-Normal Matrix ====== //
+    
+    vec3 T = normalize(vec3(matrices.model * vec4(vTangent, 0.0)));
+    vec3 N = normalize(vec3(matrices.model * vec4(vNormal, 0.0)));
+    // re-orthogonalize T with respect to N
+    T = normalize(T - dot(T, N) * N);
+    // then retrieve perpendicular vector B with the cross product of T and N
+    vec3 B = cross(N, T);
+    vsOut.TBN = mat3(T, B, N);
+
 {%- endblock %}

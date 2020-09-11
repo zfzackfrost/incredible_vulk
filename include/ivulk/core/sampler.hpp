@@ -42,7 +42,7 @@ namespace ivulk {
 		struct
 		{
 			VkBool32 bEnable = VK_TRUE;
-			float level      = 8.0f;
+			float level      = 16.0f;
 		} anisotropy;
 
 		struct

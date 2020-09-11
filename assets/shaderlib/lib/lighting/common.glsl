@@ -1,12 +1,18 @@
+{% import "lib/library.glsl" as lib %}
+
 {% macro common(uboIndex, pointLightsPerPass=4, dirLightsPerPass=4) -%}
+{% call lib.new('lib_lighting_common') %}
 #define POINT_LIGHTS_PER_PASS {{ pointLightsPerPass }}
 #define DIR_LIGHTS_PER_PASS   {{ dirLightsPerPass }}
 
 struct PointLight
 {
     vec3 position;
-    float radius;
     vec3 color;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 
 struct DirectionLight
@@ -17,9 +23,30 @@ struct DirectionLight
 
 layout (binding = {{ uboIndex }}) uniform LightingUBO {
     PointLight     pointLights[{{pointLightsPerPass}}];
-    int pointLightCount;
     DirectionLight dirLights[{{dirLightsPerPass}}];
+
+    int pointLightCount;
     int dirLightCount;
+
     vec3 viewPos;
 } lighting;
+
+int pointLightCount()
+{
+    return min(lighting.pointLightCount, POINT_LIGHTS_PER_PASS);
+}
+
+int dirLightCount()
+{
+    return min(lighting.dirLightCount, DIR_LIGHTS_PER_PASS);
+}
+
+float pointLightAttenuation(PointLight light, vec3 fragPos)
+{
+    float d = length(light.position - fragPos);
+    float attenuation = 1.0 / (light.constant + light.linear * d + 
+            light.quadratic * (d * d));
+    return attenuation;
+}
+{% endcall %}
 {%- endmacro %}
