@@ -48,6 +48,11 @@ namespace ivulk {
 
 	bool App::getPrintDbg() const { return m_initArgs.bDebugPrint; }
 
+	void App::quit()
+	{
+		state.evt.shouldQuit = true;
+	}
+
 	void App::mainLoop()
 	{
 		using namespace std::chrono;
@@ -66,8 +71,14 @@ namespace ivulk {
 					{
 						state.evt.shouldQuit = true;
 					}
+					else
+					{
+						EventManager::pushEvent(evt);
+					}
 				}
 			}
+
+			EventManager::processAllEvents();
 
 			// Render frame
 			drawFrame();
@@ -554,7 +565,7 @@ namespace ivulk {
 		auto deviceExtensions = getRequiredVkDeviceExtensions();
 
 		// ============= Collect features ============== //
-		
+
 		VkPhysicalDeviceFeatures supportedFeatures;
 		vkGetPhysicalDeviceFeatures(state.vk.physicalDevice, &supportedFeatures);
 
@@ -562,7 +573,6 @@ namespace ivulk {
 		deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
 
 		// =========== Create logical device =========== //
-		
 
 		VkDeviceCreateInfo createInfo {
 			.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,

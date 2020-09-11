@@ -10,6 +10,7 @@
 #include <ivulk/core/vertex.hpp>
 
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -29,10 +30,10 @@ struct MatricesUBOData
 struct PointLight
 {
 	LAYOUT_VEC3 glm::vec3 position = glm::vec3(0, 0, 0);
-	LAYOUT_VEC3 glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-	
-	LAYOUT_FLOAT float constant = 1.0f;
-	LAYOUT_FLOAT float linear = 0.22f;
+	LAYOUT_VEC3 glm::vec3 color    = glm::vec3(1.0f, 1.0f, 1.0f);
+
+	LAYOUT_FLOAT float constant  = 1.0f;
+	LAYOUT_FLOAT float linear    = 0.22f;
 	LAYOUT_FLOAT float quadratic = 0.2f;
 };
 struct DirectionLight
@@ -46,7 +47,7 @@ struct LightingUBOData
 	LAYOUT_STRUCT DirectionLight dirLights[4];
 
 	LAYOUT_INT int32_t pointLightCount = 0;
-	LAYOUT_INT int32_t dirLightCount = 0;
+	LAYOUT_INT int32_t dirLightCount   = 0;
 
 	LAYOUT_VEC3 glm::vec3 viewPos;
 };
@@ -63,35 +64,34 @@ public:
 	}
 
 protected:
-
 	virtual void initialize(bool swapchainOnly) override
 	{
 		if (!swapchainOnly)
 		{
-			sampler           = Sampler::create(state.vk.device, {});
-			woodDiffuseTex = Image::create(state.vk.device,
-											  {
-												  .load {
-													  .bEnable = true,
-													  .path    = "textures/Wood/Wood_diffuse512.png",
-												  },
-											  });
+			sampler = Sampler::create(state.vk.device, {});
+			woodDiffuseTex  = Image::create(state.vk.device,
+                                           {
+                                               .load = {
+                                                   .bEnable = true,
+                                                   .path    = "textures/Wood/Wood_diffuse512.png",
+                                               },
+                                           });
 			woodSpecularTex = Image::create(state.vk.device,
-											  {
-												  .load {
-													  .bEnable = true,
-													  .path    = "textures/Wood/Wood_specular256.png",
-													  .bSrgb = false,
-												  },
-											  });
-			woodNormalTex = Image::create(state.vk.device,
-											  {
-												  .load {
-													  .bEnable = true,
-													  .path    = "textures/Wood/Wood_normal512.png",
-													  .bSrgb = false,
-												  },
-											  });
+											{
+												.load = {
+													.bEnable = true,
+													.path    = "textures/Wood/Wood_specular256.png",
+													.bSrgb   = false,
+												},
+											});
+			woodNormalTex   = Image::create(state.vk.device,
+                                          {
+                                              .load = {
+                                                  .bEnable = true,
+                                                  .path    = "textures/Wood/Wood_normal512.png",
+                                                  .bSrgb   = false,
+                                              },
+                                          });
 		}
 		uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBOData)});
 		uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
@@ -139,6 +139,39 @@ protected:
 			return;
 
 		model = StaticModel::load("models/unitsphere.fbx");
+
+		EventManager::addCallback(E_EventType::KeyDown,
+								  std::bind(&ModelLitApp::escapeKeyQuit, this, std::placeholders::_1));
+		EventManager::addCallback(E_EventType::KeyDown,
+								  std::bind(&ModelLitApp::dirKeys, this, std::placeholders::_1));
+		EventManager::addCallback(E_EventType::KeyUp,
+								  std::bind(&ModelLitApp::dirKeys, this, std::placeholders::_1));
+	}
+
+	void escapeKeyQuit(Event evt)
+	{
+		auto e = evt.assumeKeyEvent();
+		if (e.bRepeat)
+			return;
+		if (e.keycode != E_KeyCode::KeyEsc)
+			return;
+		quit();
+	}
+	void dirKeys(Event evt)
+	{
+		auto e = evt.assumeKeyEvent();
+		if (e.bRepeat)
+			return;
+		auto mult = e.bIsDown ? 1.0f : -1.0f;
+
+		if (e.keycode == E_KeyCode::KeyDownArrow || e.keycode == E_KeyCode::KeyS)
+			dirKeysInput += glm::vec2(0, -1) * mult;
+		if (e.keycode == E_KeyCode::KeyUpArrow || e.keycode == E_KeyCode::KeyW)
+			dirKeysInput += glm::vec2(0, +1) * mult;
+		if (e.keycode == E_KeyCode::KeyLeftArrow || e.keycode == E_KeyCode::KeyA)
+			dirKeysInput += glm::vec2(-1, 0) * mult;
+		if (e.keycode == E_KeyCode::KeyRightArrow || e.keycode == E_KeyCode::KeyD)
+			dirKeysInput += glm::vec2(+1, 0) * mult;
 	}
 
 	virtual void cleanup(bool swapchainOnly) override
@@ -180,6 +213,14 @@ protected:
 			timeSinceStatus = 0.0f;
 		}
 
+		if (glm::dot(dirKeysInput, dirKeysInput) > 0.0001)
+		{
+			glm::vec3 fwd = glm::normalize(glm::vec3(0) - viewPos);
+			glm::vec3 rght = glm::vec3(1, 0, 0);
+			viewPos += fwd * (dirKeysInput.y * 10.0f * deltaSeconds);
+			viewPos += rght * (dirKeysInput.x * 10.0f * deltaSeconds);
+		}
+
 		// ================= Matrices ================== //
 
 		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
@@ -187,8 +228,7 @@ protected:
 
 		matrices.model = glm::rotate(matrices.model, deltaSeconds * glm::radians(60.0f), glm::vec3(0, 0, 1));
 
-
-		matrices.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0), glm::vec3(0, 0, 1));
+		matrices.view = glm::lookAt(viewPos, glm::vec3(0), glm::vec3(0, 0, 1));
 
 		matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
 		matrices.proj[1][1] *= -1.0f;
@@ -197,19 +237,17 @@ protected:
 
 		// ================== Lights =================== //
 
-		lighting.dirLights[0].color = glm::vec3(0.6);
+		lighting.dirLights[0].color     = glm::vec3(0.6);
 		lighting.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, -1));
-		lighting.dirLightCount = 1;
+		lighting.dirLightCount          = 1;
 
-		lighting.pointLights[0].color = glm::vec3(0.2);
+		lighting.pointLights[0].color    = glm::vec3(0.2);
 		lighting.pointLights[0].position = glm::vec3(8, 5, 2.5);
-		lighting.pointLightCount = 0;
+		lighting.pointLightCount         = 0;
 
-		lighting.viewPos = glm::vec3(2.0f, 2.0f, 2.0f);
+		lighting.viewPos = viewPos;
 
 		uboLighting->setUniforms(lighting);
-
-		
 	}
 
 	virtual InitArgs getInitArgs() const override
@@ -259,7 +297,7 @@ protected:
 
 	UniformBufferObject::Ptr uboMatrices;
 	MatricesUBOData matrices;
-	
+
 	UniformBufferObject::Ptr uboLighting;
 	LightingUBOData lighting;
 
@@ -268,6 +306,8 @@ protected:
 	float elapsedTime;
 	float timeSinceStatus;
 
+	glm::vec2 dirKeysInput;
+	glm::vec3 viewPos = {2, 2, 2};
 };
 
 int main(int argc, char* argv[])

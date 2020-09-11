@@ -14,6 +14,7 @@
 #include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/texture.hpp>
 #include <ivulk/core/vertex.hpp>
+#include <ivulk/core/event.hpp>
 #include <ivulk/utils/version_data.hpp>
 
 #include <boost/filesystem.hpp>
@@ -71,6 +72,11 @@ namespace ivulk {
          * Pure Virtual
          */
 		virtual boost::filesystem::path getAssetsDir() = 0;
+
+		/**
+		 * @brief Schedule the app to quit at the end of this frame
+		 */
+		void quit();
 
 	protected:
 		/**

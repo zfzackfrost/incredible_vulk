@@ -4,6 +4,7 @@
 
 set(IVULK_SOURCES "")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app.cpp")
+list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/event.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__drawing.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__graphics_pipeline.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/app__swap_chain.cpp")
@@ -20,6 +21,7 @@ list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/utils/fs.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/utils/messages.cpp")
 
 list(APPEND IVULK_SOURCES "${PROJECT_SOURCE_DIR}/include/ivulk/core/app.hpp")
+list(APPEND IVULK_SOURCES "${PROJECT_SOURCE_DIR}/include/ivulk/core/event.hpp")
 list(APPEND IVULK_SOURCES "${PROJECT_SOURCE_DIR}/include/ivulk/core/buffer.hpp")
 list(APPEND IVULK_SOURCES "${PROJECT_SOURCE_DIR}/include/ivulk/core/model/base.hpp")
 list(APPEND IVULK_SOURCES "${PROJECT_SOURCE_DIR}/include/ivulk/core/model/static_model.hpp")
