@@ -8,6 +8,7 @@
 #include <ivulk/core/texture.hpp>
 #include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/vertex.hpp>
+#include <ivulk/render/transform.hpp>
 
 #include <cstdlib>
 #include <functional>
@@ -61,6 +62,10 @@ public:
 		elapsedTime     = 0.0f;
 		timeSinceStatus = std::numeric_limits<float>::max();
 		clearColor      = glm::vec4(0, 0, 0, 1);
+		modelXform = {
+			.translate = {0, 0, 0},
+			.scale = {1, 1, 1}
+		};
 	}
 
 protected:
@@ -221,16 +226,24 @@ protected:
 			viewPos += rght * (dirKeysInput.x * 10.0f * deltaSeconds);
 		}
 
+		float rotRate = glm::sin((elapsedTime / glm::two_over_pi<float>()) * glm::two_pi<float>()) * 0.5 + 0.5;
+		rotRate = glm::radians(glm::mix(100.0f, 200.0f, rotRate));
+		glm::vec3 deltaEuler = glm::vec3(deltaSeconds * rotRate);
+		deltaEuler.x = 0.0f;
+		modelXform.rotation *= glm::quat(deltaEuler);
+		modelXform.translate.x = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
+
 		// ================= Matrices ================== //
 
 		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
 					   / static_cast<float>(state.vk.swapChain.extent.height);
 
-		matrices.model = glm::rotate(matrices.model, deltaSeconds * glm::radians(60.0f), glm::vec3(0, 0, 1));
+		matrices.model = modelXform.modelMatrix();
 
-		matrices.view = glm::lookAt(viewPos, glm::vec3(0), glm::vec3(0, 0, 1));
+		viewXform = viewXform.withLookAt(viewPos, {0, 0, 0});
+		matrices.view = viewXform.viewMatrix();
 
-		matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.1f, 10.0f);
+		matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.0001f, 1000.0f);
 		matrices.proj[1][1] *= -1.0f;
 
 		uboMatrices->setUniforms(matrices);
@@ -241,9 +254,9 @@ protected:
 		lighting.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, -1));
 		lighting.dirLightCount          = 1;
 
-		lighting.pointLights[0].color    = glm::vec3(0.2);
-		lighting.pointLights[0].position = glm::vec3(8, 5, 2.5);
-		lighting.pointLightCount         = 0;
+		lighting.pointLights[0].color    = glm::vec3(0.5);
+		lighting.pointLights[0].position = glm::vec3(0, 2, 0.1);
+		lighting.pointLightCount         = 1;
 
 		lighting.viewPos = viewPos;
 
@@ -286,6 +299,9 @@ protected:
 		auto execDir = execPath.parent_path();
 		return execDir / "assets";
 	}
+
+	Transform modelXform;
+	Transform viewXform;
 
 	GraphicsPipeline::Ptr pipeline;
 	StaticModel::Ptr model;

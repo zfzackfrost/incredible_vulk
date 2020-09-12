@@ -15,6 +15,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/functions.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/ext/quaternion_common.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 #define LAYOUT_SCALAR alignas(4)
 #define LAYOUT_FLOAT LAYOUT_SCALAR
