@@ -13,13 +13,13 @@ namespace ivulk {
     //                               Mesh                                //
     ///////////////////////////////////////////////////////////////////////
 
-    StaticMesh::StaticMesh(Buffer::Ptr vBuf, Buffer::Ptr iBuf)
+    StaticMesh::StaticMesh(Buffer::Ptr vBuf, Buffer::Ptr iBuf, uint32_t pipelineIndex)
         : m_vertexBuffer(vBuf)
         , m_indexBuffer(iBuf)
+        , m_pipelineIndex(pipelineIndex)
     { }
 
-    StaticMesh::Ptr StaticMesh::create(const std::vector<vertex_t>& vertices,
-                                       const std::vector<uint32_t>& indices)
+    StaticMesh::Ptr StaticMesh::create(const std::vector<vertex_t>& vertices, const std::vector<uint32_t>& indices, uint32_t pipelineIndex)
     {
         auto state = App::current()->getState().vk;
         Buffer::Ptr vBuf, iBuf;
@@ -68,7 +68,12 @@ namespace ivulk {
 
         // ############### Create/Return Ptr ################ //
 
-        return Ptr(new StaticMesh(vBuf, iBuf));
+        return Ptr(new StaticMesh(vBuf, iBuf, pipelineIndex));
+    }
+
+    uint32_t StaticMesh::getPipelineIndex() const
+    {
+        return m_pipelineIndex;
     }
 
     ///////////////////////////////////////////////////////////////////////
@@ -144,6 +149,8 @@ namespace ivulk {
                 indices.push_back(face.mIndices[j]);
         }
 
-        return StaticMesh::create(vertices, indices);
+        uint32_t pipelineIndex = mesh->mMaterialIndex;
+
+        return StaticMesh::create(vertices, indices, pipelineIndex);
     }
 } // namespace ivulk

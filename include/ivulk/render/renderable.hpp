@@ -9,6 +9,7 @@
 
 #include <ivulk/glm.hpp>
 #include <ivulk/render/priorities.hpp>
+#include <ivulk/core/graphics_pipeline.hpp>
 #include <memory>
 
 namespace ivulk {
@@ -25,7 +26,7 @@ namespace ivulk {
 		 * 
 		 * @param cmdBufs The set of command buffers to render to.
 		 */
-        virtual void render(std::weak_ptr<CommandBuffers> cmdBufs, glm::mat4 modelMatrix = glm::mat4(1)) = 0;
+        virtual void render(std::weak_ptr<CommandBuffers> cmdBufs, glm::mat4 modelMatrix = glm::mat4(1), const std::vector<std::weak_ptr<GraphicsPipeline>>& pipelines = {}) = 0;
 
         /**
 		 * @brief Get the priority for rendering this object.

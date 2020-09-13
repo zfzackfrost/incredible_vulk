@@ -34,19 +34,22 @@ namespace ivulk {
 
         StaticMesh() = delete;
 
-        static Ptr create(const std::vector<vertex_t>& vertices, const std::vector<uint32_t>& indices);
+        static Ptr create(const std::vector<vertex_t>& vertices, const std::vector<uint32_t>& indices, uint32_t pipelineIndex);
+
+        uint32_t getPipelineIndex() const;
 
         Buffer::Ref getIndexBuffer() const { return m_indexBuffer; }
         Buffer::Ref getVertexBuffer() const { return m_vertexBuffer; }
 
     private:
-        StaticMesh(Buffer::Ptr vBuf, Buffer::Ptr iBuf);
+        StaticMesh(Buffer::Ptr vBuf, Buffer::Ptr iBuf, uint32_t pipelineIndex);
 
         Buffer::Ptr m_vertexBuffer;
         Buffer::Ptr m_indexBuffer;
+        uint32_t m_pipelineIndex;
     };
 
-    class StaticModel : public ModelBase<StaticModel, StaticMesh>
+    class StaticModel final : public ModelBase<StaticModel, StaticMesh>
     {
     public:
     private:

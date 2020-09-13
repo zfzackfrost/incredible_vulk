@@ -34,14 +34,29 @@ namespace ivulk {
         using model_base_t = ModelBase<Derived, Mesh>;
 
         virtual void render(std::weak_ptr<CommandBuffers> cmdBufs,
-                            glm::mat4 modelMatrix = glm::mat4(1)) override
+                            glm::mat4 modelMatrix = glm::mat4(1),
+                            const std::vector<GraphicsPipeline::Ref>& pipelines = {}) override
         {
 
             using namespace tag;
+            MatricesPushConstants matrices {
+                .model = modelMatrix
+            };
+
             if (auto c = cmdBufs.lock())
             {
                 for (const auto& m : meshes)
                 {
+                    uint32_t pipelineIndex = m->getPipelineIndex();
+                    if (pipelineIndex < pipelines.size())
+                    {
+                        auto pipeline = pipelines[pipelineIndex];
+
+                        auto p = pipeline.lock();
+                        auto layout = p->getPipelineLayout();
+                        c->bindPipeline(pipeline);
+                        c->pushConstants(&matrices, layout, _size = sizeof(MatricesPushConstants));
+                    }
                     Buffer::Ref vBuf = m->getVertexBuffer();
                     Buffer::Ref iBuf = m->getIndexBuffer();
                     c->draw(_vertexBuffer = vBuf, _indexBuffer = iBuf);

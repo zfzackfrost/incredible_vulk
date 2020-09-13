@@ -4,11 +4,11 @@
 
 namespace ivulk {
 
-    void Scene::render(std::weak_ptr<CommandBuffers> cmdBufs, glm::mat4 modelMatrix)
+    void Scene::render(std::weak_ptr<CommandBuffers> cmdBufs, glm::mat4 modelMatrix, const std::vector<std::weak_ptr<GraphicsPipeline>>& pipelines)
     {
         for (const auto& rndbl : m_renderables)
         {
-            rndbl->render(cmdBufs, modelMatrix);
+            rndbl->render(cmdBufs, modelMatrix, pipelines);
         }
     }
 } // namespace ivulk

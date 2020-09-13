@@ -61,13 +61,13 @@ public:
     }
 
 protected:
-    void createWoodPipeline()
+    void createSpherePipeline(bool top)
     {
         GraphicsPipelineInfo createInfo {
 			.vertex = StaticMeshVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/sphere.vert.spv",
-				.frag = "shaders/sphere.frag.spv",
+				.frag = (top) ? "shaders/sphere_top.frag.spv" : "shaders/sphere_bottom.frag.spv",
 			},
 			.descriptor = {
 				.uboBindings = {
@@ -80,32 +80,16 @@ protected:
 						.binding = 1u,
 					},
 				},
-				.textureBindings = {
-					{
-						.image = woodDiffuseTex,
-						.sampler = sampler,
-						.binding = 4u,
-					},
-					{
-						.image = woodSpecularTex,
-						.sampler = sampler,
-						.binding = 5u,
-					},
-					{
-						.image = woodNormalTex,
-						.sampler = sampler,
-						.binding = 6u,
-					},
-				}
 			},
 		};
-        if (woodPipeline)
+        auto& pipeline = (top) ? topPipeline : bottomPipeline;
+        if (pipeline)
         {
-            woodPipeline->recreate(createInfo);
+            pipeline->recreate(createInfo);
         }
         else
         {
-            woodPipeline = GraphicsPipeline::create(state.vk.device, createInfo);
+            pipeline = GraphicsPipeline::create(state.vk.device, createInfo);
         }
     }
     virtual void initialize(bool swapchainOnly) override
@@ -113,52 +97,32 @@ protected:
         if (!swapchainOnly)
         {
             sampler = Sampler::create(state.vk.device, {});
-            woodDiffuseTex  = Image::create(state.vk.device,
-                                           {
-                                               .load = {
-                                                   .bEnable = true,
-                                                   .path    = "textures/Wood/Wood_diffuse512.png",
-                                               },
-                                           });
-            woodSpecularTex = Image::create(state.vk.device,
-											{
-												.load = {
-													.bEnable = true,
-													.path    = "textures/Wood/Wood_specular256.png",
-													.bSrgb   = false,
-												},
-											});
-            woodNormalTex   = Image::create(state.vk.device,
-					{
-						.load = {
-						.bEnable = true,
-						.path    = "textures/Wood/Wood_normal512.png",
-						.bSrgb   = false,
-						},
-					});
         }
         uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBO)});
         uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
 
-        createWoodPipeline();
-        state.vk.pipelines.mainGfx = woodPipeline;
+        createSpherePipeline(true);
+        createSpherePipeline(false);
+
+        state.vk.pipelines.mainGfx = topPipeline;
 
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
             return;
 
-        sphereModel = StaticModel::load("models/unitsphere.fbx");
+        sphereModel = StaticModel::load("models/unitsphere_splitmat.fbx");
 
         EventManager::addCallback(E_EventType::KeyDown,
                                   std::bind(&ModelLitApp::escapeKeyQuit, this, std::placeholders::_1));
-
+        std::vector<GraphicsPipeline::Ref> spherePipelines = {
+            topPipeline,
+            bottomPipeline,
+        };
         scene   = Scene::create();
         sphere1 = scene->addRenderable(
-            RenderableInstance::create(sphereModel, _priority = 0, _pipeline = woodPipeline));
+            RenderableInstance::create(sphereModel, _priority = 0, _pipelines = spherePipelines));
         sphere2 = scene->addRenderable(
-            RenderableInstance::create(sphereModel,
-                                       _priority = 0,
-                                       _pipeline = woodPipeline));
+            RenderableInstance::create(sphereModel, _priority = 0, _pipelines = spherePipelines));
     }
 
     void escapeKeyQuit(Event evt)
@@ -169,22 +133,6 @@ protected:
         if (e.keycode != E_KeyCode::KeyEsc)
             return;
         quit();
-    }
-    void dirKeys(Event evt)
-    {
-        auto e = evt.assumeKeyEvent();
-        if (e.bRepeat)
-            return;
-        auto mult = e.bIsDown ? 1.0f : -1.0f;
-
-        if (e.keycode == E_KeyCode::KeyDownArrow || e.keycode == E_KeyCode::KeyS)
-            dirKeysInput += glm::vec2(0, -1) * mult;
-        if (e.keycode == E_KeyCode::KeyUpArrow || e.keycode == E_KeyCode::KeyW)
-            dirKeysInput += glm::vec2(0, +1) * mult;
-        if (e.keycode == E_KeyCode::KeyLeftArrow || e.keycode == E_KeyCode::KeyA)
-            dirKeysInput += glm::vec2(-1, 0) * mult;
-        if (e.keycode == E_KeyCode::KeyRightArrow || e.keycode == E_KeyCode::KeyD)
-            dirKeysInput += glm::vec2(+1, 0) * mult;
     }
 
     virtual void cleanup(bool swapchainOnly) override
@@ -198,18 +146,21 @@ protected:
         sphereModel.reset();
         uboMatrices.reset();
         uboLighting.reset();
-        woodDiffuseTex.reset();
-        woodNormalTex.reset();
-        woodSpecularTex.reset();
         sampler.reset();
-        woodPipeline.reset();
+
+        // Don't destroy pipelines when recreating swapchain
+        // ... instead destroy at the end of the session and
+        //     use the `recreate` method of pipelines when
+        //     recreating the swapchain.
+        topPipeline.reset();
+        bottomPipeline.reset();
     }
 
     virtual void render(CommandBuffers::Ref cmdBuffer) override
     {
         if (auto cb = cmdBuffer.lock())
         {
-            cb->clearAttachments(woodPipeline, clearColor);
+            cb->clearAttachments(topPipeline, clearColor);
             scene->render(cb);
         }
     }
@@ -240,12 +191,12 @@ protected:
         deltaEuler.x         = 0.0f;
         _sphere1->transform.rotation *= glm::quat(deltaEuler);
         _sphere1->transform.translate.x = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
-        
-        float theta = (elapsedTime / 2.5f) * glm::two_pi<float>();
+
+        float theta                     = (elapsedTime / 2.5f) * glm::two_pi<float>();
         _sphere2->transform.translate.x = glm::cos(theta) + _sphere1->transform.translate.x;
         _sphere2->transform.translate.y = glm::sin(theta) + _sphere1->transform.translate.y;
         _sphere2->transform.translate.z = _sphere1->transform.translate.z;
-        _sphere2->transform.scale = glm::vec3(0.35);
+        _sphere2->transform.scale       = glm::vec3(0.35);
 
         // ================= Matrices ================== //
 
@@ -319,10 +270,7 @@ protected:
 
     StaticModel::Ptr sphereModel;
 
-    GraphicsPipeline::Ptr woodPipeline;
-    Image::Ptr woodDiffuseTex;
-    Image::Ptr woodSpecularTex;
-    Image::Ptr woodNormalTex;
+    GraphicsPipeline::Ptr topPipeline, bottomPipeline;
     Sampler::Ptr sampler;
 
     Scene::Ptr scene;

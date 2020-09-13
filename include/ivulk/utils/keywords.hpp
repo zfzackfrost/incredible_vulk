@@ -20,6 +20,7 @@ namespace ivulk {
 	BOOST_PARAMETER_NAME(indexBuffer)
 	BOOST_PARAMETER_NAME(instances)
 	BOOST_PARAMETER_NAME(pipeline)
+	BOOST_PARAMETER_NAME(pipelines)
 	BOOST_PARAMETER_NAME(priority)
 	BOOST_PARAMETER_NAME(offset)
 	BOOST_PARAMETER_NAME(size)

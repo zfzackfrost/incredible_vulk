@@ -40,7 +40,8 @@ namespace ivulk {
         using Ref = std::weak_ptr<RenderableInstance>;
 
         virtual void render(std::weak_ptr<CommandBuffers> cmdBufs,
-                            glm::mat4 modelMatrix = glm::mat4(1)) override;
+                            glm::mat4 modelMatrix = glm::mat4(1),
+                            const std::vector<std::weak_ptr<GraphicsPipeline>>& pipelines = {}) override;
         virtual inline int16_t renderOrder() const override { return priority(); }
 
         // clang-format off
@@ -53,12 +54,13 @@ namespace ivulk {
 				(xform,    (Transform), Transform{})
 				(priority, (std::optional<int16_t>), std::optional<int16_t>{})
 				(getPriority, (std::optional<std::function<int16_t()>>), std::optional<std::function<int16_t()>>{})
-				(pipeline, *, std::weak_ptr<GraphicsPipeline>{})
+				(pipeline, *, GraphicsPipeline::Ref{})
+				(pipelines, *, std::vector<GraphicsPipeline::Ref>{})
 			)
 		)
         // clang-format on
         {
-            return createImpl(std::weak_ptr(base), xform, priority, getPriority, pipeline);
+            return createImpl(std::weak_ptr(base), xform, priority, getPriority, pipeline, pipelines);
         }
 
         /**
@@ -67,9 +69,9 @@ namespace ivulk {
         std::weak_ptr<I_Renderable> renderable;
 
         /**
-		 * @brief Graphics pipeline to render with
+		 * @brief Graphics pipelines to render with
 		 */
-        GraphicsPipeline::Ref pipeline;
+        std::vector<GraphicsPipeline::Ref> pipelines;
 
         /**
 		 * @brief Additional model matrix transform of the instance
@@ -87,7 +89,8 @@ namespace ivulk {
                               Transform xform,
                               std::optional<int16_t> priority,
                               std::optional<std::function<int16_t()>> getPriority,
-                              std::weak_ptr<GraphicsPipeline> pipeline)
+                              std::weak_ptr<GraphicsPipeline> pipeline,
+                              const std::vector<GraphicsPipeline::Ref>& pipelines)
         {
             auto r = Ptr(new RenderableInstance());
             if (auto b = base.lock())
@@ -101,7 +104,7 @@ namespace ivulk {
             {
                 r->priority = [priority]() -> int16_t { return *priority; };
             }
-            r->pipeline = pipeline;
+            r->pipelines = (pipelines.empty()) ? std::vector<GraphicsPipeline::Ref>{pipeline} : pipelines;
             return r;
         }
     };

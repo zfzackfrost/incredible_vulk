@@ -32,7 +32,8 @@ namespace ivulk {
         }
 
         virtual void render(std::weak_ptr<CommandBuffers> cmdBufs,
-                            glm::mat4 modelMatrix = glm::mat4(1)) override;
+                            glm::mat4 modelMatrix = glm::mat4(1),
+                            const std::vector<std::weak_ptr<GraphicsPipeline>>& pipelines = {}) override;
 
         virtual inline int16_t renderOrder() const override { return E_RenderPriority::Normal - 100; }
 
