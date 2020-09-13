@@ -10,6 +10,10 @@
 #include <ivulk/core/vertex.hpp>
 #include <ivulk/render/transform.hpp>
 
+#include <ivulk/render/model/static_model.hpp>
+#include <ivulk/render/scene.hpp>
+#include <ivulk/render/renderable_instance.hpp>
+
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -17,7 +21,6 @@
 #include <memory>
 #include <stdexcept>
 
-#include <ivulk/core/model/static_model.hpp>
 
 using namespace ivulk;
 
@@ -62,10 +65,6 @@ public:
 		elapsedTime     = 0.0f;
 		timeSinceStatus = std::numeric_limits<float>::max();
 		clearColor      = glm::vec4(0, 0, 0, 1);
-		modelXform = {
-			.translate = {0, 0, 0},
-			.scale = {1, 1, 1}
-		};
 	}
 
 protected:
@@ -101,7 +100,7 @@ protected:
 		uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBOData)});
 		uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
 
-		pipeline = GraphicsPipeline::create(state.vk.device, {
+		woodPipeline = GraphicsPipeline::create(state.vk.device, {
 			.vertex = StaticMeshVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/sphere.vert.spv",
@@ -137,20 +136,19 @@ protected:
 				}
 			},
 		});
-		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(pipeline);
+		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(woodPipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested
 		if (swapchainOnly)
 			return;
 
-		model = StaticModel::load("models/unitsphere.fbx");
+		sphereModel = StaticModel::load("models/unitsphere.fbx");
 
 		EventManager::addCallback(E_EventType::KeyDown,
 								  std::bind(&ModelLitApp::escapeKeyQuit, this, std::placeholders::_1));
-		EventManager::addCallback(E_EventType::KeyDown,
-								  std::bind(&ModelLitApp::dirKeys, this, std::placeholders::_1));
-		EventManager::addCallback(E_EventType::KeyUp,
-								  std::bind(&ModelLitApp::dirKeys, this, std::placeholders::_1));
+
+		scene = Scene::create();
+		sphere1 = scene->addRenderable(RenderableInstance::create(sphereModel, _priority = 0, _pipeline = woodPipeline));
 	}
 
 	void escapeKeyQuit(Event evt)
@@ -181,13 +179,14 @@ protected:
 
 	virtual void cleanup(bool swapchainOnly) override
 	{
-		pipeline.reset();
+		woodPipeline.reset();
 
 		// Skip anything that doesn't depend on the swapchain, if requested
 		if (swapchainOnly)
 			return;
 
-		model.reset();
+		scene.reset();
+		sphereModel.reset();
 		uboMatrices.reset();
 		uboLighting.reset();
 		woodDiffuseTex.reset();
@@ -200,9 +199,8 @@ protected:
 	{
 		if (auto cb = cmdBuffer.lock())
 		{
-			cb->clearAttachments(pipeline, clearColor);
-			cb->bindPipeline(pipeline);
-			model->render(cb);
+			cb->clearAttachments(woodPipeline, clearColor);
+			scene->render(cb);
 		}
 	}
 
@@ -218,27 +216,24 @@ protected:
 			timeSinceStatus = 0.0f;
 		}
 
-		if (glm::dot(dirKeysInput, dirKeysInput) > 0.0001)
-		{
-			glm::vec3 fwd = glm::normalize(glm::vec3(0) - viewPos);
-			glm::vec3 rght = glm::vec3(1, 0, 0);
-			viewPos += fwd * (dirKeysInput.y * 10.0f * deltaSeconds);
-			viewPos += rght * (dirKeysInput.x * 10.0f * deltaSeconds);
-		}
+		auto _sphere1 = sphere1.lock();
+		if (!_sphere1)
+			return;
 
 		float rotRate = glm::sin((elapsedTime / glm::two_over_pi<float>()) * glm::two_pi<float>()) * 0.5 + 0.5;
 		rotRate = glm::radians(glm::mix(100.0f, 200.0f, rotRate));
 		glm::vec3 deltaEuler = glm::vec3(deltaSeconds * rotRate);
 		deltaEuler.x = 0.0f;
-		modelXform.rotation *= glm::quat(deltaEuler);
-		modelXform.translate.x = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
+		_sphere1->transform.rotation *= glm::quat(deltaEuler);
+		_sphere1->transform.translate.x = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
+		
 
 		// ================= Matrices ================== //
 
 		float aspect = static_cast<float>(state.vk.swapChain.extent.width)
 					   / static_cast<float>(state.vk.swapChain.extent.height);
 
-		matrices.model = modelXform.modelMatrix();
+		matrices.model = _sphere1->transform.modelMatrix();
 
 		viewXform = viewXform.withLookAt(viewPos, {0, 0, 0});
 		matrices.view = viewXform.viewMatrix();
@@ -300,16 +295,18 @@ protected:
 		return execDir / "assets";
 	}
 
-	Transform modelXform;
 	Transform viewXform;
 
-	GraphicsPipeline::Ptr pipeline;
-	StaticModel::Ptr model;
+	StaticModel::Ptr sphereModel;
 
+	GraphicsPipeline::Ptr woodPipeline;
 	Image::Ptr woodDiffuseTex;
 	Image::Ptr woodSpecularTex;
 	Image::Ptr woodNormalTex;
 	Sampler::Ptr sampler;
+
+	Scene::Ptr scene;
+	RenderableInstance::Ref sphere1;
 
 	UniformBufferObject::Ptr uboMatrices;
 	MatricesUBOData matrices;

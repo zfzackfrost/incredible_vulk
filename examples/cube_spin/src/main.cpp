@@ -15,9 +15,6 @@
 #include <memory>
 #include <stdexcept>
 
-#include <ivulk/core/model/base.hpp>
-
-
 using namespace ivulk;
 
 struct UboMatrices

@@ -1,5 +1,4 @@
 #include <ivulk/core/app.hpp>
-#include <ivulk/core/model/base.hpp>
 
 #include <ivulk/config.hpp>
 #include <ivulk/utils/messages.hpp>

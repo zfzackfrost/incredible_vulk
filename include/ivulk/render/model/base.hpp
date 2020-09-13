@@ -10,6 +10,7 @@
 #include <boost/filesystem.hpp>
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/command_buffer.hpp>
+#include <ivulk/render/renderable.hpp>
 
 #include <ivulk/utils/fs.hpp>
 
@@ -20,7 +21,7 @@
 namespace ivulk {
 
 	template <typename Derived, typename Mesh>
-	class ModelBase
+	class ModelBase : public I_Renderable
 	{
 	public:
 		using Ptr = std::shared_ptr<Derived>;
@@ -31,10 +32,10 @@ namespace ivulk {
 		using vertex_t     = typename Mesh::vertex_t;
 		using model_base_t = ModelBase<Derived, Mesh>;
 
-		void render(CommandBuffers::Ref cmdBuf)
+		virtual void render(std::weak_ptr<CommandBuffers> cmdBufs, glm::mat4 modelMatrix = glm::mat4(1)) override
 		{
 			using namespace tag;
-			if (auto c = cmdBuf.lock())
+			if (auto c = cmdBufs.lock())
 			{
 				for (const auto& m : meshes)
 				{

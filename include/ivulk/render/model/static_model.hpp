@@ -7,10 +7,11 @@
 
 #pragma once
 
-#include <ivulk/core/model/base.hpp>
 #include <ivulk/core/vertex.hpp>
 
 #include <assimp/scene.h>
+
+#include <ivulk/render/model/base.hpp>
 
 namespace ivulk {
 

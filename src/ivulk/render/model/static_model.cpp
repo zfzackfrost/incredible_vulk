@@ -1,4 +1,4 @@
-#include <ivulk/core/model/static_model.hpp>
+#include <ivulk/render/model/static_model.hpp>
 
 #include <ivulk/core/app.hpp>
 #include <ivulk/utils/messages.hpp>
