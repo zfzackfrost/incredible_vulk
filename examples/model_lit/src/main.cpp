@@ -68,39 +68,10 @@ public:
 	}
 
 protected:
-	virtual void initialize(bool swapchainOnly) override
-	{
-		if (!swapchainOnly)
-		{
-			sampler = Sampler::create(state.vk.device, {});
-			woodDiffuseTex  = Image::create(state.vk.device,
-                                           {
-                                               .load = {
-                                                   .bEnable = true,
-                                                   .path    = "textures/Wood/Wood_diffuse512.png",
-                                               },
-                                           });
-			woodSpecularTex = Image::create(state.vk.device,
-											{
-												.load = {
-													.bEnable = true,
-													.path    = "textures/Wood/Wood_specular256.png",
-													.bSrgb   = false,
-												},
-											});
-			woodNormalTex   = Image::create(state.vk.device,
-                                          {
-                                              .load = {
-                                                  .bEnable = true,
-                                                  .path    = "textures/Wood/Wood_normal512.png",
-                                                  .bSrgb   = false,
-                                              },
-                                          });
-		}
-		uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBOData)});
-		uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
 
-		woodPipeline = GraphicsPipeline::create(state.vk.device, {
+	void createWoodPipeline()
+	{
+		GraphicsPipelineInfo createInfo {
 			.vertex = StaticMeshVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/sphere.vert.spv",
@@ -135,7 +106,49 @@ protected:
 					},
 				}
 			},
-		});
+		};
+		if (woodPipeline)
+		{
+			woodPipeline->recreate(createInfo);
+		}
+		else
+		{
+			woodPipeline = GraphicsPipeline::create(state.vk.device, createInfo);
+		}
+	}
+	virtual void initialize(bool swapchainOnly) override
+	{
+		if (!swapchainOnly)
+		{
+			sampler = Sampler::create(state.vk.device, {});
+			woodDiffuseTex  = Image::create(state.vk.device,
+                                           {
+                                               .load = {
+                                                   .bEnable = true,
+                                                   .path    = "textures/Wood/Wood_diffuse512.png",
+                                               },
+                                           });
+			woodSpecularTex = Image::create(state.vk.device,
+											{
+												.load = {
+													.bEnable = true,
+													.path    = "textures/Wood/Wood_specular256.png",
+													.bSrgb   = false,
+												},
+											});
+			woodNormalTex   = Image::create(state.vk.device,
+                                          {
+                                              .load = {
+                                                  .bEnable = true,
+                                                  .path    = "textures/Wood/Wood_normal512.png",
+                                                  .bSrgb   = false,
+                                              },
+                                          });
+		}
+		uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBOData)});
+		uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
+
+		createWoodPipeline();
 		state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(woodPipeline);
 
 		// Skip anything that doesn't depend on the swapchain, if requested
@@ -179,7 +192,6 @@ protected:
 
 	virtual void cleanup(bool swapchainOnly) override
 	{
-		woodPipeline.reset();
 
 		// Skip anything that doesn't depend on the swapchain, if requested
 		if (swapchainOnly)
@@ -193,6 +205,7 @@ protected:
 		woodNormalTex.reset();
 		woodSpecularTex.reset();
 		sampler.reset();
+		woodPipeline.reset();
 	}
 
 	virtual void render(CommandBuffers::Ref cmdBuffer) override

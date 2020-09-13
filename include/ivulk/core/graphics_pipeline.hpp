@@ -60,6 +60,8 @@ namespace ivulk {
 
 		std::vector<uint32_t> getColorAttIndices() { return m_colorAttIndices; }
 
+		void recreate(GraphicsPipelineInfo info);
+
 	private:
 		friend base_t;
 		friend class App;

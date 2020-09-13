@@ -6,6 +6,16 @@ namespace ivulk {
 
 	namespace fs = boost::filesystem;
 
+	void GraphicsPipeline::recreate(GraphicsPipelineInfo info)
+	{
+		auto* tmpPipeline = createImpl(getDevice(), info);
+		destroy();
+		handles = tmpPipeline->handles;
+		setDestroyed(false);
+		tmpPipeline->setDestroyed(true);
+		delete tmpPipeline;
+	}
+
 	std::vector<char> GraphicsPipeline::readSPIRVFile(const fs::path& fpath)
 	{
 		auto p = fpath.lexically_normal();

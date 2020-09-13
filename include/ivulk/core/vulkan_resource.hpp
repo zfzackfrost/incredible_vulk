@@ -68,6 +68,9 @@ namespace ivulk {
 		handles_t handles;
 
 		VkDevice getDevice() { return m_device; }
+		void setDestroyed(bool bDestroyed) {
+			m_destroyed = bDestroyed;
+		}
 
 	private:
 		VkDevice m_device;
