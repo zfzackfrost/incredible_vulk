@@ -5,14 +5,19 @@
 #define POINT_LIGHTS_PER_PASS {{ pointLightsPerPass }}
 #define DIR_LIGHTS_PER_PASS   {{ dirLightsPerPass }}
 
+struct PointLightAttenuation
+{
+    float constant;
+    float linear;
+    float quadratic;
+};
+
 struct PointLight
 {
     vec3 position;
     vec3 color;
 
-    float constant;
-    float linear;
-    float quadratic;
+    PointLightAttenuation attenuation;
 };
 
 struct DirectionLight
@@ -43,10 +48,9 @@ int dirLightCount()
 
 float pointLightAttenuation(PointLight light, vec3 fragPos)
 {
+    PointLightAttenuation a = light.attenuation;
     float d = length(light.position - fragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * d + 
-            light.quadratic * (d * d));
-    return attenuation;
+    return 1.0 / (a.constant + a.linear * d + a.quadratic * (d * d));
 }
 {% endcall %}
 {%- endmacro %}

@@ -24,31 +24,6 @@
 
 using namespace ivulk;
 
-struct PointLight
-{
-    LAYOUT_VEC3 glm::vec3 position = glm::vec3(0, 0, 0);
-    LAYOUT_VEC3 glm::vec3 color    = glm::vec3(1.0f, 1.0f, 1.0f);
-
-    LAYOUT_FLOAT float constant  = 1.0f;
-    LAYOUT_FLOAT float linear    = 0.22f;
-    LAYOUT_FLOAT float quadratic = 0.2f;
-};
-struct DirectionLight
-{
-    LAYOUT_VEC3 glm::vec3 direction;
-    LAYOUT_VEC3 glm::vec3 color;
-};
-struct LightingUBOData
-{
-    LAYOUT_STRUCT PointLight pointLights[4];
-    LAYOUT_STRUCT DirectionLight dirLights[4];
-
-    LAYOUT_INT int32_t pointLightCount = 0;
-    LAYOUT_INT int32_t dirLightCount   = 0;
-
-    LAYOUT_VEC3 glm::vec3 viewPos;
-};
-
 class ModelLitApp : public App
 {
 public:
@@ -76,7 +51,7 @@ protected:
 						.binding = 0u,
 					},
 					{
-						.ubo     = uboLighting,
+						.ubo     = uboScene,
 						.binding = 1u,
 					},
 				},
@@ -99,7 +74,7 @@ protected:
             sampler = Sampler::create(state.vk.device, {});
         }
         uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBO)});
-        uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
+        uboScene    = UniformBufferObject::create(state.vk.device, {.size = sizeof(SceneUBOData)});
 
         createSpherePipeline(true);
         createSpherePipeline(false);
@@ -145,7 +120,7 @@ protected:
         scene.reset();
         sphereModel.reset();
         uboMatrices.reset();
-        uboLighting.reset();
+        uboScene.reset();
         sampler.reset();
 
         // Don't destroy pipelines when recreating swapchain
@@ -213,17 +188,18 @@ protected:
 
         // ================== Lights =================== //
 
-        lighting.dirLights[0].color     = glm::vec3(0.6);
-        lighting.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, -1));
-        lighting.dirLightCount          = 1;
+        sceneData.dirLights[0].color     = glm::vec3(0.6);
+        sceneData.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, -1));
+        sceneData.dirLightCount          = 0;
 
-        lighting.pointLights[0].color    = glm::vec3(0.5);
-        lighting.pointLights[0].position = glm::vec3(0, 2, 0.1);
-        lighting.pointLightCount         = 1;
+        sceneData.pointLights[0].color       = glm::vec3(0.5);
+        sceneData.pointLights[0].position    = glm::vec3(0, 2, 0.1);
+        sceneData.pointLights[0].attenuation = PointLightAttenuation::fromRadius(2.0f);
+        sceneData.pointLightCount            = 1;
 
-        lighting.viewPos = viewPos;
+        sceneData.viewPosition = viewPos;
 
-        uboLighting->setUniforms(lighting);
+        uboScene->setUniforms(sceneData);
     }
 
     virtual InitArgs getInitArgs() const override
@@ -280,8 +256,8 @@ protected:
     UniformBufferObject::Ptr uboMatrices;
     MatricesUBO matrices;
 
-    UniformBufferObject::Ptr uboLighting;
-    LightingUBOData lighting;
+    UniformBufferObject::Ptr uboScene;
+    SceneUBOData sceneData;
 
     glm::vec4 clearColor;
 

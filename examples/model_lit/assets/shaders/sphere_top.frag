@@ -1,5 +1,4 @@
 {% extends "lib/lighting/simple.frag" %}
-
 {% block uniforms %}
     {{ super() }}
 {% endblock %}

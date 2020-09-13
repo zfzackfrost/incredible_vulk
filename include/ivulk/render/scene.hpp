@@ -10,10 +10,13 @@
 #include <ivulk/render/renderable.hpp>
 #include <ivulk/render/renderable_instance.hpp>
 
+#include <ivulk/render/scene_ubo.hpp>
+
 #include <set>
 
 namespace ivulk {
     class RenderableInstance;
+
     class Scene : public I_Renderable
     {
     public:
