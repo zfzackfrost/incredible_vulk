@@ -69,7 +69,7 @@ vec3 getAmbientAmount{{fn}}()
     
     vec3 N = getNormal{{fn}}() * 2.0 - 1.0;
     N = normalize(fsIn.TBN * N);
-    vec3 V = normalize(lighting.viewPos - fsIn.position);
+    vec3 V = normalize(scene.viewPos - fsIn.position);
     float shininess = getShininess{{fn}}();
 
     vec3 specular = vec3(0);
@@ -77,7 +77,7 @@ vec3 getAmbientAmount{{fn}}()
     vec3 ambient = getAmbientAmount{{fn}}();
     for (int i = 0; i < pointLightCount(); ++i)
     {
-        PointLight light = lighting.pointLights[i];
+        PointLight light = scene.pointLights[i];
 
         // Light direction
         vec3 L = normalize(light.position - fsIn.position);
@@ -96,7 +96,7 @@ vec3 getAmbientAmount{{fn}}()
     }
     for (int i = 0; i < dirLightCount(); ++i)
     {
-        DirectionLight light = lighting.dirLights[i];
+        DirectionLight light = scene.dirLights[i];
         vec3 L = normalize(-light.direction);
         vec3 H = normalize(V + L);
 

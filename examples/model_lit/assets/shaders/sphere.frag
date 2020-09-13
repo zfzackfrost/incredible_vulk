@@ -1,5 +1,4 @@
 {% extends "lib/lighting/simple.frag" %}
-
 {% block libs %}
     {{ super() }}
     {% include "lib/math.glsl" %}

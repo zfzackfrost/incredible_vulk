@@ -21,7 +21,7 @@ struct DirectionLight
     vec3 color;
 };
 
-layout (binding = {{ uboIndex }}) uniform LightingUBO {
+layout (binding = {{ uboIndex }}) uniform SceneUBO {
     PointLight     pointLights[{{pointLightsPerPass}}];
     DirectionLight dirLights[{{dirLightsPerPass}}];
 
@@ -29,16 +29,16 @@ layout (binding = {{ uboIndex }}) uniform LightingUBO {
     int dirLightCount;
 
     vec3 viewPos;
-} lighting;
+} scene;
 
 int pointLightCount()
 {
-    return min(lighting.pointLightCount, POINT_LIGHTS_PER_PASS);
+    return min(scene.pointLightCount, POINT_LIGHTS_PER_PASS);
 }
 
 int dirLightCount()
 {
-    return min(lighting.dirLightCount, DIR_LIGHTS_PER_PASS);
+    return min(scene.dirLightCount, DIR_LIGHTS_PER_PASS);
 }
 
 float pointLightAttenuation(PointLight light, vec3 fragPos)

@@ -141,7 +141,7 @@ protected:
         uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
 
         createWoodPipeline();
-        state.vk.pipelines.mainGfx = std::weak_ptr<GraphicsPipeline>(woodPipeline);
+        state.vk.pipelines.mainGfx = woodPipeline;
 
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
@@ -241,9 +241,11 @@ protected:
         _sphere1->transform.rotation *= glm::quat(deltaEuler);
         _sphere1->transform.translate.x = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
         
-        _sphere2->transform.translate.x = -1;
-        _sphere2->transform.translate.y = -1.5;
-        _sphere2->transform.translate.z = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
+        float theta = (elapsedTime / 2.5f) * glm::two_pi<float>();
+        _sphere2->transform.translate.x = glm::cos(theta) + _sphere1->transform.translate.x;
+        _sphere2->transform.translate.y = glm::sin(theta) + _sphere1->transform.translate.y;
+        _sphere2->transform.translate.z = _sphere1->transform.translate.z;
+        _sphere2->transform.scale = glm::vec3(0.35);
 
         // ================= Matrices ================== //
 
@@ -298,6 +300,9 @@ protected:
         int32_t result = 0;
         if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
             result += 1000;
+        if (deviceFeatures.samplerAnisotropy == VK_TRUE)
+            result += 500;
+        result += deviceProperties.limits.maxImageDimension2D;
         return result;
     }
 
@@ -336,7 +341,7 @@ protected:
     float timeSinceStatus;
 
     glm::vec2 dirKeysInput;
-    glm::vec3 viewPos = {4, 2, 2};
+    glm::vec3 viewPos = {4, 4, 2};
 };
 
 int main(int argc, char* argv[])

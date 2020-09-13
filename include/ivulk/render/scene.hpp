@@ -8,33 +8,27 @@
 #pragma once
 
 #include <ivulk/render/renderable.hpp>
+#include <ivulk/render/renderable_instance.hpp>
 
 #include <set>
 
 namespace ivulk {
+    class RenderableInstance;
     class Scene : public I_Renderable
     {
     public:
         using Ptr = std::shared_ptr<Scene>;
         using Ref = std::weak_ptr<Scene>;
 
-        template <typename R>
-        std::weak_ptr<R> addRenderable(const std::shared_ptr<R> rndbl)
+        std::weak_ptr<RenderableInstance> addRenderable(const std::shared_ptr<RenderableInstance> rndbl)
         {
-            static_assert(std::is_base_of_v<I_Renderable, R>,
-                          "Template parameter `R` must derive from interface `I_Renderable`");
-            std::shared_ptr<I_Renderable> r = std::static_pointer_cast<I_Renderable>(rndbl);
-            m_renderables.insert(r);
+            m_renderables.insert(rndbl);
             return rndbl;
         }
 
-        template <typename R>
-        void removeRenderable(const std::shared_ptr<R> rndbl)
+        void removeRenderable(const std::shared_ptr<RenderableInstance> rndbl)
         {
-            static_assert(std::is_base_of_v<I_Renderable, R>,
-                          "Template parameter `R` must derive from interface `I_Renderable`");
-            std::shared_ptr<I_Renderable> r = std::static_pointer_cast<I_Renderable>(rndbl);
-            m_renderables.erase(r);
+            m_renderables.erase(rndbl);
         }
 
         virtual void render(std::weak_ptr<CommandBuffers> cmdBufs,
@@ -49,12 +43,12 @@ namespace ivulk {
 
         struct CompareRenderablePtr
         {
-            inline bool operator()(const std::shared_ptr<I_Renderable>& a,
-                                   const std::shared_ptr<I_Renderable>& b) const
+            inline bool operator()(const std::shared_ptr<RenderableInstance>& a,
+                                   const std::shared_ptr<RenderableInstance>& b) const
             {
-                return a->renderOrder() < b->renderOrder();
+                return a->renderOrder() < b->renderOrder(); 
             }
         };
-        std::multiset<std::shared_ptr<I_Renderable>, CompareRenderablePtr> m_renderables;
+        std::multiset<std::shared_ptr<RenderableInstance>, CompareRenderablePtr> m_renderables;
     };
 } // namespace ivulk
