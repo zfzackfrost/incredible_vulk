@@ -9,4 +9,4 @@ indent_size = 4
 indent_size = 2
 
 [*.{cpp,hpp,h,hh,c}]
-indent_style = tab
+indent_style = space

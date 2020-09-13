@@ -12,15 +12,14 @@
 #include <vector>
 
 namespace ivulk {
-	/**
+    /**
 	 * @brief Information about the swap chain's support for Vulkan features
 	 */
-	struct SwapChainInfo
-	{
-		VkSurfaceCapabilitiesKHR capabilities;
-		std::vector<VkSurfaceFormatKHR> formats;
-		std::vector<VkPresentModeKHR> presentModes;
-	};
-
+    struct SwapChainInfo
+    {
+        VkSurfaceCapabilitiesKHR capabilities;
+        std::vector<VkSurfaceFormatKHR> formats;
+        std::vector<VkPresentModeKHR> presentModes;
+    };
 
 } // namespace ivulk

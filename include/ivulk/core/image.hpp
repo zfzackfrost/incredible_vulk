@@ -17,40 +17,41 @@
 #include <optional>
 
 namespace ivulk {
-	struct ImageInfo final
-	{
-		struct {
-			bool bEnable = false;
-			boost::filesystem::path path;
-			bool bSrgb = true;
-		} load;
+    struct ImageInfo final
+    {
+        struct
+        {
+            bool bEnable = false;
+            boost::filesystem::path path;
+            bool bSrgb = true;
+        } load;
 
-		VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
-		VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT;
-		VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		VmaMemoryUsage memoryMode = E_MemoryMode::GpuOnly;
-		VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
-		VkExtent3D extent{};
-		VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-	};
+        VkImageTiling tiling      = VK_IMAGE_TILING_OPTIMAL;
+        VkImageUsageFlags usage   = VK_IMAGE_USAGE_SAMPLED_BIT;
+        VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        VmaMemoryUsage memoryMode = E_MemoryMode::GpuOnly;
+        VkFormat format           = VK_FORMAT_R8G8B8A8_SRGB;
+        VkExtent3D extent {};
+        VkImageLayout layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    };
 
-	class Image : public VulkanResource<Image, ImageInfo, VkImage, VmaAllocation, VkImageView>
-	{
-	public:
-		VkImage getImage() { return getHandleAt<0>(); }
-		VmaAllocation getAllocation() { return getHandleAt<1>(); }
-		VkImageView getImageView() { return getHandleAt<2>(); }
-		VkFormat getFormat() { return m_format; }
+    class Image : public VulkanResource<Image, ImageInfo, VkImage, VmaAllocation, VkImageView>
+    {
+    public:
+        VkImage getImage() { return getHandleAt<0>(); }
+        VmaAllocation getAllocation() { return getHandleAt<1>(); }
+        VkImageView getImageView() { return getHandleAt<2>(); }
+        VkFormat getFormat() { return m_format; }
 
-	private:
-		friend base_t;
-		VkFormat m_format;
+    private:
+        friend base_t;
+        VkFormat m_format;
 
-		Image(VkDevice device, VkImage image, VmaAllocation allocation, VkImageView view);
+        Image(VkDevice device, VkImage image, VmaAllocation allocation, VkImageView view);
 
-		static Image* createImpl(VkDevice device, ImageInfo createInfo);
+        static Image* createImpl(VkDevice device, ImageInfo createInfo);
 
-		void destroyImpl();
-	};
+        void destroyImpl();
+    };
 } // namespace ivulk

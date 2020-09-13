@@ -15,46 +15,46 @@
 
 namespace ivulk {
 
-	// clang-format off
+    // clang-format off
 	IVULK_VERTEX_STRUCT(StaticMeshVertex, 
 		((glm::vec3, position, 0))
 		((glm::vec3, normal, 1))
 		((glm::vec3, tangent, 2))
 		((glm::vec2, texCoords0, 3))
 	);
-	// clang-format on
+    // clang-format on
 
-	class StaticMesh final
-	{
-	public:
-		using Ptr = std::shared_ptr<StaticMesh>;
-		using Ref = std::weak_ptr<StaticMesh>;
+    class StaticMesh final
+    {
+    public:
+        using Ptr = std::shared_ptr<StaticMesh>;
+        using Ref = std::weak_ptr<StaticMesh>;
 
-		using vertex_t = StaticMeshVertex;
+        using vertex_t = StaticMeshVertex;
 
-		StaticMesh() = delete;
+        StaticMesh() = delete;
 
-		static Ptr create(const std::vector<vertex_t>& vertices, const std::vector<uint32_t>& indices);
+        static Ptr create(const std::vector<vertex_t>& vertices, const std::vector<uint32_t>& indices);
 
-		Buffer::Ref getIndexBuffer() const { return m_indexBuffer; }
-		Buffer::Ref getVertexBuffer() const { return m_vertexBuffer; }
+        Buffer::Ref getIndexBuffer() const { return m_indexBuffer; }
+        Buffer::Ref getVertexBuffer() const { return m_vertexBuffer; }
 
-	private:
-		StaticMesh(Buffer::Ptr vBuf, Buffer::Ptr iBuf);
+    private:
+        StaticMesh(Buffer::Ptr vBuf, Buffer::Ptr iBuf);
 
-		Buffer::Ptr m_vertexBuffer;
-		Buffer::Ptr m_indexBuffer;
-	};
+        Buffer::Ptr m_vertexBuffer;
+        Buffer::Ptr m_indexBuffer;
+    };
 
-	class StaticModel : public ModelBase<StaticModel, StaticMesh>
-	{
-	public:
-	private:
-		friend model_base_t;
+    class StaticModel : public ModelBase<StaticModel, StaticMesh>
+    {
+    public:
+    private:
+        friend model_base_t;
 
-		void processNode(aiNode* node, const aiScene* scene);
-		mesh_ptr_t processMesh(aiMesh* mesh, const aiScene* scene);
+        void processNode(aiNode* node, const aiScene* scene);
+        mesh_ptr_t processMesh(aiMesh* mesh, const aiScene* scene);
 
-		static StaticModel* loadImpl(const boost::filesystem::path& p);
-	};
+        static StaticModel* loadImpl(const boost::filesystem::path& p);
+    };
 } // namespace ivulk

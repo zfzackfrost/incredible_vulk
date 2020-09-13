@@ -12,22 +12,22 @@
 #include <set>
 
 namespace ivulk {
-	/**
+    /**
 	 * @brief Indices of Vulkan queue families
 	 */
-	struct QueueFamilyIndices
-	{
-		std::optional<uint32_t> graphics = {}; ///< Index of the graphics queue family
-		std::optional<uint32_t> present = {};  ///< Index of the present queue family
+    struct QueueFamilyIndices
+    {
+        std::optional<uint32_t> graphics = {}; ///< Index of the graphics queue family
+        std::optional<uint32_t> present  = {}; ///< Index of the present queue family
 
-		bool isComplete() const { return graphics.has_value() && present.has_value(); }
+        bool isComplete() const { return graphics.has_value() && present.has_value(); }
 
-		std::set<uint32_t> getUniqueFamilies() const
-		{
-			return {
-				graphics.value(),
-				present.value(),
-			};
-		}
-	};
+        std::set<uint32_t> getUniqueFamilies() const
+        {
+            return {
+                graphics.value(),
+                present.value(),
+            };
+        }
+    };
 } // namespace ivulk
