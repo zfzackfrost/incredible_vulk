@@ -44,7 +44,7 @@ macro(ProcessShaderResource)
         OUTPUT ${OUT} ${TEMP_OUT}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${TMP_DIR}
         COMMAND ${Python3_EXECUTABLE} ${IVULK_TEMPLATE_TOOL_SCRIPT} -o "${TEMP_OUT}" -I "${IVULK_SHADERLIB_DIR}" -I "${INPUT_DIR}" "${CUR_RESOURCE}"
-        COMMAND ${GLSLC_EXECUTABLE} -o "${OUT}" "${TEMP_OUT}"
+        COMMAND ${GLSLC_EXECUTABLE} --target-env=vulkan -o "${OUT}" "${TEMP_OUT}"
         WORKING_DIRECTORY ${IncredibleVulk_SOURCE_DIR}
         DEPENDS ${CUR_RESOURCE} ${Target}
     )

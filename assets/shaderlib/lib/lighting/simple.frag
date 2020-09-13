@@ -1,4 +1,4 @@
-{% extends "lib/base.glsl" %}
+{% extends "lib/base.frag" %}
 {% set fn = "_" ~ ("simple_lighting_fn" | genid()) %}
 
 

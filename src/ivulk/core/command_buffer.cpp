@@ -118,4 +118,13 @@ namespace ivulk {
         }
     }
 
+    void CommandBuffers::pushConstantsImpl(const void* data, VkPipelineLayout layout, VkShaderStageFlags stages, VkDeviceSize offset, VkDeviceSize size)
+    {
+        if (!m_currentIdx.has_value())
+            throw std::runtime_error(
+                utils::makeErrorMessage("VK::CMD", "Command buffer recording not started"));
+
+        vkCmdPushConstants(getCmdBuffer(*m_currentIdx), layout, stages, offset, size, data);
+    }
+
 } // namespace ivulk

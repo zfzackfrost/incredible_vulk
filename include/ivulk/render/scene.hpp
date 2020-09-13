@@ -55,6 +55,6 @@ namespace ivulk {
                 return a->renderOrder() < b->renderOrder();
             }
         };
-        std::set<std::shared_ptr<I_Renderable>, CompareRenderablePtr> m_renderables;
+        std::multiset<std::shared_ptr<I_Renderable>, CompareRenderablePtr> m_renderables;
     };
 } // namespace ivulk

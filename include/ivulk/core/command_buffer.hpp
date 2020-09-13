@@ -10,6 +10,7 @@
 
 #include <ivulk/utils/keywords.hpp>
 #include <ivulk/utils/messages.hpp>
+#include <ivulk/core/shader_stage.hpp>
 
 #include <glm/glm.hpp>
 #include <optional>
@@ -97,6 +98,24 @@ namespace ivulk {
             bindPipelineImpl(pipeline);
         }
 
+
+        // clang-format off
+		BOOST_PARAMETER_MEMBER_FUNCTION((void), pushConstants, tag, 
+			(required
+				(data, *)
+                (layout, *)
+			)
+            (optional
+                (offset, *, 0u)
+                (size, *, 0u)
+                (stageFlags, *, E_ShaderStage::All)
+            )
+		)
+        // clang-format on
+        {
+            pushConstantsImpl(data, layout, stageFlags, offset, size);
+        }
+
     private:
         friend base_t;
 
@@ -131,6 +150,8 @@ namespace ivulk {
         void clearAttachmentsImpl(std::weak_ptr<GraphicsPipeline> pipeline, glm::vec4 color);
 
         void bindPipelineImpl(std::weak_ptr<GraphicsPipeline> pipeline);
+
+        void pushConstantsImpl(const void* data, VkPipelineLayout layout, VkShaderStageFlags stages, VkDeviceSize offset, VkDeviceSize size);
 
         std::optional<std::size_t> m_currentIdx = {};
     };

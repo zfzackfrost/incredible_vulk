@@ -1,4 +1,5 @@
 #include <ivulk/core/graphics_pipeline.hpp>
+#include <ivulk/render/standard_shader.hpp>
 
 #include <ivulk/core/app.hpp>
 
@@ -336,12 +337,20 @@ namespace ivulk {
 
         // ============= Pipeline Layout ============== //
 
+        VkPushConstantRange pushConstantRanges[] = {
+            {
+                .stageFlags = E_ShaderStage::All,
+                .offset = 0,
+                .size = sizeof(MatricesPushConstants),
+            },
+        };
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo {
             .sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
             .setLayoutCount         = 0,
             .pSetLayouts            = nullptr,
-            .pushConstantRangeCount = 0,
-            .pPushConstantRanges    = nullptr,
+            .pushConstantRangeCount = 1,
+            .pPushConstantRanges    = pushConstantRanges,
         };
         if (descrSetLayout != VK_NULL_HANDLE)
         {

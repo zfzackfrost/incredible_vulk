@@ -13,6 +13,7 @@
 #include <ivulk/render/model/static_model.hpp>
 #include <ivulk/render/renderable_instance.hpp>
 #include <ivulk/render/scene.hpp>
+#include <ivulk/render/standard_shader.hpp>
 
 #include <cstdlib>
 #include <functional>
@@ -22,13 +23,6 @@
 #include <stdexcept>
 
 using namespace ivulk;
-
-struct MatricesUBOData
-{
-    LAYOUT_MAT4 glm::mat4 model = glm::mat4(1.0f);
-    LAYOUT_MAT4 glm::mat4 view  = glm::mat4(1.0f);
-    LAYOUT_MAT4 glm::mat4 proj  = glm::mat4(1.0f);
-};
 
 struct PointLight
 {
@@ -143,7 +137,7 @@ protected:
 						},
 					});
         }
-        uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBOData)});
+        uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBO)});
         uboLighting = UniformBufferObject::create(state.vk.device, {.size = sizeof(LightingUBOData)});
 
         createWoodPipeline();
@@ -161,6 +155,10 @@ protected:
         scene   = Scene::create();
         sphere1 = scene->addRenderable(
             RenderableInstance::create(sphereModel, _priority = 0, _pipeline = woodPipeline));
+        sphere2 = scene->addRenderable(
+            RenderableInstance::create(sphereModel,
+                                       _priority = 0,
+                                       _pipeline = woodPipeline));
     }
 
     void escapeKeyQuit(Event evt)
@@ -231,6 +229,9 @@ protected:
         auto _sphere1 = sphere1.lock();
         if (!_sphere1)
             return;
+        auto _sphere2 = sphere2.lock();
+        if (!_sphere2)
+            return;
 
         float rotRate = glm::sin((elapsedTime / glm::two_over_pi<float>()) * glm::two_pi<float>()) * 0.5
                         + 0.5;
@@ -239,13 +240,15 @@ protected:
         deltaEuler.x         = 0.0f;
         _sphere1->transform.rotation *= glm::quat(deltaEuler);
         _sphere1->transform.translate.x = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
+        
+        _sphere2->transform.translate.x = -1;
+        _sphere2->transform.translate.y = -1.5;
+        _sphere2->transform.translate.z = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
 
         // ================= Matrices ================== //
 
         float aspect = static_cast<float>(state.vk.swapChain.extent.width)
                        / static_cast<float>(state.vk.swapChain.extent.height);
-
-        matrices.model = _sphere1->transform.modelMatrix();
 
         viewXform     = viewXform.withLookAt(viewPos, {0, 0, 0});
         matrices.view = viewXform.viewMatrix();
@@ -319,9 +322,10 @@ protected:
 
     Scene::Ptr scene;
     RenderableInstance::Ref sphere1;
+    RenderableInstance::Ref sphere2;
 
     UniformBufferObject::Ptr uboMatrices;
-    MatricesUBOData matrices;
+    MatricesUBO matrices;
 
     UniformBufferObject::Ptr uboLighting;
     LightingUBOData lighting;
@@ -332,7 +336,7 @@ protected:
     float timeSinceStatus;
 
     glm::vec2 dirKeysInput;
-    glm::vec3 viewPos = {2, 2, 2};
+    glm::vec3 viewPos = {4, 2, 2};
 };
 
 int main(int argc, char* argv[])

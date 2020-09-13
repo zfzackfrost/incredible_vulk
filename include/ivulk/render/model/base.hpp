@@ -11,6 +11,7 @@
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/command_buffer.hpp>
 #include <ivulk/render/renderable.hpp>
+#include <ivulk/render/standard_shader.hpp>
 
 #include <ivulk/utils/fs.hpp>
 
@@ -35,6 +36,7 @@ namespace ivulk {
         virtual void render(std::weak_ptr<CommandBuffers> cmdBufs,
                             glm::mat4 modelMatrix = glm::mat4(1)) override
         {
+
             using namespace tag;
             if (auto c = cmdBufs.lock())
             {
