@@ -18,19 +18,20 @@
 #include <variant>
 
 namespace ivulk {
+    
     struct FramebufferInfo final
     {
-        std::variant<GraphicsPipeline::Ref, GraphicsPipeline::Ptr, VkRenderPass> renderContext {};
-        std::vector<std::variant<Image::Ref, Image::Ptr, VkImageView>> attachments;
+        std::variant<GraphicsPipeline::Ref, GraphicsPipeline::Ptr, vk::RenderPass> renderContext {};
+        std::vector<std::variant<Image::Ref, Image::Ptr, vk::ImageView>> attachments;
         uint32_t width  = 0u;
         uint32_t height = 0u;
         uint32_t layers = 1u;
     };
 
-    class Framebuffer : public VulkanResource<Framebuffer, FramebufferInfo, VkFramebuffer>
+    class Framebuffer : public VulkanResource<Framebuffer, FramebufferInfo, vk::Framebuffer>
     {
     public:
-        VkFramebuffer getFramebuffer() { return getHandleAt<0>(); }
+        vk::Framebuffer getFramebuffer() { return getHandleAt<0>(); }
 
     private:
         friend base_t;
