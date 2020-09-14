@@ -76,7 +76,8 @@ namespace ivulk {
     void App::drawFrame()
     {
         vkQueueWaitIdle(state.vk.queues.graphics);
-        vkWaitForFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(
+            state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;
 
@@ -100,8 +101,9 @@ namespace ivulk {
         }
 
         createVkCommandBuffers(imageIndex);
-        auto cmdBufs = state.vk.cmd.renderCmdBufs;
-        auto cmdBuf0 = cmdBufs->getCmdBuffer(0);
+        auto cmdBufs            = state.vk.cmd.renderCmdBufs;
+        auto _cmdBuf0           = cmdBufs->getCmdBuffer(0);
+        VkCommandBuffer cmdBuf0 = _cmdBuf0;
 
         state.vk.sync.imagesInFlight[imageIndex] = state.vk.sync.inFlightFences[m_currentFrame];
 

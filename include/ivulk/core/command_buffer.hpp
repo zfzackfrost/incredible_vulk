@@ -11,46 +11,46 @@
 
 #include <ivulk/core/vulkan_resource.hpp>
 
+#include <ivulk/core/shader_stage.hpp>
 #include <ivulk/utils/keywords.hpp>
 #include <ivulk/utils/messages.hpp>
-#include <ivulk/core/shader_stage.hpp>
 
 #include <glm/glm.hpp>
+#include <ivulk/vk.hpp>
 #include <optional>
 #include <stdexcept>
 #include <vector>
-#include <ivulk/vk.hpp>
 
 namespace ivulk {
     class Buffer;
     class GraphicsPipeline;
     struct CommandBuffersCreateInfo
     {
-        VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        VkCommandPool cmdPool      = VK_NULL_HANDLE;
-        uint32_t count             = 1;
+        vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary;
+        vk::CommandPool cmdPool;
+        uint32_t count = 1;
     };
     class CommandBuffers : public VulkanResource<CommandBuffers,
                                                  CommandBuffersCreateInfo,
-                                                 VkCommandPool,
-                                                 std::vector<VkCommandBuffer>>
+                                                 vk::CommandPool,
+                                                 std::vector<vk::CommandBuffer>>
     {
     public:
-        CommandBuffers(VkDevice device, VkCommandPool pool, std::vector<VkCommandBuffer> buffers)
+        CommandBuffers(VkDevice device, vk::CommandPool pool, std::vector<vk::CommandBuffer> buffers)
             : base_t(device, handles_t {pool, buffers})
         { }
 
-        VkCommandPool getCmdPool() { return getHandleAt<0>(); }
-        VkCommandBuffer getCmdBuffer(std::size_t i) { return getHandleAt<1>()[i]; }
-        std::vector<VkCommandBuffer> getCmdBuffers() { return getHandleAt<1>(); }
+        vk::CommandPool getCmdPool() { return getHandleAt<0>(); }
+        vk::CommandBuffer getCmdBuffer(std::size_t i) { return getHandleAt<1>()[i]; }
+        std::vector<vk::CommandBuffer> getCmdBuffers() { return getHandleAt<1>(); }
 
         // clang-format off
 		BOOST_PARAMETER_MEMBER_FUNCTION((void), start, tag, 
 			(required
-				(index, *)
+				(index, (std::size_t))
 			)
 			(optional
-				(flags, *, VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT)
+				(flags, (vk::CommandBufferUsageFlags), vk::CommandBufferUsageFlagBits::eSimultaneousUse)
 			)
 		)
         // clang-format on
@@ -101,7 +101,6 @@ namespace ivulk {
             bindPipelineImpl(pipeline);
         }
 
-
         // clang-format off
 		BOOST_PARAMETER_MEMBER_FUNCTION((void), pushConstants, tag, 
 			(required
@@ -124,26 +123,28 @@ namespace ivulk {
 
         static CommandBuffers* createImpl(VkDevice device, CommandBuffersCreateInfo createInfo)
         {
-            VkCommandBufferAllocateInfo allocInfo {
-                .sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-                .commandPool        = createInfo.cmdPool,
-                .level              = createInfo.level,
-                .commandBufferCount = createInfo.count,
-            };
+            vk::CommandBufferAllocateInfo allocInfo {};
+            allocInfo.setCommandPool(createInfo.cmdPool);
+            allocInfo.setLevel(createInfo.level);
+            allocInfo.setCommandBufferCount(createInfo.count);
 
             std::vector<VkCommandBuffer> commandBuffers(createInfo.count);
-            if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS)
+            VkCommandBufferAllocateInfo ai = allocInfo;
+            if (vkAllocateCommandBuffers(device, &ai, commandBuffers.data()) != VK_SUCCESS)
             {
                 throw std::runtime_error(
                     utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan command buffer(s)"));
             }
 
-            return new CommandBuffers(device, createInfo.cmdPool, commandBuffers);
+            return new CommandBuffers(
+                device,
+                createInfo.cmdPool,
+                std::vector<vk::CommandBuffer>(commandBuffers.begin(), commandBuffers.end()));
         }
 
         void destroyImpl() { }
 
-        void startImpl(std::size_t index, VkCommandBufferUsageFlags flags);
+        void startImpl(std::size_t index, vk::CommandBufferUsageFlags flags);
         void drawImpl(std::weak_ptr<Buffer> vertexBuffer,
                       std::weak_ptr<Buffer> indexBuffer,
                       uint32_t vertices,
@@ -154,7 +155,11 @@ namespace ivulk {
 
         void bindPipelineImpl(std::weak_ptr<GraphicsPipeline> pipeline);
 
-        void pushConstantsImpl(const void* data, VkPipelineLayout layout, VkShaderStageFlags stages, VkDeviceSize offset, VkDeviceSize size);
+        void pushConstantsImpl(const void* data,
+                               VkPipelineLayout layout,
+                               VkShaderStageFlags stages,
+                               VkDeviceSize offset,
+                               VkDeviceSize size);
 
         std::optional<std::size_t> m_currentIdx = {};
     };

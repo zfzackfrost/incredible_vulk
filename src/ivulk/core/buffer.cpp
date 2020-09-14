@@ -12,24 +12,24 @@ namespace ivulk {
         auto state     = App::current()->getState();
         auto allocator = state.vk.allocator;
 
-        VkBufferCreateInfo bufferInfo = {
-            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        };
-        bufferInfo.size  = info.size;
-        bufferInfo.usage = info.usage;
+        vk::BufferCreateInfo bufferInfo{};
+        bufferInfo.setSize(info.size);
+        bufferInfo.setUsage(info.usage);
+        bufferInfo.setSharingMode(info.sharingMode);
         VkBuffer buffer;
 
         VmaAllocationCreateInfo allocInfo {
             .usage = info.memoryMode,
         };
+        VkBufferCreateInfo bi = bufferInfo;
         VmaAllocation alloc = VK_NULL_HANDLE;
-        if (vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &buffer, &alloc, nullptr) != VK_SUCCESS)
+        if (vmaCreateBuffer(allocator, &bi, &allocInfo, &buffer, &alloc, nullptr) != VK_SUCCESS)
         {
             throw std::runtime_error(utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan buffer"));
         }
 
         // Return value
-        auto* ret   = new Buffer(device, buffer, alloc);
+        auto* ret   = new Buffer(device, vk::Buffer(buffer), alloc);
         ret->m_size = info.size;
         return ret;
     }
@@ -78,28 +78,28 @@ namespace ivulk {
         auto state = App::current()->getState();
         if (auto sb = srcBuf.lock())
         {
-            const VkBufferCopy cpyRegion {
-                .srcOffset = 0,
-                .dstOffset = 0,
-                .size      = size,
-            };
+            vk::BufferCopy cpyRegion{};
+            cpyRegion.setSrcOffset(0);
+            cpyRegion.setDstOffset(0);
+            cpyRegion.setSize(size);
+
             auto cmdBufs = CommandBuffers::create(getDevice(),
                                                   {
                                                       .cmdPool = state.vk.cmd.gfxPool,
                                                   });
             auto cb0     = cmdBufs->getCmdBuffer(0);
-            cmdBufs->start(0, _flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-            vkCmdCopyBuffer(cb0, sb->getBuffer(), getBuffer(), 1, &cpyRegion);
+            cmdBufs->start(0, _flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+            cb0.copyBuffer(sb->getBuffer(), getBuffer(), 1, &cpyRegion);
             cmdBufs->finish();
-
+            
+            vk::Queue q(state.vk.queues.graphics);
             m_count = sb->m_count;
-            VkSubmitInfo submitInfo {
-                .sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-                .commandBufferCount = 1,
-                .pCommandBuffers    = &cb0,
-            };
-            vkQueueSubmit(state.vk.queues.graphics, 1, &submitInfo, VK_NULL_HANDLE);
-            vkQueueWaitIdle(state.vk.queues.graphics);
+            vk::SubmitInfo submitInfo{};
+            submitInfo.setCommandBufferCount(1);
+            submitInfo.setPCommandBuffers(&cb0);
+
+            q.submit(1, &submitInfo, nullptr);
+            q.waitIdle();
         }
     }
 } // namespace ivulk

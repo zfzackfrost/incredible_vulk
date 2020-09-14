@@ -13,41 +13,38 @@
 #include <ivulk/core/vulkan_resource.hpp>
 #include <ivulk/utils/messages.hpp>
 
+#include <ivulk/vk.hpp>
 #include <optional>
 #include <stdexcept>
-#include <ivulk/vk.hpp>
 
 #include <cstring>
 
 namespace ivulk {
 
     namespace E_BufferUsage {
-        enum Type
-        {
-            TransferSrc  = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            TransferDst  = VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            UniformTexel = VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT,
-            StorageTexel = VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
-            Uniform      = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-            Storage      = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-            Index        = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-            Vertex       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-            Indirect     = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
-        };
-    }
+        constexpr vk::BufferUsageFlagBits TransferSrc  = vk::BufferUsageFlagBits::eTransferSrc;
+        constexpr vk::BufferUsageFlagBits TransferDst  = vk::BufferUsageFlagBits::eTransferDst;
+        constexpr vk::BufferUsageFlagBits UniformTexel = vk::BufferUsageFlagBits::eUniformTexelBuffer;
+        constexpr vk::BufferUsageFlagBits StorageTexel = vk::BufferUsageFlagBits::eStorageTexelBuffer;
+        constexpr vk::BufferUsageFlagBits Uniform      = vk::BufferUsageFlagBits::eUniformBuffer;
+        constexpr vk::BufferUsageFlagBits Storage      = vk::BufferUsageFlagBits::eStorageBuffer;
+        constexpr vk::BufferUsageFlagBits Index        = vk::BufferUsageFlagBits::eIndexBuffer;
+        constexpr vk::BufferUsageFlagBits Vertex       = vk::BufferUsageFlagBits::eVertexBuffer;
+        constexpr vk::BufferUsageFlagBits Indirect     = vk::BufferUsageFlagBits::eIndirectBuffer;
+    } // namespace E_BufferUsage
 
     struct BufferInfo final
     {
         VkDeviceSize size         = 0;
-        VkSharingMode sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        VkBufferUsageFlags usage  = 0;
+        vk::SharingMode sharingMode = vk::SharingMode::eExclusive;
+        vk::BufferUsageFlags usage;
         VmaMemoryUsage memoryMode = E_MemoryMode::Unknown;
     };
 
-    class Buffer : public VulkanResource<Buffer, BufferInfo, VkBuffer, VmaAllocation>
+    class Buffer : public VulkanResource<Buffer, BufferInfo, vk::Buffer, VmaAllocation>
     {
     public:
-        Buffer(VkDevice device, VkBuffer buf, VmaAllocation alloc)
+        Buffer(VkDevice device, vk::Buffer buf, VmaAllocation alloc)
             : base_t(device, handles_t {buf, alloc})
         { }
 

@@ -9,20 +9,23 @@
 #include <ivulk/utils/messages.hpp>
 
 namespace ivulk {
-    void CommandBuffers::startImpl(std::size_t index, VkCommandBufferUsageFlags flags)
+    void CommandBuffers::startImpl(std::size_t index, vk::CommandBufferUsageFlags flags)
     {
         if (m_currentIdx.has_value())
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CMD", "Command buffer recording already started"));
 
-        VkCommandBufferBeginInfo beginInfo {};
-        beginInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.pNext            = nullptr;
-        beginInfo.flags            = flags;
-        beginInfo.pInheritanceInfo = nullptr;
-        if (vkBeginCommandBuffer(getCmdBuffer(index), &beginInfo) != VK_SUCCESS)
+        vk::CommandBufferBeginInfo beginInfo {};
+        beginInfo.flags = flags;
+
+        vk::CommandBuffer cmdBuf = getCmdBuffer(index);
+        auto r = cmdBuf.begin(beginInfo);
+        if (r != vk::Result::eSuccess)
+        {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CMD", "Failed to start command buffer recording"));
+        }
+
         m_currentIdx = index;
     }
     void CommandBuffers::finish()
@@ -31,7 +34,9 @@ namespace ivulk {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CMD", "Command buffer recording not started"));
         m_currentIdx = {};
-        if (vkEndCommandBuffer(getCmdBuffer(*m_currentIdx)) != VK_SUCCESS)
+        
+        vk::CommandBuffer cmdBuf = getCmdBuffer(*m_currentIdx);
+        if (cmdBuf.end() != vk::Result::eSuccess)
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CMD", "Failed to finish command buffer recording"));
     }
@@ -47,26 +52,27 @@ namespace ivulk {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CMD", "Command buffer recording not started"));
 
+        vk::CommandBuffer cmdBuf = getCmdBuffer(*m_currentIdx);
         auto count     = vertices;
         bool isIndexed = false;
         if (auto vbuf = vertexBuffer.lock())
         {
-            VkBuffer buffers[]     = {vbuf->getBuffer()};
+            vk::Buffer buffers[]     = {vbuf->getBuffer()};
             VkDeviceSize offsets[] = {0};
-            vkCmdBindVertexBuffers(getCmdBuffer(*m_currentIdx), 0, 1, buffers, offsets);
+            cmdBuf.bindVertexBuffers(0, 1, buffers, offsets);
             if (count == 0)
                 count = vbuf->getCount();
             if (auto ibuf = indexBuffer.lock())
             {
-                vkCmdBindIndexBuffer(getCmdBuffer(*m_currentIdx), ibuf->getBuffer(), 0, VK_INDEX_TYPE_UINT32);
+                cmdBuf.bindIndexBuffer(ibuf->getBuffer(), 0, vk::IndexType::eUint32);
                 isIndexed = true;
                 count     = ibuf->getCount();
             }
         }
         if (isIndexed)
-            vkCmdDrawIndexed(getCmdBuffer(*m_currentIdx), count, 1, 0, 0, 0);
+            cmdBuf.drawIndexed(count, 1, 0, 0, 0);
         else
-            vkCmdDraw(getCmdBuffer(*m_currentIdx), count, instances, firstVertex, firstInstance);
+            cmdBuf.draw(count, instances, firstVertex, firstInstance);
     }
 
     void CommandBuffers::clearAttachmentsImpl(std::weak_ptr<GraphicsPipeline> pipeline, glm::vec4 color)
