@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <algorithm>
 #include <ivulk/core/command_buffer.hpp>
 #include <ivulk/render/scene.hpp>

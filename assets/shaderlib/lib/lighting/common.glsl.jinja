@@ -1,4 +1,4 @@
-{% import "lib/library.glsl" as lib %}
+{% import "lib/library.glsl.jinja" as lib %}
 
 {% macro common(uboIndex, pointLightsPerPass=4, dirLightsPerPass=4) -%}
 {% call lib.new('lib_lighting_common') %}

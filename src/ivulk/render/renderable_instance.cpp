@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/render/renderable_instance.hpp>
 #include <ivulk/render/standard_shader.hpp>
 

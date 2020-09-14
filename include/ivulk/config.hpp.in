@@ -1,11 +1,42 @@
+/**
+ * @file config.hpp.in
+ * @author Zachary Frost
+ * @copyright MIT License (See LICENSE.md in repostory root)
+ * @brief Auto-generated config header input.
+ */
+
 #pragma once
 
-////////////////////////////////////////////////////////////////////////////
-//                                Version                                 //
-////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////
+//                          Dynamic Linking                          //
+///////////////////////////////////////////////////////////////////////
 
-#define IVULK_VERSION_MAJOR  @IncredibleVulk_VERSION_MAJOR@
-#define IVULK_VERSION_MINOR  @IncredibleVulk_VERSION_MINOR@
-#define IVULK_VERSION_PATCH  @IncredibleVulk_VERSION_PATCH@
+#include <boost/config.hpp> // for dynamic linking helpers
+
+#cmakedefine IVULK_DYN_LINK
+#if defined(IVULK_DYN_LINK)
+#    if defined(IVULK_SOURCE)
+#        define IVULK_API BOOST_SYMBOL_EXPORT
+#    else
+#        define IVULK_API BOOST_SYMBOL_IMPORT
+#    endif
+#else
+#    define IVULK_API
+#endif
+
+///////////////////////////////////////////////////////////////////////
+//                              Version                              //
+///////////////////////////////////////////////////////////////////////
+
+#define IVULK_VERSION_MAJOR @IncredibleVulk_VERSION_MAJOR@
+#define IVULK_VERSION_MINOR @IncredibleVulk_VERSION_MINOR@
+#define IVULK_VERSION_PATCH @IncredibleVulk_VERSION_PATCH@
 #define IVULK_VERSION_STRING "@IncredibleVulk_VERSION@"
+
+///////////////////////////////////////////////////////////////////////
+//                            GLM Config                             //
+///////////////////////////////////////////////////////////////////////
+
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 

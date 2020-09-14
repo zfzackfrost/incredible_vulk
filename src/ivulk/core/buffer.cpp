@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/app.hpp>
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/command_buffer.hpp>

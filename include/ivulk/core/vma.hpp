@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <vk_mem_alloc.h>
 
 namespace ivulk {

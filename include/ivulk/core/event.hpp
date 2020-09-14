@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/glm.hpp>
 
 #include <SDL2/SDL.h>

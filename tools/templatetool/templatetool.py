@@ -60,9 +60,13 @@ def main():
         print("Context root must be a dictionary!")
         return 1
     result = process_templates(str(input_path), include_paths, context)
-    if args.output is not None:
-        os.makedirs(os.path.dirname(args.output), exist_ok=True)
-        with open(args.output, 'w') as wfile:
+
+    output = args.output
+    if output is not None:
+        if os.path.splitext(output)[1] == ".jinja":
+            output = os.path.splitext(output)[0]
+        os.makedirs(os.path.dirname(output), exist_ok=True)
+        with open(output, 'w') as wfile:
             wfile.write(result)
     else:
         print(result)

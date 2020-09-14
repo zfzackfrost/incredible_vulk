@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/glm.hpp>
 #include <ivulk/render/lighting.hpp>
 

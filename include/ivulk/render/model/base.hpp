@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <boost/filesystem.hpp>
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/command_buffer.hpp>

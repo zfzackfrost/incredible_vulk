@@ -6,6 +6,9 @@
  */
 
 #pragma once
+
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/vma.hpp>
 #include <ivulk/core/vulkan_resource.hpp>
 #include <ivulk/utils/messages.hpp>

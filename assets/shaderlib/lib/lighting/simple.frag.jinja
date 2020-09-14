@@ -1,8 +1,8 @@
-{% extends "lib/base.frag" %}
+{% extends "lib/base.frag.jinja" %}
 {% set fn = "_" ~ ("simple_lighting_fn" | genid()) %}
 
 
-{% import "lib/lighting/common.glsl" as lighting %}
+{% import "lib/lighting/common.glsl.jinja" as lighting %}
 
 {% block pre -%}
 

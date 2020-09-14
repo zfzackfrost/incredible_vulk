@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/render/model/static_model.hpp>
 
 #include <ivulk/core/app.hpp>

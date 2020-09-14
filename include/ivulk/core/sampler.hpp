@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/shader_stage.hpp>
 #include <ivulk/core/vulkan_resource.hpp>
 #include <vulkan/vulkan.h>

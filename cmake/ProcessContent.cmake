@@ -1,6 +1,8 @@
-find_package (Python3 REQUIRED COMPONENTS Interpreter)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-set(IVULK_TEMPLATE_TOOL_SCRIPT "${IncredibleVulk_SOURCE_DIR}/tools/templatetool/templatetool.py")
+set(IVULK_TEMPLATE_TOOL_SCRIPT
+    "${IncredibleVulk_SOURCE_DIR}/tools/templatetool/templatetool.py"
+)
 
 set(IVULK_SHADER_SOURCE_EXTENSIONS "")
 list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".frag")
@@ -10,6 +12,7 @@ list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".tese")
 list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".geom")
 list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".comp")
 list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".hlsl")
+list(APPEND IVULK_SHADER_SOURCE_EXTENSIONS ".jinja")
 
 set(IVULK_ASSETS_DIR "${IncredibleVulk_SOURCE_DIR}/assets")
 set(IVULK_SHADERLIB_DIR "${IVULK_ASSETS_DIR}/shaderlib")
@@ -21,14 +24,11 @@ macro(ProcessNormalResource)
     set(OUT "${CMAKE_CURRENT_BINARY_DIR}/${AssetSubdir}/${OUT}/${FNAME}")
 
     add_custom_command(
-            COMMENT "Moving updated resource file '${FNAME}'"
-            OUTPUT ${OUT}
-            DEPENDS ${CUR_RESOURCE}
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                ${TMP_DIR}
-            COMMAND ${CMAKE_COMMAND} -E copy_if_different
-                ${CUR_RESOURCE}
-                ${OUT}
+        COMMENT "Moving updated resource file '${FNAME}'"
+        OUTPUT ${OUT}
+        DEPENDS ${CUR_RESOURCE}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${TMP_DIR}
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CUR_RESOURCE} ${OUT}
     )
 
     list(APPEND TMP_RESOURCE_LIST ${CUR_RESOURCE} ${OUT})
@@ -37,27 +37,41 @@ endmacro()
 macro(ProcessShaderResource)
     set(TMP_DIR ${CMAKE_CURRENT_BINARY_DIR}/${AssetSubdir}/${OUT})
     get_filename_component(INPUT_DIR ${CUR_RESOURCE} DIRECTORY)
-    set(TEMP_OUT "${PROJECT_BINARY_DIR}/${AssetSubdir}/${OUT}/tmp/${FNAME}")
-    set(OUT "${PROJECT_BINARY_DIR}/${AssetSubdir}/${OUT}/${FNAME}.spv")
 
-    add_custom_command(
-        OUTPUT ${OUT} ${TEMP_OUT}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${TMP_DIR}
-        COMMAND ${Python3_EXECUTABLE} ${IVULK_TEMPLATE_TOOL_SCRIPT} -o "${TEMP_OUT}" -I "${IVULK_SHADERLIB_DIR}" -I "${INPUT_DIR}" "${CUR_RESOURCE}"
-        COMMAND ${GLSLC_EXECUTABLE} --target-env=vulkan -o "${OUT}" "${TEMP_OUT}"
-        WORKING_DIRECTORY ${IncredibleVulk_SOURCE_DIR}
-        DEPENDS ${CUR_RESOURCE} ${Target}
-    )
+    if(${EXT} STREQUAL ".jinja")
+        get_filename_component(FNAME ${FNAME} NAME_WLE)
+    endif()
+    get_filename_component(TMP_EXT ${FNAME} LAST_EXT)
+    if(NOT ${TMP_EXT} STREQUAL ".glsl")
+        set(TEMP_OUT "${PROJECT_BINARY_DIR}/${AssetSubdir}/${OUT}/tmp/${FNAME}")
+        set(OUT "${PROJECT_BINARY_DIR}/${AssetSubdir}/${OUT}/${FNAME}.spv")
 
-    list(APPEND TMP_RESOURCE_LIST ${CUR_RESOURCE} ${OUT} ${TEMP_OUT})
+        add_custom_command(
+            OUTPUT ${OUT} ${TEMP_OUT}
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${TMP_DIR}
+            COMMAND
+                ${Python3_EXECUTABLE} ${IVULK_TEMPLATE_TOOL_SCRIPT} -o
+                "${TEMP_OUT}" -I "${IVULK_SHADERLIB_DIR}" -I "${INPUT_DIR}"
+                "${CUR_RESOURCE}"
+            COMMAND ${GLSLC_EXECUTABLE} --target-env=vulkan -o "${OUT}"
+                    "${TEMP_OUT}"
+            WORKING_DIRECTORY ${IncredibleVulk_SOURCE_DIR}
+            DEPENDS ${CUR_RESOURCE} ${Target}
+        )
+
+        list(APPEND TMP_RESOURCE_LIST ${CUR_RESOURCE} ${OUT} ${TEMP_OUT})
+    endif()
 endmacro()
 
 # Arguments:
-#   TargetName: The name of the original target to process content for
-#   TargetSuffix: The suffix to add to `TargetName` when creating the content target
-#   AssetSubdir: The current source subdirectory that contain s the assets
+#
+# * TargetName: The name of the original target to process content for
+# * TargetSuffix: The suffix to add to `TargetName` when creating the content
+#   target
+# * AssetSubdir: The current source subdirectory that contain s the assets
+#
 function(ConfigureContent TargetName TargetSuffix AssetSubdir)
-    if (IVULK_BUILD_CONTENT)
+    if(IVULK_BUILD_CONTENT)
 
         set(TMP_CONTENT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${AssetSubdir})
 
@@ -65,7 +79,7 @@ function(ConfigureContent TargetName TargetSuffix AssetSubdir)
         file(GLOB_RECURSE COMMON_CONTENT "${IVULK_ASSETS_DIR}/*.*")
         set(TMP_RESOURCE_LIST "")
 
-        foreach (CUR_RESOURCE ${PROJ_CONTENT})
+        foreach(CUR_RESOURCE ${PROJ_CONTENT})
             get_filename_component(FNAME ${CUR_RESOURCE} NAME)
             get_filename_component(DIR ${CUR_RESOURCE} DIRECTORY)
             get_filename_component(EXT ${CUR_RESOURCE} LAST_EXT)
@@ -73,23 +87,25 @@ function(ConfigureContent TargetName TargetSuffix AssetSubdir)
 
             set(OUT "")
 
-            while (NOT ${DIRNAME} STREQUAL ${AssetSubdir})
+            while(NOT ${DIRNAME} STREQUAL ${AssetSubdir})
                 get_filename_component(PATH_COMPONENT ${DIR} NAME)
                 set(OUT "${PATH_COMPONENT}/${OUT}")
                 get_filename_component(DIR ${DIR} DIRECTORY)
                 get_filename_component(DIRNAME ${DIR} NAME)
-            endwhile ()
+            endwhile()
 
             list(FIND IVULK_SHADER_SOURCE_EXTENSIONS ${EXT} TMP_IS_SHADER)
 
-            if (TMP_IS_SHADER EQUAL -1)
-                ProcessNormalResource()
+            if(TMP_IS_SHADER EQUAL -1)
+                processnormalresource()
             else()
-                ProcessShaderResource()
+                processshaderresource()
             endif()
 
-        endforeach ()
-        add_custom_target(${TargetName}${TargetSuffix} ALL DEPENDS ${TMP_RESOURCE_LIST})
+        endforeach()
+        add_custom_target(
+            ${TargetName}${TargetSuffix} ALL DEPENDS ${TMP_RESOURCE_LIST}
+        )
     else()
         add_custom_target(${TargetName} ALL)
     endif()

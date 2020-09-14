@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <algorithm>
 #include <initializer_list>
 #include <iomanip>

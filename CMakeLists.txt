@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.15)
-project(IncredibleVulk VERSION 0.1.0 LANGUAGES CXX)
+project(
+    IncredibleVulk
+    VERSION 0.1.0
+    LANGUAGES CXX
+)
 
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
@@ -11,12 +15,21 @@ set(IVULK_EXTERN_DIR "${PROJECT_SOURCE_DIR}/extern")
 
 include(GitSubmodules)
 
-set(BUILD_SHARED_LIBS ON CACHE BOOL "")
+set(BUILD_SHARED_LIBS
+    ON
+    CACHE BOOL ""
+)
+
 ######################################################################
 #                        Build Configuration                         #
 ######################################################################
 
-option(IVULK_DOWNLOAD_MISSING "Download missing dependencies. Otherwise build will fail with missing dependencies." ON)
+option(
+    IVULK_DOWNLOAD_MISSING
+    "Download missing dependencies. Otherwise build will fail with missing dependencies."
+    ON
+)
+option(IVULK_BUILD_SHARED "Enable build a shared library." ON)
 option(IVULK_BUILD_EXAMPLES "Build Incredible Vulk example applications." ON)
 
 ######################################################################
@@ -35,16 +48,23 @@ include(ProcessContent)
 
 # =================== SDL2 ==================== #
 
-set(SDL_STATIC ON CACHE BOOL "" FORCE)
-set(SDL_SHARED OFF CACHE BOOL "" FORCE)
-set(SDL_STATIC_PIC ON CACHE BOOL "")
+set(SDL_STATIC
+    ON
+    CACHE BOOL "" FORCE
+)
+set(SDL_SHARED
+    OFF
+    CACHE BOOL "" FORCE
+)
+set(SDL_STATIC_PIC
+    ON
+    CACHE BOOL ""
+)
 add_subdirectory(extern/SDL2)
 
 ######################################################################
 #                              Targets                               #
 ######################################################################
-
-
 
 # ================ Main Target ================ #
 

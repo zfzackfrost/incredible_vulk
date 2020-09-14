@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/image.hpp>
 #include <ivulk/core/sampler.hpp>
 

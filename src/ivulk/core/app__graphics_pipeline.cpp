@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/app.hpp>
 #include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/utils/messages.hpp>

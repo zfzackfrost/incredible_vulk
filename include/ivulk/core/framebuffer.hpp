@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/image.hpp>
 #include <ivulk/core/vulkan_resource.hpp>

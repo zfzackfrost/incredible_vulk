@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/app.hpp>
 #include <ivulk/utils/messages.hpp>
 
@@ -72,9 +75,8 @@ namespace ivulk {
 
     void App::drawFrame()
     {
-        vkQueueWaitIdle(state.vk.queues.graphics);
+        vkWaitForFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
-        m_currentFrame = 0;
         uint32_t imageIndex;
 
         auto result = vkAcquireNextImageKHR(state.vk.device,
@@ -139,6 +141,6 @@ namespace ivulk {
 
         m_currentFrame = (m_currentFrame + 1) % m_initArgs.vk.maxFramesInFlight;
 
-        vkQueueWaitIdle(state.vk.queues.present);
+        // vkQueueWaitIdle(state.vk.queues.present);
     }
 } // namespace ivulk

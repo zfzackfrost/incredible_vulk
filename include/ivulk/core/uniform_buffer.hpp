@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/buffer.hpp>
 #include <ivulk/core/shader_stage.hpp>
 

@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <vulkan/vulkan.h>
 
 #include <ivulk/core/app.hpp>

@@ -1,8 +1,8 @@
-{% extends "lib/lighting/simple.frag" %}
+{% extends "lib/lighting/simple.frag.jinja" %}
 
 {% block libs %}
     {{ super() }}
-    {% include "lib/math.glsl" %}
+    {% include "lib/math.glsl.jinja" %}
 {% endblock %}
 
 {% block uniforms %}
@@ -23,7 +23,7 @@
 
 {% block post %}
 
-{% include "lib/lighting/normalmap.glsl" %}
+{% include "lib/lighting/normalmap.glsl.jinja" %}
 
 {{ super() }}
 {% endblock %}

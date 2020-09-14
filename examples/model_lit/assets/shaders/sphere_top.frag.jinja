@@ -1,4 +1,4 @@
-{% extends "lib/lighting/simple.frag" %}
+{% extends "lib/lighting/simple.frag.jinja" %}
 {% block uniforms %}
     {{ super() }}
 {% endblock %}
@@ -11,7 +11,7 @@
     return 8.0;
 {% endblock %}
 {% block matDiffuse -%}
-    return vec3(0.05, 0.1, 1.0);
+    return vec3(1.0, 0.05, 0.05);
 {%- endblock %}
 {% block matSpecular -%}
     return vec3(0.55);

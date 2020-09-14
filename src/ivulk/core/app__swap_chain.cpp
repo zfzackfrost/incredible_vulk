@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/app.hpp>
 
 #include <ivulk/utils/format.hpp>
@@ -31,12 +34,12 @@ namespace ivulk {
     }
     VkPresentModeKHR App::chooseVkPresentMode(const std::vector<VkPresentModeKHR>& supportedModes)
     {
-        auto idealMatcher = [](VkPresentModeKHR mode) -> bool {
-            return mode == VK_PRESENT_MODE_IMMEDIATE_KHR;
-        };
-        auto ideal = std::find_if(supportedModes.begin(), supportedModes.end(), idealMatcher);
-        if (ideal != supportedModes.end())
-            return *ideal;
+        // auto idealMatcher = [](VkPresentModeKHR mode) -> bool {
+            // return mode == VK_PRESENT_MODE_IMMEDIATE_KHR;
+        // };
+        // auto ideal = std::find_if(supportedModes.begin(), supportedModes.end(), idealMatcher);
+        // if (ideal != supportedModes.end())
+            // return *ideal;
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
@@ -230,7 +233,7 @@ namespace ivulk {
 
     void App::cleanupVkSwapChain()
     {
-        cleanup(true);
+        vkDeviceWaitIdle(state.vk.device);
         if (state.vk.swapChain.depthImage)
             state.vk.swapChain.depthImage->destroy();
 
@@ -240,6 +243,7 @@ namespace ivulk {
         vkDestroySwapchainKHR(state.vk.device, state.vk.swapChain.sc, nullptr);
 
         vkDestroyDescriptorPool(state.vk.device, state.vk.descriptor.pool, nullptr);
+        cleanup(true);
     }
 
     void App::recreateVkSwapChain()

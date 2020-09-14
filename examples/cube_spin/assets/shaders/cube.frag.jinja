@@ -9,7 +9,7 @@ layout(location = 1) in vec3 vertexColor;
 layout (binding = 1) uniform sampler2D tex;
 
 
-{% include "cube.common.glsl" %}
+{% include "cube.common.glsl.jinja" %}
 
 void main() {
     vec3 base = texture(tex, texCoords).rgb;

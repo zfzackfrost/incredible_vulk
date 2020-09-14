@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/app.hpp>
 
 #include <ivulk/config.hpp>
@@ -6,6 +9,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
+#include <vulkan/vulkan.hpp>
 
 #include <vector>
 
@@ -89,6 +93,8 @@ namespace ivulk {
         }
 
         vkDeviceWaitIdle(state.vk.device);
+        vkQueueWaitIdle(state.vk.queues.present);
+        vkQueueWaitIdle(state.vk.queues.graphics);
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -130,6 +136,7 @@ namespace ivulk {
 
     void App::appCleanup()
     {
+
         // Run subclass cleanup
         cleanup();
 
@@ -143,10 +150,10 @@ namespace ivulk {
         for (auto fen : state.vk.sync.inFlightFences)
             vkDestroyFence(state.vk.device, fen, nullptr);
 
-        cleanupVkSwapChain();
-
         // Destroy command pools
         vkDestroyCommandPool(state.vk.device, state.vk.cmd.gfxPool, nullptr);
+
+        cleanupVkSwapChain();
 
         // Destroy VMA allocator
         vmaDestroyAllocator(state.vk.allocator);

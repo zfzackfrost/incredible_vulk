@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/utils/format.hpp>
 
 #include <ivulk/core/app.hpp>

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/glm.hpp>
 #include <ivulk/render/priorities.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>

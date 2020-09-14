@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <boost/parameter.hpp>
 
 namespace ivulk {

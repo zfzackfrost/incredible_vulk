@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/command_buffer.hpp>
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/queue_families.hpp>

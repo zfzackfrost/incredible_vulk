@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <iostream>
 #include <string>
 #include <vulkan/vulkan.h>

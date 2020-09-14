@@ -8,7 +8,7 @@ layout(location = 0) out vec4 fColor;
 
 layout(binding = 1) uniform sampler2D tex;
 
-{% include "texture_3d.common.glsl" %}
+{% include "texture_3d.common.glsl.jinja" %}
 
 void main() {
     vec4 s = texture(tex, texCoords);

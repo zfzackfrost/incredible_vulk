@@ -1,3 +1,6 @@
+#define IVULK_SOURCE
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/image.hpp>
 
 #include <ivulk/core/app.hpp>

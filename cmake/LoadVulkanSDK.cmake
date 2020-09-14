@@ -9,14 +9,16 @@ find_package(Vulkan REQUIRED)
 ######################################################################
 
 get_filename_component(TMP ${Vulkan_INCLUDE_DIR} DIRECTORY)
-set(Vulkan_ROOT_DIR "${TMP}" CACHE PATH "Vulkan SDK root directory.")
+set(Vulkan_ROOT_DIR
+    "${TMP}"
+    CACHE PATH "Vulkan SDK root directory."
+)
 
-find_program(GLSLC_EXECUTABLE
+find_program(
+    GLSLC_EXECUTABLE
     NAMES glslc
     PATHS ${Vulkan_ROOT_DIR}
-    PATH_SUFFIXES bin Bin Bin32
-    REQUIRED
-    )
+    PATH_SUFFIXES bin Bin Bin32 REQUIRED
+)
 
 message(STATUS "Found glslc: '${GLSLC_EXECUTABLE}'")
-

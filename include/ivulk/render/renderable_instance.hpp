@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/render/renderable.hpp>
 #include <ivulk/render/transform.hpp>
 #include <ivulk/utils/keywords.hpp>

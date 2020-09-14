@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <ivulk/config.hpp>
+
 #include <ivulk/core/app_state.hpp>
 #include <ivulk/core/command_buffer.hpp>
 #include <ivulk/core/event.hpp>
@@ -160,6 +162,8 @@ namespace ivulk {
         AppState state;
 
     private:
+        friend class Renderer;
+
         InitArgs m_initArgs;
         std::size_t m_currentFrame = 0;
 
