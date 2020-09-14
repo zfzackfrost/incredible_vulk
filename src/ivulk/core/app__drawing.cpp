@@ -75,6 +75,7 @@ namespace ivulk {
 
     void App::drawFrame()
     {
+        vkQueueWaitIdle(state.vk.queues.graphics);
         vkWaitForFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
         uint32_t imageIndex;

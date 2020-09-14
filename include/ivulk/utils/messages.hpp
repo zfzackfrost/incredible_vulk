@@ -11,7 +11,7 @@
 
 #include <iostream>
 #include <string>
-#include <vulkan/vulkan.h>
+#include <ivulk/vk.hpp>
 
 namespace ivulk::utils {
 

@@ -5,7 +5,7 @@
 
 #include <ivulk/core/app.hpp>
 
-#include <vulkan/vulkan.h>
+#include <ivulk/vk.hpp>
 
 namespace ivulk {
     Renderer::Renderer(App* ownerApp)

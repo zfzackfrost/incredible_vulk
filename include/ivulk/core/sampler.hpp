@@ -11,7 +11,7 @@
 
 #include <ivulk/core/shader_stage.hpp>
 #include <ivulk/core/vulkan_resource.hpp>
-#include <vulkan/vulkan.h>
+#include <ivulk/vk.hpp>
 
 #include <optional>
 

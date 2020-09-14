@@ -16,7 +16,7 @@
 #include <ivulk/core/framebuffer.hpp>
 
 #include <SDL2/SDL.h>
-#include <vulkan/vulkan.h>
+#include <ivulk/vk.hpp>
 
 #include <string>
 #include <vector>

@@ -13,7 +13,7 @@
 #include <ivulk/core/image.hpp>
 #include <ivulk/core/vulkan_resource.hpp>
 
-#include <vulkan/vulkan.h>
+#include <ivulk/vk.hpp>
 
 #include <variant>
 

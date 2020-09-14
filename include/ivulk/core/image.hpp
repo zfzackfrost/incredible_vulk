@@ -9,7 +9,7 @@
 
 #include <ivulk/config.hpp>
 
-#include <vulkan/vulkan.h>
+#include <ivulk/vk.hpp>
 
 #include <ivulk/core/vma.hpp>
 #include <ivulk/core/vulkan_resource.hpp>

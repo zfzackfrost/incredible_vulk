@@ -34,12 +34,12 @@ namespace ivulk {
     }
     VkPresentModeKHR App::chooseVkPresentMode(const std::vector<VkPresentModeKHR>& supportedModes)
     {
-        // auto idealMatcher = [](VkPresentModeKHR mode) -> bool {
-            // return mode == VK_PRESENT_MODE_IMMEDIATE_KHR;
-        // };
-        // auto ideal = std::find_if(supportedModes.begin(), supportedModes.end(), idealMatcher);
-        // if (ideal != supportedModes.end())
-            // return *ideal;
+        auto idealMatcher = [](VkPresentModeKHR mode) -> bool {
+            return mode == VK_PRESENT_MODE_IMMEDIATE_KHR;
+        };
+        auto ideal = std::find_if(supportedModes.begin(), supportedModes.end(), idealMatcher);
+        if (ideal != supportedModes.end())
+            return *ideal;
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
