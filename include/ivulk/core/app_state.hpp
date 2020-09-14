@@ -11,6 +11,7 @@
 #include <ivulk/core/graphics_pipeline.hpp>
 #include <ivulk/core/queue_families.hpp>
 #include <ivulk/core/vma.hpp>
+#include <ivulk/core/framebuffer.hpp>
 
 #include <SDL2/SDL.h>
 #include <vulkan/vulkan.h>
@@ -84,7 +85,7 @@ namespace ivulk {
                 VkSwapchainKHR sc = VK_NULL_HANDLE;
                 std::vector<VkImage> images;
                 std::vector<VkImageView> imageViews;
-                std::vector<VkFramebuffer> framebuffers;
+                std::vector<Framebuffer::Ptr> framebuffers;
                 VkFormat format;
                 VkExtent2D extent;
                 Image::Ptr depthImage;

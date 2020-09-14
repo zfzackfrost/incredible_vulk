@@ -206,23 +206,14 @@ namespace ivulk {
             auto& extent = swapChain.extent;
             for (std::size_t i = 0; i < swapChain.imageViews.size(); ++i)
             {
-                std::vector<VkImageView> attachments = {swapChain.imageViews[i],
-                                                        swapChain.depthImage->getImageView()};
-                VkFramebufferCreateInfo createInfo {
-                    .sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-                    .renderPass      = pipeline->getRenderPass(),
-                    .attachmentCount = static_cast<uint32_t>(attachments.size()),
-                    .pAttachments    = attachments.data(),
+                FramebufferInfo createInfo {
+                    .renderContext      = pipeline,
+                    .attachments = {swapChain.imageViews[i],
+                                                        swapChain.depthImage},
                     .width           = extent.width,
                     .height          = extent.height,
-                    .layers          = 1,
                 };
-                if (vkCreateFramebuffer(state.vk.device, &createInfo, nullptr, &swapChain.framebuffers[i])
-                    != VK_SUCCESS)
-                {
-                    throw std::runtime_error(
-                        utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan framebuffers"));
-                }
+                swapChain.framebuffers[i] = Framebuffer::create(state.vk.device, createInfo);
             }
             if (getPrintDbg())
             {
@@ -243,10 +234,7 @@ namespace ivulk {
         if (state.vk.swapChain.depthImage)
             state.vk.swapChain.depthImage->destroy();
 
-        for (auto framebuffer : state.vk.swapChain.framebuffers)
-        {
-            vkDestroyFramebuffer(state.vk.device, framebuffer, nullptr);
-        }
+        state.vk.swapChain.framebuffers.clear();
         for (const auto& imgV : state.vk.swapChain.imageViews)
             vkDestroyImageView(state.vk.device, imgV, nullptr);
         vkDestroySwapchainKHR(state.vk.device, state.vk.swapChain.sc, nullptr);

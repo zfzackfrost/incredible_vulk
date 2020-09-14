@@ -51,7 +51,7 @@ namespace ivulk {
                 VkRenderPassBeginInfo renderPassInfo {
 					.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 					.renderPass = pipeline->getRenderPass(),
-					.framebuffer = fb[imageIndex],
+					.framebuffer = fb[imageIndex]->getFramebuffer(),
 					.renderArea = {
 						.offset = {0, 0},
 						.extent = scExtent,
