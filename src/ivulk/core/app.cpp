@@ -606,8 +606,13 @@ namespace ivulk {
         }
 
         // Get queue handles
-        vkGetDeviceQueue(state.vk.device, indices.graphics.value(), 0, &state.vk.queues.graphics);
-        vkGetDeviceQueue(state.vk.device, indices.present.value(), 0, &state.vk.queues.present);
+        {
+        VkQueue q;
+        vkGetDeviceQueue(state.vk.device, indices.graphics.value(), 0, &q);
+        state.vk.queues.graphics = vk::Queue(q);
+        vkGetDeviceQueue(state.vk.device, indices.present.value(), 0, &q);
+        state.vk.queues.present = vk::Queue(q);
+        }
     }
 
     void App::createVmaAllocator()

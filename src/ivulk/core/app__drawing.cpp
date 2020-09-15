@@ -75,7 +75,7 @@ namespace ivulk {
 
     void App::drawFrame()
     {
-        vkQueueWaitIdle(state.vk.queues.graphics);
+        state.vk.queues.graphics.waitIdle();
         vkWaitForFences(
             state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -107,40 +107,36 @@ namespace ivulk {
 
         state.vk.sync.imagesInFlight[imageIndex] = state.vk.sync.inFlightFences[m_currentFrame];
 
-        VkSemaphore signalSemaphores[]    = {state.vk.sync.renderFinishedSems[m_currentFrame]};
-        VkSemaphore waitSemaphores[]      = {state.vk.sync.imageAvailableSems[m_currentFrame]};
-        VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        VkSubmitInfo submitInfo {
-            .sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .waitSemaphoreCount   = 1,
-            .pWaitSemaphores      = waitSemaphores,
-            .pWaitDstStageMask    = waitStages,
-            .commandBufferCount   = 1,
-            .pCommandBuffers      = &cmdBuf0,
-            .signalSemaphoreCount = 1,
-            .pSignalSemaphores    = signalSemaphores,
-        };
+        vk::Semaphore signalSemaphores[]    = {state.vk.sync.renderFinishedSems[m_currentFrame]};
+        vk::Semaphore waitSemaphores[]      = {state.vk.sync.imageAvailableSems[m_currentFrame]};
+        vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+        vk::SubmitInfo submitInfo {};
+        submitInfo.setWaitSemaphoreCount(1);
+        submitInfo.setPWaitSemaphores(waitSemaphores);
+        submitInfo.setPWaitDstStageMask(waitStages);
+        submitInfo.setCommandBufferCount(1);
+        submitInfo.setPCommandBuffers(&_cmdBuf0);
+        submitInfo.setSignalSemaphoreCount(1);
+        submitInfo.setPSignalSemaphores(signalSemaphores);
 
         vkResetFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame]);
-        if (vkQueueSubmit(
-                state.vk.queues.graphics, 1, &submitInfo, state.vk.sync.inFlightFences[m_currentFrame])
-            != VK_SUCCESS)
+
+        auto iff = vk::Fence(state.vk.sync.inFlightFences[m_currentFrame]);
+        if (state.vk.queues.graphics.submit(1, &submitInfo, iff) != vk::Result::eSuccess)
         {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CMD", "Failed to submit Vulkan draw command buffer"));
         }
 
-        VkSwapchainKHR swapChains[] = {state.vk.swapChain.sc};
-        VkPresentInfoKHR presentInfo {
-            .sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores    = signalSemaphores,
-            .swapchainCount     = 1,
-            .pSwapchains        = swapChains,
-            .pImageIndices      = &imageIndex,
-        };
+        vk::SwapchainKHR swapChains[] = {state.vk.swapChain.sc};
+        vk::PresentInfoKHR presentInfo{};
+        presentInfo.setWaitSemaphoreCount(1);
+        presentInfo.setPWaitSemaphores(signalSemaphores);
+        presentInfo.setSwapchainCount(1);
+        presentInfo.setPSwapchains(swapChains);
+        presentInfo.setPImageIndices(&imageIndex);
 
-        vkQueuePresentKHR(state.vk.queues.present, &presentInfo);
+        state.vk.queues.present.presentKHR(&presentInfo);
 
         m_currentFrame = (m_currentFrame + 1) % m_initArgs.vk.maxFramesInFlight;
 

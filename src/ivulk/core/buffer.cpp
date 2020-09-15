@@ -12,7 +12,7 @@ namespace ivulk {
         auto state     = App::current()->getState();
         auto allocator = state.vk.allocator;
 
-        vk::BufferCreateInfo bufferInfo{};
+        vk::BufferCreateInfo bufferInfo {};
         bufferInfo.setSize(info.size);
         bufferInfo.setUsage(info.usage);
         bufferInfo.setSharingMode(info.sharingMode);
@@ -22,7 +22,7 @@ namespace ivulk {
             .usage = info.memoryMode,
         };
         VkBufferCreateInfo bi = bufferInfo;
-        VmaAllocation alloc = VK_NULL_HANDLE;
+        VmaAllocation alloc   = VK_NULL_HANDLE;
         if (vmaCreateBuffer(allocator, &bi, &allocInfo, &buffer, &alloc, nullptr) != VK_SUCCESS)
         {
             throw std::runtime_error(utils::makeErrorMessage("VK::CREATE", "Failed to create Vulkan buffer"));
@@ -78,7 +78,7 @@ namespace ivulk {
         auto state = App::current()->getState();
         if (auto sb = srcBuf.lock())
         {
-            vk::BufferCopy cpyRegion{};
+            vk::BufferCopy cpyRegion {};
             cpyRegion.setSrcOffset(0);
             cpyRegion.setDstOffset(0);
             cpyRegion.setSize(size);
@@ -87,14 +87,16 @@ namespace ivulk {
                                                   {
                                                       .cmdPool = state.vk.cmd.gfxPool,
                                                   });
-            auto cb0     = cmdBufs->getCmdBuffer(0);
+
+            auto cb0 = cmdBufs->getCmdBuffer(0);
+
             cmdBufs->start(0, _flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
             cb0.copyBuffer(sb->getBuffer(), getBuffer(), 1, &cpyRegion);
             cmdBufs->finish();
-            
-            vk::Queue q(state.vk.queues.graphics);
-            m_count = sb->m_count;
-            vk::SubmitInfo submitInfo{};
+
+            vk::Queue q = state.vk.queues.graphics;
+            m_count     = sb->m_count;
+            vk::SubmitInfo submitInfo {};
             submitInfo.setCommandBufferCount(1);
             submitInfo.setPCommandBuffers(&cb0);
 

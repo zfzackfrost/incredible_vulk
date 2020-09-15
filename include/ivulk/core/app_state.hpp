@@ -75,8 +75,8 @@ namespace ivulk {
 
             struct
             {
-                VkQueue graphics = VK_NULL_HANDLE;
-                VkQueue present  = VK_NULL_HANDLE;
+                vk::Queue graphics{nullptr};
+                vk::Queue present{nullptr};
             } queues;
 
             /**
