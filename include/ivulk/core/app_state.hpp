@@ -48,10 +48,11 @@ namespace ivulk {
         struct
         {
             VkInstance instance                     = VK_NULL_HANDLE; ///< The Vulkan instance
+            vk::Device device{nullptr};
+            vk::PhysicalDevice physicalDevice{nullptr};
+
             VkSurfaceKHR surface                    = VK_NULL_HANDLE;
             VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
-            VkPhysicalDevice physicalDevice         = VK_NULL_HANDLE;
-            VkDevice device                         = VK_NULL_HANDLE;
             std::vector<const char*> requiredLayers;
             VmaAllocator allocator = VK_NULL_HANDLE;
 

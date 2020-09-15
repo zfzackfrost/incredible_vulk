@@ -6,6 +6,7 @@
 #include <ivulk/config.hpp>
 #include <ivulk/utils/messages.hpp>
 #include <ivulk/utils/table_print.hpp>
+#include <ivulk/utils/containers.hpp>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
@@ -546,20 +547,18 @@ namespace ivulk {
     {
         float queuePriority        = 1.0f;
         QueueFamilyIndices indices = findVkQueueFamilies(state.vk.physicalDevice);
-        std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+        std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 
         // Collect queue create infos
         {
-            VkDeviceQueueCreateInfo createInfoBase {
-                .sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-                .queueCount       = 1,
-                .pQueuePriorities = &queuePriority,
-            };
+            vk::DeviceQueueCreateInfo createInfoBase;
+            createInfoBase.setQueueCount(1)
+                .setPQueuePriorities(&queuePriority);
             auto uniqueQueueFamilies = indices.getUniqueFamilies();
             for (const auto& i : uniqueQueueFamilies)
             {
                 auto createInfo             = createInfoBase;
-                createInfo.queueFamilyIndex = i;
+                createInfo.setQueueFamilyIndex(i);
                 queueCreateInfos.push_back(createInfo);
             }
         }
@@ -568,22 +567,19 @@ namespace ivulk {
 
         // ============= Collect features ============== //
 
-        VkPhysicalDeviceFeatures supportedFeatures;
-        vkGetPhysicalDeviceFeatures(state.vk.physicalDevice, &supportedFeatures);
+        vk::PhysicalDeviceFeatures supportedFeatures = state.vk.physicalDevice.getFeatures();
 
-        VkPhysicalDeviceFeatures deviceFeatures {};
-        deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
+        vk::PhysicalDeviceFeatures deviceFeatures {};
+        deviceFeatures.setSamplerAnisotropy(supportedFeatures.samplerAnisotropy);
 
         // =========== Create logical device =========== //
 
-        VkDeviceCreateInfo createInfo {
-            .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size()),
-            .pQueueCreateInfos       = queueCreateInfos.data(),
-            .enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size()),
-            .ppEnabledExtensionNames = deviceExtensions.data(),
-            .pEnabledFeatures        = &deviceFeatures,
-        };
+        vk::DeviceCreateInfo createInfo {};
+        createInfo.setQueueCreateInfoCount(queueCreateInfos.size())
+            .setPQueueCreateInfos(queueCreateInfos.data())
+            .setEnabledExtensionCount(deviceExtensions.size())
+            .setPpEnabledExtensionNames(deviceExtensions.data())
+            .setPEnabledFeatures(&deviceFeatures);
         if (m_initArgs.vk.bEnableValidation)
         {
             createInfo.enabledLayerCount   = static_cast<uint32_t>(state.vk.requiredLayers.size());
@@ -593,26 +589,26 @@ namespace ivulk {
         {
             createInfo.enabledLayerCount = 0;
         }
-
-        if (vkCreateDevice(state.vk.physicalDevice, &createInfo, nullptr, &state.vk.device) != VK_SUCCESS)
+        
+        auto r = state.vk.physicalDevice.createDevice(createInfo);
+        if(r.result != vk::Result::eSuccess)
         {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CREATE", "Failed to create logical device"));
         }
-        else if (getPrintDbg())
+        else
         {
-            std::cout << utils::makeSuccessMessage("VK::CREATE", "Created the Vulkan logical device")
-                      << std::endl;
+            state.vk.device = r.value;
+            if (getPrintDbg())
+            {
+                std::cout << utils::makeSuccessMessage("VK::CREATE", "Created the Vulkan logical device")
+                          << std::endl;
+            }
         }
 
         // Get queue handles
-        {
-        VkQueue q;
-        vkGetDeviceQueue(state.vk.device, indices.graphics.value(), 0, &q);
-        state.vk.queues.graphics = vk::Queue(q);
-        vkGetDeviceQueue(state.vk.device, indices.present.value(), 0, &q);
-        state.vk.queues.present = vk::Queue(q);
-        }
+        state.vk.queues.graphics = state.vk.device.getQueue(indices.graphics.value(), 0);
+        state.vk.queues.present = state.vk.device.getQueue(indices.present.value(), 0);
     }
 
     void App::createVmaAllocator()

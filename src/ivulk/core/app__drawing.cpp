@@ -81,18 +81,19 @@ namespace ivulk {
 
         uint32_t imageIndex;
 
-        auto result = vkAcquireNextImageKHR(state.vk.device,
-                                            state.vk.swapChain.sc,
-                                            UINT64_MAX,
-                                            state.vk.sync.imageAvailableSems[m_currentFrame],
-                                            VK_NULL_HANDLE,
-                                            &imageIndex);
+        auto result_acquire = state.vk.device.acquireNextImageKHR(
+            state.vk.swapChain.sc,
+            UINT64_MAX,
+            state.vk.sync.imageAvailableSems[m_currentFrame],
+            nullptr);
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        if (result_acquire.result == vk::Result::eErrorOutOfDateKHR)
         {
             recreateVkSwapChain();
             return;
         }
+        else
+            imageIndex = result_acquire.value;
 
         if (state.vk.sync.imagesInFlight[imageIndex] != VK_NULL_HANDLE)
         {
@@ -101,9 +102,8 @@ namespace ivulk {
         }
 
         createVkCommandBuffers(imageIndex);
-        auto cmdBufs            = state.vk.cmd.renderCmdBufs;
-        auto _cmdBuf0           = cmdBufs->getCmdBuffer(0);
-        VkCommandBuffer cmdBuf0 = _cmdBuf0;
+        auto cmdBufs = state.vk.cmd.renderCmdBufs;
+        auto cb0     = cmdBufs->getCmdBuffer(0);
 
         state.vk.sync.imagesInFlight[imageIndex] = state.vk.sync.inFlightFences[m_currentFrame];
 
@@ -111,30 +111,30 @@ namespace ivulk {
         vk::Semaphore waitSemaphores[]      = {state.vk.sync.imageAvailableSems[m_currentFrame]};
         vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
         vk::SubmitInfo submitInfo {};
-        submitInfo.setWaitSemaphoreCount(1);
-        submitInfo.setPWaitSemaphores(waitSemaphores);
-        submitInfo.setPWaitDstStageMask(waitStages);
-        submitInfo.setCommandBufferCount(1);
-        submitInfo.setPCommandBuffers(&_cmdBuf0);
-        submitInfo.setSignalSemaphoreCount(1);
-        submitInfo.setPSignalSemaphores(signalSemaphores);
+        submitInfo.setWaitSemaphoreCount(1)
+            .setPWaitSemaphores(waitSemaphores)
+            .setPWaitDstStageMask(waitStages)
+            .setCommandBufferCount(1)
+            .setPCommandBuffers(&cb0)
+            .setSignalSemaphoreCount(1)
+            .setPSignalSemaphores(signalSemaphores);
 
         vkResetFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame]);
 
         auto iff = vk::Fence(state.vk.sync.inFlightFences[m_currentFrame]);
-        if (state.vk.queues.graphics.submit(1, &submitInfo, iff) != vk::Result::eSuccess)
+        if (state.vk.queues.graphics.submit(submitInfo, iff) != vk::Result::eSuccess)
         {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CMD", "Failed to submit Vulkan draw command buffer"));
         }
 
         vk::SwapchainKHR swapChains[] = {state.vk.swapChain.sc};
-        vk::PresentInfoKHR presentInfo{};
-        presentInfo.setWaitSemaphoreCount(1);
-        presentInfo.setPWaitSemaphores(signalSemaphores);
-        presentInfo.setSwapchainCount(1);
-        presentInfo.setPSwapchains(swapChains);
-        presentInfo.setPImageIndices(&imageIndex);
+        vk::PresentInfoKHR presentInfo {};
+        presentInfo.setWaitSemaphoreCount(1)
+            .setPWaitSemaphores(signalSemaphores)
+            .setSwapchainCount(1)
+            .setPSwapchains(swapChains)
+            .setPImageIndices(&imageIndex);
 
         state.vk.queues.present.presentKHR(&presentInfo);
 
