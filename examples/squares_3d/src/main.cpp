@@ -222,16 +222,13 @@ protected:
 		};
     }
 
-    virtual int32_t rateDeviceSuitability(VkPhysicalDevice device) override
+    virtual int32_t rateDeviceSuitability(vk::PhysicalDevice device) override
     {
-        VkPhysicalDeviceProperties deviceProperties;
-        VkPhysicalDeviceFeatures deviceFeatures;
-        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+        auto deviceProperties = device.getProperties();
+        // auto deviceFeatures = device.getFeatures();
         int32_t result = 0;
-        if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+        if (deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
             result += 1000;
-        result += deviceProperties.limits.maxImageDimension2D;
         return result;
     }
 

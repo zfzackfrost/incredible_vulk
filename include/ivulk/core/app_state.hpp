@@ -47,7 +47,7 @@ namespace ivulk {
 		 */
         struct
         {
-            VkInstance instance                     = VK_NULL_HANDLE; ///< The Vulkan instance
+            vk::Instance instance{nullptr}; ///< The Vulkan instance
             vk::Device device{nullptr};
             vk::PhysicalDevice physicalDevice{nullptr};
 

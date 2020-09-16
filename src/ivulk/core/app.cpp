@@ -4,9 +4,9 @@
 #include <ivulk/core/app.hpp>
 
 #include <ivulk/config.hpp>
+#include <ivulk/utils/containers.hpp>
 #include <ivulk/utils/messages.hpp>
 #include <ivulk/utils/table_print.hpp>
-#include <ivulk/utils/containers.hpp>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_vulkan.h>
@@ -222,38 +222,40 @@ namespace ivulk {
         auto requiredExtensions = getRequiredVkExtensions();
         auto requiredLayers     = getRequiredVkLayers();
 
-        const VkApplicationInfo appInfo {
-            .sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-            .pNext              = nullptr,
-            .pApplicationName   = m_initArgs.appName.c_str(),
-            .applicationVersion = m_initArgs.appVersion.toVkVersion(),
-            .pEngineName        = "Incredible Vulk",
-            .engineVersion = VK_MAKE_VERSION(IVULK_VERSION_MAJOR, IVULK_VERSION_MINOR, IVULK_VERSION_PATCH),
-            .apiVersion    = VK_API_VERSION_1_0,
-        };
+        vk::ApplicationInfo appInfo {};
+        appInfo.setPApplicationName(m_initArgs.appName.c_str())
+            .setApplicationVersion(m_initArgs.appVersion.toVkVersion())
+            .setPEngineName("Incredible Vulk")
+            .setEngineVersion(VK_MAKE_VERSION(IVULK_VERSION_MAJOR, IVULK_VERSION_MINOR, IVULK_VERSION_PATCH))
+            .setApiVersion(VK_API_VERSION_1_0);
 
-        VkInstanceCreateInfo createInfo {
-            .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-            .pApplicationInfo        = &appInfo,
-            .enabledLayerCount       = static_cast<uint32_t>(requiredLayers.size()),
-            .ppEnabledLayerNames     = requiredLayers.data(),
-            .enabledExtensionCount   = static_cast<uint32_t>(requiredExtensions.size()),
-            .ppEnabledExtensionNames = requiredExtensions.data(),
-        };
+        vk::InstanceCreateInfo createInfo {};
+        createInfo.setPApplicationInfo(&appInfo)
+            .setEnabledLayerCount(requiredLayers.size())
+            .setPpEnabledLayerNames(requiredLayers.data())
+            .setEnabledExtensionCount(requiredExtensions.size())
+            .setPpEnabledExtensionNames(requiredExtensions.data());
+
         if (m_initArgs.vk.bEnableValidation)
         {
             auto debugCreateInfo = makeVkDebugMessengerCreateInfo();
-            createInfo.pNext     = &debugCreateInfo;
+            createInfo.setPNext(&debugCreateInfo);
         }
 
-        if (vkCreateInstance(&createInfo, nullptr, &state.vk.instance) != VK_SUCCESS)
+        auto inst_result = vk::createInstance(createInfo);
+        if (inst_result.result != vk::Result::eSuccess)
         {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::INIT", "Failed to create the Vulkan instance"));
         }
-        else if (getPrintDbg())
+        else
         {
-            std::cout << utils::makeSuccessMessage("VK::INIT", " Created the Vulkan instance") << std::endl;
+            state.vk.instance = inst_result.value;
+            if (getPrintDbg())
+            {
+                std::cout << utils::makeSuccessMessage("VK::INIT", " Created the Vulkan instance")
+                          << std::endl;
+            }
         }
 
         state.vk.requiredLayers = std::move(requiredLayers);
@@ -261,17 +263,15 @@ namespace ivulk {
 
     void App::pickVkPhysicalDevice()
     {
-        uint32_t deviceCount = 0;
-        vkEnumeratePhysicalDevices(state.vk.instance, &deviceCount, nullptr);
-        if (deviceCount == 0)
+        auto _devices = state.vk.instance.enumeratePhysicalDevices();
+        if (_devices.result != vk::Result::eSuccess || _devices.value.empty())
         {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::HARDWARE", "Failed to find a Vulkan compatible GPU"));
         }
-        std::vector<VkPhysicalDevice> devices(deviceCount);
-        vkEnumeratePhysicalDevices(state.vk.instance, &deviceCount, devices.data());
+        auto devices = std::move(_devices.value);
 
-        std::multimap<int32_t, VkPhysicalDevice> scoredDevices;
+        std::multimap<int32_t, vk::PhysicalDevice> scoredDevices;
         for (auto& d : devices)
         {
             if (isDeviceSuitable(d))
@@ -281,7 +281,7 @@ namespace ivulk {
             }
         }
         if (scoredDevices.empty() || scoredDevices.rbegin()->first < 0
-            || scoredDevices.rbegin()->second == VK_NULL_HANDLE)
+            || !scoredDevices.rbegin()->second)
         {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::HARDWARE", "Failed to find a suitable GPU"));
@@ -291,36 +291,36 @@ namespace ivulk {
             state.vk.physicalDevice = scoredDevices.rbegin()->second;
             if (getPrintDbg())
             {
-                VkPhysicalDeviceProperties deviceProperties;
-                vkGetPhysicalDeviceProperties(state.vk.physicalDevice, &deviceProperties);
+                auto deviceProps = state.vk.physicalDevice.getProperties();
 
                 std::string description = "Picked physical device: `";
-                description += deviceProperties.deviceName + std::string {"`"};
+                description += deviceProps.deviceName.data() + std::string {"`"};
 
                 std::cout << utils::makeInfoMessage("VK::HARDWARE", description) << std::endl;
             }
         }
     }
 
-    bool App::checkDeviceExtensions(VkPhysicalDevice device)
+    bool App::checkDeviceExtensions(vk::PhysicalDevice device)
     {
-        uint32_t extensionCount;
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-        std::vector<VkExtensionProperties> extensions(extensionCount);
-        vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, extensions.data());
+        auto extensions = device.enumerateDeviceExtensionProperties();
+        if (extensions.result != vk::Result::eSuccess)
+        {
+            throw std::runtime_error(vk::to_string(extensions.result));
+        }
 
         auto deviceExtensions = getRequiredVkDeviceExtensions();
 
         std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
-        for (const auto& extProps : extensions)
+        for (const auto& extProps : extensions.value)
         {
-            requiredExtensions.erase(extProps.extensionName);
+            requiredExtensions.erase(extProps.extensionName.data());
         }
 
         return requiredExtensions.empty();
     }
 
-    bool App::isDeviceSuitable(VkPhysicalDevice device)
+    bool App::isDeviceSuitable(vk::PhysicalDevice device)
     {
         QueueFamilyIndices indices = findVkQueueFamilies(device);
         bool extensionsSupported   = checkDeviceExtensions(device);
@@ -552,12 +552,11 @@ namespace ivulk {
         // Collect queue create infos
         {
             vk::DeviceQueueCreateInfo createInfoBase;
-            createInfoBase.setQueueCount(1)
-                .setPQueuePriorities(&queuePriority);
+            createInfoBase.setQueueCount(1).setPQueuePriorities(&queuePriority);
             auto uniqueQueueFamilies = indices.getUniqueFamilies();
             for (const auto& i : uniqueQueueFamilies)
             {
-                auto createInfo             = createInfoBase;
+                auto createInfo = createInfoBase;
                 createInfo.setQueueFamilyIndex(i);
                 queueCreateInfos.push_back(createInfo);
             }
@@ -589,9 +588,9 @@ namespace ivulk {
         {
             createInfo.enabledLayerCount = 0;
         }
-        
+
         auto r = state.vk.physicalDevice.createDevice(createInfo);
-        if(r.result != vk::Result::eSuccess)
+        if (r.result != vk::Result::eSuccess)
         {
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::CREATE", "Failed to create logical device"));
@@ -608,7 +607,7 @@ namespace ivulk {
 
         // Get queue handles
         state.vk.queues.graphics = state.vk.device.getQueue(indices.graphics.value(), 0);
-        state.vk.queues.present = state.vk.device.getQueue(indices.present.value(), 0);
+        state.vk.queues.present  = state.vk.device.getQueue(indices.present.value(), 0);
     }
 
     void App::createVmaAllocator()

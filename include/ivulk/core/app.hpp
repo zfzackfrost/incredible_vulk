@@ -154,7 +154,7 @@ namespace ivulk {
          *
          * Pure Virtual.
          */
-        virtual int32_t rateDeviceSuitability(VkPhysicalDevice device) = 0;
+        virtual int32_t rateDeviceSuitability(vk::PhysicalDevice device) = 0;
 
         /**
          * @brief The application state
@@ -197,10 +197,10 @@ namespace ivulk {
         std::vector<const char*> getRequiredVkDeviceExtensions();
         std::vector<const char*> getRequiredVkLayers();
 
-        bool checkDeviceExtensions(VkPhysicalDevice device);
+        bool checkDeviceExtensions(vk::PhysicalDevice device);
 
         void pickVkPhysicalDevice();
-        bool isDeviceSuitable(VkPhysicalDevice device);
+        bool isDeviceSuitable(vk::PhysicalDevice device);
 
         SwapChainInfo querySwapChainInfo(VkPhysicalDevice device);
         VkSurfaceFormatKHR chooseVkSwapFormat(const std::vector<VkSurfaceFormatKHR>& supportedFormats);
