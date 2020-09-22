@@ -135,7 +135,7 @@ protected:
     {
         if (auto cb = cmdBuffer.lock())
         {
-            cb->clearAttachments(topPipeline, clearColor);
+            cb->clearAttachments(topPipeline, {.color = clearColor});
             scene->render(cb);
         }
     }

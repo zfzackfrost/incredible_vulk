@@ -93,7 +93,7 @@ namespace ivulk {
 
             auto cb0 = cmdBufs->getCmdBuffer(0);
 
-            cmdBufs->start(0, _flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+            cmdBufs->start({.index = 0u, .flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
             cb0.copyBuffer(sb->getBuffer(), getBuffer(), 1, &cpyRegion);
             cmdBufs->finish();
 

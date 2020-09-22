@@ -141,9 +141,9 @@ protected:
     {
         if (auto cb = cmdBuffer.lock())
         {
-            cb->clearAttachments(pipeline, clearColor);
+            cb->clearAttachments(pipeline, {.color = clearColor});
             cb->bindPipeline(pipeline);
-            cb->draw(_vertexBuffer = vertexBuffer, _indexBuffer = indexBuffer);
+            cb->draw({.vertexBuffer = vertexBuffer, .indexBuffer = indexBuffer});
         }
     }
 

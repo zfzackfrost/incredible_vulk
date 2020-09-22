@@ -49,7 +49,7 @@ namespace ivulk {
             clearValues[1].depthStencil = {1.0f, 0};
 
             {
-                cmdBufs->start(0);
+                cmdBufs->start({.index = 0u});
 
                 VkRenderPassBeginInfo renderPassInfo {
 					.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -82,10 +82,7 @@ namespace ivulk {
         uint32_t imageIndex;
 
         auto result_acquire = state.vk.device.acquireNextImageKHR(
-            state.vk.swapChain.sc,
-            UINT64_MAX,
-            state.vk.sync.imageAvailableSems[m_currentFrame],
-            nullptr);
+            state.vk.swapChain.sc, UINT64_MAX, state.vk.sync.imageAvailableSems[m_currentFrame], nullptr);
 
         if (result_acquire.result == vk::Result::eErrorOutOfDateKHR)
         {

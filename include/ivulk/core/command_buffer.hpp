@@ -24,12 +24,20 @@
 namespace ivulk {
     class Buffer;
     class GraphicsPipeline;
+
+    /**
+     * @brief Information for initializing a CommandBuffers resource
+     */
     struct CommandBuffersCreateInfo
     {
-        vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary;
-        vk::CommandPool cmdPool;
-        uint32_t count = 1;
+        vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary; ///< Vulkan command buffer level.
+        vk::CommandPool cmdPool; ///< The Vulkan command buffer pool to allocate from
+        uint32_t count = 1;      ///< The number of command buffers to allocate
     };
+
+    /**
+     * @brief A memory-managed resource for a group of Vulkan command buffers
+     */
     class CommandBuffers : public VulkanResource<CommandBuffers,
                                                  CommandBuffersCreateInfo,
                                                  vk::CommandPool,
@@ -40,82 +48,124 @@ namespace ivulk {
             : base_t(device, handles_t {pool, buffers})
         { }
 
+        /**
+         * @brief Get the Vulkan command pool used to allocate the command buffers.
+         */
         vk::CommandPool getCmdPool() { return getHandleAt<0>(); }
+
+        /**
+         * @brief Get a command buffer from this group by index.
+         *
+         * @param i The index of the command buffer to get
+         */
         vk::CommandBuffer getCmdBuffer(std::size_t i) { return getHandleAt<1>()[i]; }
+
+        /**
+         * @brief Get an STL vector of all the command buffers in this group.
+         */
         std::vector<vk::CommandBuffer> getCmdBuffers() { return getHandleAt<1>(); }
 
-        // clang-format off
-		BOOST_PARAMETER_MEMBER_FUNCTION((void), start, tag, 
-			(required
-				(index, (std::size_t))
-			)
-			(optional
-				(flags, (vk::CommandBufferUsageFlags), vk::CommandBufferUsageFlagBits::eSimultaneousUse)
-			)
-		)
-        // clang-format on
+        /**
+         * @brief Optional arguments for the `start` method.
+         */
+        struct StartCallInfo
         {
-            startImpl(index, flags);
-        }
+            std::size_t index; ///< The index of the command buffer to start recording to.
+            vk::CommandBufferUsageFlags flags = vk::CommandBufferUsageFlagBits::
+                eSimultaneousUse; ///< The Vulkan command buffer usage flags.
+        };
+        /** 
+         * @brief Set the current command buffer by index and start recording to it.
+         *
+         * @param callInfo The optional arguments structure.
+         */
+        void start(const StartCallInfo&& callInfo) { startImpl(callInfo.index, callInfo.flags); }
 
+        /**
+         * @brief Finish recording to the current command buffer
+         */
         void finish();
 
-        // clang-format off
-		BOOST_PARAMETER_MEMBER_FUNCTION((void), draw, tag, 
-			(optional
-				(vertexBuffer,  *, std::weak_ptr<Buffer>())
-				(indexBuffer,   *, std::weak_ptr<Buffer>())
-				(vertices,      *,                      0u)
-				(instances,     *,                      1u)
-				(firstVertex,   *,                      0u)
-				(firstInstance, *,                      0u)
-			)
-		)
-        // clang-format on
+        /**
+         * @brief Optional arguments for the `draw` method.
+         */
+        struct DrawCallInfo
         {
-            drawImpl(vertexBuffer, indexBuffer, vertices, instances, firstVertex, firstInstance);
+            std::weak_ptr<Buffer> vertexBuffer; ///< The vertex buffer to use for drawing
+            std::weak_ptr<Buffer> indexBuffer;  ///< The index buffer to use for drawing
+            uint32_t vertices      = 0u;        ///< Override the number of vertices to draw
+            uint32_t instances     = 1u;        ///< The number of instances for instanced rendering
+            uint32_t firstVertex   = 0u;        ///< The index of the first vertex to draw
+            uint32_t firstInstance = 0u;        ///< The index of the first instance to draw
+        };
+
+        /** 
+         * @brief Bind vertex/index buffers and draw from them.
+         *
+         * @param callInfo The optional arguments structure.
+         */
+        void draw(const DrawCallInfo&& callInfo)
+        {
+            drawImpl(callInfo.vertexBuffer,
+                     callInfo.indexBuffer,
+                     callInfo.vertices,
+                     callInfo.instances,
+                     callInfo.firstVertex,
+                     callInfo.firstInstance);
         }
 
-        // clang-format off
-		BOOST_PARAMETER_MEMBER_FUNCTION((void), clearAttachments, tag, 
-			(required
-				(pipeline, *)
-			)
-			(optional
-				(color, *, glm::vec4(0,0,0,1))
-			)
-		)
-        // clang-format on
+        /**
+         * @brief Optional arguments for the `clearAttachments` method.
+         */
+        struct ClearAttachmentsCallInfo
         {
-            clearAttachmentsImpl(pipeline, color);
+            glm::vec4 color            = {0, 0, 0, 1}; ///< The clear color
+            std::optional<float> depth = 0.0f;         ///< The clear depth, if any
+        };
+
+        /**
+         * @brief Clear the attachments for a graphics pipeline
+         *
+         * @param pipeline The pipeline we are working with
+         * @param callInfo The option arguments structure
+         */
+        void clearAttachments(std::weak_ptr<GraphicsPipeline> pipeline,
+                              const ClearAttachmentsCallInfo&& callInfo)
+        {
+            clearAttachmentsImpl(pipeline, callInfo.color);
         }
 
-        // clang-format off
-		BOOST_PARAMETER_MEMBER_FUNCTION((void), bindPipeline, tag, 
-			(required
-				(pipeline, *)
-			)
-		)
-        // clang-format on
-        {
-            bindPipelineImpl(pipeline);
-        }
+        /**
+         * @brief Bind a graphics pipeline
+         *
+         * @param pipeline The pipeline to bind
+         */
+        void bindPipeline(std::weak_ptr<GraphicsPipeline> pipeline) { bindPipelineImpl(pipeline); }
 
-        // clang-format off
-		BOOST_PARAMETER_MEMBER_FUNCTION((void), pushConstants, tag, 
-			(required
-				(data, *)
-                (layout, *)
-			)
-            (optional
-                (offset, *, 0u)
-                (size, *, 0u)
-                (stageFlags, *, E_ShaderStage::All)
-            )
-		)
-        // clang-format on
+        /**
+         * @brief Optional arguments structure for `pushConstants` method.
+         */
+        struct PushConstantsCallInfo
         {
-            pushConstantsImpl(data, layout, stageFlags, offset, size);
+            vk::DeviceSize offset
+                = 0u; ///< the start offset of the push constant range to update, in units of bytes
+            VkShaderStageFlags stageFlags = E_ShaderStage::
+                All; ///< the shader stages that will use the push constants in the updated range
+        };
+
+        /**
+         * @brief Update the values of push constants.
+         *
+         * @param data The data to update the push constants with
+         * @param layout The pipeline layout used to program the push constant updates
+         * @param size The size of the push constant range to update, in units of bytes
+         */
+        void pushConstants(const void* data,
+                           vk::PipelineLayout layout,
+                           vk::DeviceSize size,
+                           const PushConstantsCallInfo&& callInfo)
+        {
+            pushConstantsImpl(data, layout, callInfo.stageFlags, callInfo.offset, size);
         }
 
     private:

@@ -57,11 +57,11 @@ namespace ivulk {
                         auto p = pipeline.lock();
                         auto layout = p->getPipelineLayout();
                         c->bindPipeline(pipeline);
-                        c->pushConstants(&matrices, layout, _size = sizeof(MatricesPushConstants));
+                        c->pushConstants(&matrices, layout, sizeof(MatricesPushConstants), {});
                     }
                     Buffer::Ref vBuf = m->getVertexBuffer();
                     Buffer::Ref iBuf = m->getIndexBuffer();
-                    c->draw(_vertexBuffer = vBuf, _indexBuffer = iBuf);
+                    c->draw({.vertexBuffer = vBuf, .indexBuffer = iBuf});
                 }
             }
         }
