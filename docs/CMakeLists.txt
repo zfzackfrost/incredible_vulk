@@ -75,10 +75,12 @@ add_custom_command(
     DEPENDS
         # Sphinx docs files to track
         ${SPHINX_RST_FILES}
-        ${DOXYGEN_INDEX_XML}
+        Doxygen
     MAIN_DEPENDENCY ${SPHINX_SOURCE}/conf.py
     COMMENT "Generating documentation with Sphinx"
 )
 
 # Custom target for running Sphinx
-add_custom_target(Sphinx ALL DEPENDS ${SPHINX_INDEX_FILE})
+add_custom_target(Docs ALL DEPENDS ${SPHINX_INDEX_FILE})
+
+
