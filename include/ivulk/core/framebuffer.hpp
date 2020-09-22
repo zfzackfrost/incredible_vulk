@@ -18,19 +18,40 @@
 #include <variant>
 
 namespace ivulk {
-    
+
+    /**
+     * @brief Information for initializing a Framebuffer resource
+     */
     struct FramebufferInfo final
     {
+        /**
+         * @brief The render context
+         *
+         * The source used to retrieve a Vulkan render pass handle.
+         */
         std::variant<GraphicsPipeline::Ref, GraphicsPipeline::Ptr, vk::RenderPass> renderContext {};
+
+        /**
+         * @brief The framebuffer attachments
+         *
+         * Each vector element is used to retrieve a Vulkan image view handle.
+         */
         std::vector<std::variant<Image::Ref, Image::Ptr, vk::ImageView>> attachments;
-        uint32_t width  = 0u;
-        uint32_t height = 0u;
-        uint32_t layers = 1u;
+
+        uint32_t width  = 0u; ///< The framebuffer width
+        uint32_t height = 0u; ///< The fraembuffer height
+        uint32_t layers = 1u; ///< The number of layers in the framebuffer
     };
 
+    /**
+     * @brief A memory-managed resource for a Vulkan framebuffer
+     */
     class Framebuffer : public VulkanResource<Framebuffer, FramebufferInfo, vk::Framebuffer>
     {
     public:
+        /**
+         * @brief Get the Vulkan framebuffer handle
+         */
         vk::Framebuffer getFramebuffer() { return getHandleAt<0>(); }
 
     private:
