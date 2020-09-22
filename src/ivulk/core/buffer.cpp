@@ -73,11 +73,14 @@ namespace ivulk {
             m_count = *newCount;
     }
 
-    void Buffer::copyFromBuffer(Buffer::Ref srcBuf, VkDeviceSize size)
+    void Buffer::copyFromBuffer(Buffer::Ref srcBuf, VkDeviceSize size, bool copyCount)
     {
         auto state = App::current()->getState();
         if (auto sb = srcBuf.lock())
         {
+            if (copyCount)
+                m_count = sb->m_count;
+
             vk::BufferCopy cpyRegion {};
             cpyRegion.setSrcOffset(0);
             cpyRegion.setDstOffset(0);
@@ -95,7 +98,6 @@ namespace ivulk {
             cmdBufs->finish();
 
             vk::Queue q = state.vk.queues.graphics;
-            m_count     = sb->m_count;
             vk::SubmitInfo submitInfo {};
             submitInfo.setCommandBufferCount(1);
             submitInfo.setPCommandBuffers(&cb0);
