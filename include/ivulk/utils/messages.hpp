@@ -22,7 +22,7 @@ namespace ivulk::utils {
 	std::string makeInfoMessage(std::string type, std::string description);
 	std::string makeSuccessMessage(std::string type, std::string description);
 
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkFlags msgFlags, VkDebugReportObjectTypeEXT objType,
+	static VkBool32 debugCallback(VkFlags msgFlags, VkDebugReportObjectTypeEXT objType,
 														uint64_t srcObject, size_t location, int32_t iMsgCode,
 														const char* pLayerPrefix, const char* pMsg,
 														void* pUserData)

@@ -31,6 +31,7 @@ option(
 )
 option(IVULK_BUILD_SHARED "Enable build a shared library." ON)
 option(IVULK_BUILD_EXAMPLES "Build Incredible Vulk example applications." ON)
+option(IVULK_BUILD_DOCS "Build Incredible Vulk documentation." ON)
 
 ######################################################################
 #                            Dependencies                            #
@@ -75,4 +76,8 @@ add_subdirectory(src)
 
 if(IVULK_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+if (IVULK_BUILD_DOCS)
+    add_subdirectory(docs)
 endif()

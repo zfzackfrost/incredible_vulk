@@ -1,0 +1,5 @@
+Sphinx>=3.0,<3.4
+docutils>=0.12
+six>=1.9
+sphinx_rtd_theme>=0.5
+Jinja2>=2.11
