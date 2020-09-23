@@ -19,6 +19,8 @@
 #include <map>
 #include <stdexcept>
 
+#include <ivulk/render/renderer.hpp>
+
 namespace ivulk {
 
     App* s_currentApp = nullptr;
@@ -80,7 +82,13 @@ namespace ivulk {
             EventManager::processAllEvents();
 
             // Render frame
-            drawFrame();
+            // drawFrame();
+            {
+                if (auto r = Renderer::current().lock())
+                {
+                    r->drawFrame();
+                }
+            }
 
             // Update application state
             {
@@ -104,6 +112,7 @@ namespace ivulk {
     {
         // Cache init args
         m_initArgs = getInitArgs();
+        state.vk.swapChain.maxFramesInFlight = m_initArgs.vk.maxFramesInFlight;
 
         // ================== Initialize SDL2 =================== //
 

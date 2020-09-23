@@ -10,23 +10,47 @@
 #include <ivulk/config.hpp>
 
 #include <ivulk/core/app_state.hpp>
+#include <ivulk/core/command_buffer.hpp>
 
+#include <memory>
+#include <type_traits>
 namespace ivulk {
     class App;
 
-    class Renderer
+    class Renderer : public std::enable_shared_from_this<Renderer>
     {
     public:
-        explicit Renderer(App* ownerApp);
+        using Ptr = std::shared_ptr<Renderer>;
+        using Ref = std::weak_ptr<Renderer>;
 
-        static Renderer* current();
+        Renderer() = delete;
 
-        void drawFrame();
+        template <typename Derived, typename... Args>
+        static std::shared_ptr<Derived> create(App* ownerApp, Args... args)
+        {
+            static_assert(std::is_base_of_v<Renderer, Derived>,
+                          "Template type parameter `Derived` of  `create` needs to inherit from `Renderer`");
+
+            return std::shared_ptr<Derived>(new Derived(ownerApp, args...));
+        }
+
+        static std::weak_ptr<Renderer> current();
+
+        void activate();
+
+        virtual void drawFrame();
 
     protected:
+        virtual void fillCommandBuffers(std::size_t i);
+        virtual void render();
+
+        explicit Renderer(App* ownerApp);
+
+        App* ownerApp;
         AppState& state;
         static void makeCurrent(Renderer* newCurrent = nullptr);
 
         uint32_t m_currentFrame;
+        CommandBuffers::Ptr m_cmdBufs;
     };
 } // namespace ivulk

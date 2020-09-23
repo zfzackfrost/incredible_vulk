@@ -29,6 +29,7 @@ list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/image.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/sampler.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/core/vma.cpp")
 list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/render/scene.cpp")
+list(APPEND IVULK_SOURCES "${CMAKE_CURRENT_LIST_DIR}/ivulk/render/renderer.cpp")
 list(APPEND IVULK_SOURCES
      "${CMAKE_CURRENT_LIST_DIR}/ivulk/render/renderable_instance.cpp"
 )

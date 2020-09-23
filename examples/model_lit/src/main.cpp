@@ -9,6 +9,7 @@
 #include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/vertex.hpp>
 #include <ivulk/render/transform.hpp>
+#include <ivulk/render/renderer.hpp>
 
 #include <ivulk/render/model/static_model.hpp>
 #include <ivulk/render/renderable_instance.hpp>
@@ -84,6 +85,9 @@ protected:
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
             return;
+
+        renderer = Renderer::create<Renderer>(this);
+        renderer->activate();
 
         sphereModel = StaticModel::load("models/unitsphere_splitmat.fbx");
 
@@ -252,6 +256,8 @@ protected:
 
     UniformBufferObject::Ptr uboScene;
     SceneUBOData sceneData;
+
+    Renderer::Ptr renderer;
 
     glm::vec4 clearColor;
 

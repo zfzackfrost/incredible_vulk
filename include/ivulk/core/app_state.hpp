@@ -107,6 +107,7 @@ namespace ivulk {
                 VkFormat format;                            ///< Vulkan swapchain format
                 VkExtent2D extent;                          ///< Vulkan swapchain extent
                 Image::Ptr depthImage;                      ///< Vulkan image for swapchain depth component
+                uint32_t maxFramesInFlight = 2;             ///< Maximum frames number to enqueue
             } swapChain;
 
             /**
