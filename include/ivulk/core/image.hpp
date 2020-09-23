@@ -33,6 +33,8 @@ namespace ivulk {
             boost::filesystem::path path; ///< The file path to load the image from
             bool bSrgb
                 = true; ///< If true (default), use an sRGB format when loading the image. Otherwise use a normalized format.
+            bool bGenMips
+                = true; ///< If true (default), generate mipmaps for the loaded image. Otherwise, no mipmaps are generated.
         } load;
 
         VkImageTiling tiling      = VK_IMAGE_TILING_OPTIMAL;    ///< Vulkan image tiling setting
@@ -80,11 +82,14 @@ namespace ivulk {
         friend base_t;
         VkFormat m_format;
         VkExtent3D m_extent;
+        uint32_t m_mipLevels;
 
         Image(VkDevice device, VkImage image, VmaAllocation allocation, VkImageView view);
 
         static Image* createImpl(VkDevice device, ImageInfo createInfo);
 
         void destroyImpl();
+
+        static uint32_t calcMipLevels(const VkExtent3D extent);
     };
 } // namespace ivulk
