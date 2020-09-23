@@ -1,0 +1,166 @@
+{% extends "lib/base.frag.jinja" %}
+{% set fn = "_" ~ ("physical_lighting_fn" | genid()) %}
+
+
+{% import "lib/lighting/common.glsl.jinja" as lighting %}
+
+{% block pre -%}
+
+{{ lighting.common(1, pointLightsPerPass|default(4), dirLightsPerPass|default(4)) }}
+
+{% endblock %}
+
+{% block io -%}
+layout (location = 0) out vec4 fColor;
+layout(location = 0) in VS_OUT {
+    vec3 position;
+    vec2 texCoords; 
+    mat3 TBN;
+} fsIn;
+
+{%- endblock %}
+
+{% block post %}
+
+float getAlpha{{fn}}()
+{
+    {% block alpha -%}
+    return 1;
+    {%- endblock %}
+}
+
+vec3 getNormal{{fn}}()
+{
+    {% block matNormal -%}
+    return vec3(0.5, 0.5, 1);
+    {%- endblock %}
+}
+vec3 getAlbedoColor{{fn}}()
+{
+    {% block matAlbedo -%}
+    return vec3(0.5);
+    {%- endblock %}
+}
+
+float getMetallic{{fn}}()
+{
+    {% block matMetallic -%}
+    return 0.0;
+    {%- endblock %}
+}
+float getRoughness{{fn}}()
+{
+    {% block matRoughness -%}
+    return 0.5;
+    {%- endblock %}
+}
+float getAmbientOcclusion{{fn}}()
+{
+    {% block matAO -%}
+    return 1.0;
+    {%- endblock %}
+}
+
+
+const float PI = 3.14159265359;
+
+vec3 fresnelSchlick{{fn}}(float cosTheta, vec3 F0)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float DistributionGGX{{fn}}(vec3 N, vec3 H, float roughness)
+{
+    float a      = roughness*roughness;
+    float a2     = a*a;
+    float NdotH  = max(dot(N, H), 0.0);
+    float NdotH2 = NdotH*NdotH;
+	
+    float num   = a2;
+    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+	
+    return num / denom;
+}
+
+float GeometrySchlickGGX{{fn}}(float NdotV, float roughness)
+{
+    float r = (roughness + 1.0);
+    float k = (r*r) / 8.0;
+
+    float num   = NdotV;
+    float denom = NdotV * (1.0 - k) + k;
+	
+    return num / denom;
+}
+float GeometrySmith{{fn}}(vec3 N, vec3 V, vec3 L, float roughness)
+{
+    float NdotV = max(dot(N, V), 0.0);
+    float NdotL = max(dot(N, L), 0.0);
+    float ggx2  = GeometrySchlickGGX{{fn}}(NdotV, roughness);
+    float ggx1  = GeometrySchlickGGX{{fn}}(NdotL, roughness);
+	
+    return ggx1 * ggx2;
+}
+
+{%- endblock %}
+
+
+
+{% block main -%}
+    
+    vec3 N = getNormal{{fn}}() * 2.0 - 1.0;
+    N = normalize(fsIn.TBN * N);
+    vec3 V = normalize(scene.viewPos - fsIn.position);
+
+    vec3 albedo = getAlbedoColor{{fn}}();
+    float metallic = getMetallic{{fn}}();
+    float roughness = getRoughness{{fn}}();
+    float ao = getAmbientOcclusion{{fn}}();
+
+    vec3 Lo = vec3(0);
+
+    for (int i = 0; i < pointLightCount(); ++i)
+    {
+        PointLight light = scene.pointLights[i];
+
+        // Light direction
+        vec3 L = normalize(light.position - fsIn.position);
+
+        // Halfway vector
+        vec3 H = normalize(V + L);
+
+        // calculate attenuation
+        float attenuation = pointLightAttenuation(light, fsIn.position);
+
+        vec3 radiance = light.color * attenuation;
+
+
+        vec3 F0 = vec3(0.04); 
+        F0      = mix(F0, albedo, metallic);
+        vec3 F  = fresnelSchlick{{fn}}(max(dot(H, V), 0.0), F0);
+
+        float NDF = DistributionGGX{{fn}}(N, H, roughness);       
+        float G   = GeometrySmith{{fn}}(N, V, L, roughness);
+
+        vec3 numerator    = NDF * G * F;
+        float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0);
+        vec3 specular     = numerator / max(denominator, 0.001);  
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+
+        kD *= 1.0 - metallic;
+
+
+        float NdotL = max(dot(N, L), 0.0);        
+        Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+    }
+
+    vec3 ambient = vec3(0.03) * albedo * ao;
+    vec3 color   = ambient + Lo;
+
+
+    fColor.rgb = color;
+    fColor.a = 1.0;
+{%- endblock %}

@@ -1,10 +1,12 @@
 #define IVULK_SOURCE
 #include <ivulk/config.hpp>
 
+#include <ivulk/core/image.hpp>
 #include <ivulk/render/renderer.hpp>
 
 #include <ivulk/core/app.hpp>
 
+#include <ivulk/utils/commands.hpp>
 #include <ivulk/vk.hpp>
 
 namespace ivulk {
@@ -17,10 +19,7 @@ namespace ivulk {
 
     std::weak_ptr<Renderer> s_current = {};
 
-    std::weak_ptr<Renderer> Renderer::current()
-    {
-        return s_current;
-    }
+    std::weak_ptr<Renderer> Renderer::current() { return s_current; }
 
     void Renderer::activate() { makeCurrent(this); }
 
@@ -32,6 +31,31 @@ namespace ivulk {
             s_current = {};
     }
 
+    // WIP
+    void Renderer::copyToSwapchain(Image::Ref colorBuf)
+    {
+        vk::CommandBuffer cmdBuf(utils::beginOneTimeCommands());
+
+        if (auto img = colorBuf.lock())
+        {
+            vk::ImageBlit r {};
+            r.dstSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
+            r.srcSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
+            r.srcOffsets[0].x = 0;
+            r.srcOffsets[0].y = 0;
+            r.srcOffsets[0].z = 0;
+            r.srcOffsets[1].x = state.vk.swapChain.extent.width;
+            r.srcOffsets[1].y = state.vk.swapChain.extent.height;
+            r.srcOffsets[1].z = 1;
+            r.dstOffsets = r.srcOffsets;
+            
+            cmdBuf.blitImage(img->getImage(), vk::ImageLayout::eTransferSrcOptimal, state.vk.swapChain.images[m_currentFrame], vk::ImageLayout::ePresentSrcKHR, {
+                r
+            }, vk::Filter::eNearest);
+        }
+        utils::endOneTimeCommands(cmdBuf);
+    }
+
     void Renderer::drawFrame()
     {
         ownerApp->state.vk.queues.graphics.waitIdle();
@@ -41,15 +65,17 @@ namespace ivulk {
         uint32_t imageIndex;
 
         auto result_acquire = state.vk.device.acquireNextImageKHR(
-            state.vk.swapChain.sc, UINT64_MAX, state.vk.sync.imageAvailableSems[m_currentFrame], nullptr);
+            state.vk.swapChain.sc,
+            UINT64_MAX,
+            state.vk.sync.imageAvailableSems[m_currentFrame],
+            nullptr,
+            &imageIndex);
 
-        if (result_acquire.result == vk::Result::eErrorOutOfDateKHR)
+        if (result_acquire == vk::Result::eErrorOutOfDateKHR)
         {
             ownerApp->recreateVkSwapChain();
             return;
         }
-        else
-            imageIndex = result_acquire.value;
 
         if (state.vk.sync.imagesInFlight[imageIndex] != VK_NULL_HANDLE)
         {
@@ -99,6 +125,7 @@ namespace ivulk {
 
     void Renderer::fillCommandBuffers(std::size_t imageIndex)
     {
+        assert(m_dest != E_RenderDest::Undefined);
         auto& fb = state.vk.swapChain.framebuffers;
         if (!m_cmdBufs)
         {
@@ -108,6 +135,7 @@ namespace ivulk {
                                                });
         }
         auto& cmdBufs = m_cmdBufs;
+
         // Configure render passes
         if (auto pipeline = state.vk.pipelines.mainGfx.lock())
         {
@@ -123,10 +151,13 @@ namespace ivulk {
                 VkRenderPassBeginInfo renderPassInfo {
 					.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 					.renderPass = pipeline->getRenderPass(),
-					.framebuffer = fb[imageIndex]->getFramebuffer(),
+					.framebuffer = m_dest == E_RenderDest::SwapChain ? fb[imageIndex]->getFramebuffer() : m_fb->getFramebuffer(),
 					.renderArea = {
 						.offset = {0, 0},
-						.extent = scExtent,
+						.extent = m_dest == E_RenderDest::SwapChain ? scExtent : VkExtent2D{
+                            .width = m_fbInfo.width,
+                            .height = m_fbInfo.height,
+                        },
 					},
 					.clearValueCount = static_cast<uint32_t>(clearValues.size()),
 					.pClearValues = clearValues.data(),
@@ -143,5 +174,18 @@ namespace ivulk {
     }
 
     void Renderer::render() { ownerApp->render(m_cmdBufs); }
+
+    void Renderer::renderOffscreen(FramebufferInfo fbInfo)
+    {
+        m_fbInfo = fbInfo;
+        m_fb     = Framebuffer::create(state.vk.device, fbInfo);
+        m_dest   = E_RenderDest::Offscreen;
+    }
+
+    void Renderer::renderSwapchain()
+    {
+        m_fb.reset();
+        m_dest = E_RenderDest::SwapChain;
+    }
 
 } // namespace ivulk

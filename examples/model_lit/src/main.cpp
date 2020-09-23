@@ -8,8 +8,8 @@
 #include <ivulk/core/texture.hpp>
 #include <ivulk/core/uniform_buffer.hpp>
 #include <ivulk/core/vertex.hpp>
-#include <ivulk/render/transform.hpp>
 #include <ivulk/render/renderer.hpp>
+#include <ivulk/render/transform.hpp>
 
 #include <ivulk/render/model/static_model.hpp>
 #include <ivulk/render/renderable_instance.hpp>
@@ -37,13 +37,72 @@ public:
     }
 
 protected:
-    void createSpherePipeline(bool top)
+    void loadTextures()
+    {
+        dirtyMetal.albedo    = Image::create(state.vk.device,
+                                          {
+
+                                              .load = {
+                                                  .bEnable = true,
+                                                  .path    = "textures/DirtyMetal/albedo.png",
+                                                  .bSrgb   = true,
+                                              }});
+        dirtyMetal.metallic  = Image::create(state.vk.device,
+                                            {
+
+                                                .load = {
+                                                    .bEnable = true,
+                                                    .path    = "textures/DirtyMetal/metallic.png",
+                                                    .bSrgb   = false,
+                                                }});
+        dirtyMetal.roughness = Image::create(state.vk.device,
+                                             {
+
+                                                 .load = {
+                                                     .bEnable = true,
+                                                     .path    = "textures/DirtyMetal/roughness.png",
+                                                     .bSrgb   = false,
+                                                 }});
+        dirtyMetal.normal    = Image::create(state.vk.device,
+                                          {
+
+                                              .load = {
+                                                  .bEnable = true,
+                                                  .path    = "textures/DirtyMetal/normal.png",
+                                                  .bSrgb   = false,
+                                              }});
+
+
+    }
+
+    void createOffscreen()
+    {
+        offscreen.color = Image::create(state.vk.device, {
+            .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            .format = VK_FORMAT_R8G8B8A8_SNORM,
+            .extent = {
+                .width = state.vk.swapChain.extent.width,
+                .height = state.vk.swapChain.extent.height,
+                .depth = 1,
+            },
+        });
+        offscreen.depth = Image::create(state.vk.device, {
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            .format = VK_FORMAT_D32_SFLOAT,
+            .extent = {
+                .width = state.vk.swapChain.extent.width,
+                .height = state.vk.swapChain.extent.height,
+                .depth = 1,
+            },
+        });
+    }
+    void createDirtyMetalPipeline()
     {
         GraphicsPipelineInfo createInfo {
 			.vertex = StaticMeshVertex::getPipelineInfo(),
 			.shaderPath = {
 				.vert = "shaders/sphere.vert.spv",
-				.frag = (top) ? "shaders/sphere_top.frag.spv" : "shaders/sphere_bottom.frag.spv",
+				.frag = "shaders/sphere.frag.spv",
 			},
 			.descriptor = {
 				.uboBindings = {
@@ -56,9 +115,31 @@ protected:
 						.binding = 1u,
 					},
 				},
+                .textureBindings = {
+                    {
+                        .image = dirtyMetal.albedo,
+                        .sampler = sampler,
+                        .binding = 4,
+                    },
+                    {
+                        .image = dirtyMetal.normal,
+                        .sampler = sampler,
+                        .binding = 5u,
+                    },
+                    {
+                        .image = dirtyMetal.metallic,
+                        .sampler = sampler,
+                        .binding = 6u,
+                    },
+                    {
+                        .image = dirtyMetal.roughness,
+                        .sampler = sampler,
+                        .binding = 7u,
+                    },
+                },
 			},
 		};
-        auto& pipeline = (top) ? topPipeline : bottomPipeline;
+        auto& pipeline = dirtyMetal.pipeline;
         if (pipeline)
         {
             pipeline->recreate(createInfo);
@@ -72,32 +153,39 @@ protected:
     {
         if (!swapchainOnly)
         {
-            sampler = Sampler::create(state.vk.device, {});
+            loadTextures();
+            sampler  = Sampler::create(state.vk.device, {});
+            renderer = Renderer::create<Renderer>(this);
         }
         uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBO)});
         uboScene    = UniformBufferObject::create(state.vk.device, {.size = sizeof(SceneUBOData)});
 
-        createSpherePipeline(true);
-        createSpherePipeline(false);
+        createOffscreen();
+        createDirtyMetalPipeline();
 
-        state.vk.pipelines.mainGfx = topPipeline;
-
+        state.vk.pipelines.mainGfx = dirtyMetal.pipeline;
+        renderer->renderSwapchain();
+        // renderer->renderOffscreen({
+                    // .renderContext = dirtyMetal.pipeline,
+                    // .attachments = {
+                        // offscreen.color,
+                        // offscreen.depth,
+                    // },
+                    // .width = state.vk.swapChain.extent.width,
+                    // .height = state.vk.swapChain.extent.height,
+            // });
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
             return;
 
-        renderer = Renderer::create<Renderer>(this);
         renderer->activate();
 
-        sphereModel = StaticModel::load("models/unitsphere_splitmat.fbx");
+        sphereModel = StaticModel::load("models/unitsphere.fbx");
 
         EventManager::addCallback(E_EventType::KeyDown, [this](Event evt) { escapeKeyQuit(evt); });
-        std::vector<GraphicsPipeline::Ref> spherePipelines = {
-            topPipeline,
-            bottomPipeline,
-        };
-        scene   = Scene::create();
-        sphere1 = scene->addRenderable(
+        std::vector<GraphicsPipeline::Ref> spherePipelines = {dirtyMetal.pipeline};
+        scene                                              = Scene::create();
+        sphere1                                            = scene->addRenderable(
             RenderableInstance::create(sphereModel, _priority = 0, _pipelines = spherePipelines));
         sphere2 = scene->addRenderable(
             RenderableInstance::create(sphereModel, _priority = 0, _pipelines = spherePipelines));
@@ -130,15 +218,14 @@ protected:
         // ... instead destroy at the end of the session and
         //     use the `recreate` method of pipelines when
         //     recreating the swapchain.
-        topPipeline.reset();
-        bottomPipeline.reset();
+        dirtyMetal.pipeline.reset();
     }
 
     void render(CommandBuffers::Ref cmdBuffer) override
     {
         if (auto cb = cmdBuffer.lock())
         {
-            cb->clearAttachments(topPipeline, {.color = clearColor});
+            cb->clearAttachments(dirtyMetal.pipeline, {.color = clearColor});
             scene->render(cb);
         }
     }
@@ -167,14 +254,14 @@ protected:
         rotRate         = glm::radians(glm::mix(100.0f, 200.0f, rotRate));
         auto deltaEuler = glm::vec3(deltaSeconds * rotRate);
         deltaEuler.x    = 0.0f;
-        _sphere1->transform.rotation *= glm::quat(deltaEuler);
-        _sphere1->transform.translate.x = meter {glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>())};
+        // _sphere1->transform.rotation *= glm::quat(deltaEuler);
+        // _sphere1->transform.translate.x = meter {glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>())};
 
-        float theta                     = (elapsedTime / 2.5f) * glm::two_pi<float>();
-        _sphere2->transform.translate.x = meter {glm::cos(theta)} + _sphere1->transform.translate.x;
-        _sphere2->transform.translate.y = meter {glm::sin(theta)} + _sphere1->transform.translate.y;
-        _sphere2->transform.translate.z = _sphere1->transform.translate.z;
-        _sphere2->transform.scale       = glm::vec3(0.35);
+        // float theta                     = (elapsedTime / 2.5f) * glm::two_pi<float>();
+        // _sphere2->transform.translate.x = meter {glm::cos(theta)} + _sphere1->transform.translate.x;
+        // _sphere2->transform.translate.y = meter {glm::sin(theta)} + _sphere1->transform.translate.y;
+        // _sphere2->transform.translate.z = _sphere1->transform.translate.z;
+        _sphere2->transform.scale = glm::vec3(0.35);
 
         // ================= Matrices ================== //
 
@@ -195,7 +282,7 @@ protected:
         sceneData.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, -1));
         sceneData.dirLightCount          = 0;
 
-        sceneData.pointLights[0].color       = glm::vec3(0.5);
+        sceneData.pointLights[0].color       = glm::vec3(4);
         sceneData.pointLights[0].position    = glm::vec3(0, 2, 0.1);
         sceneData.pointLights[0].attenuation = PointLightAttenuation::fromRadius(2.0f);
         sceneData.pointLightCount            = 1;
@@ -242,9 +329,23 @@ protected:
 
     Transform viewXform;
 
+    struct
+    {
+        Image::Ptr albedo;
+        Image::Ptr metallic;
+        Image::Ptr normal;
+        Image::Ptr roughness;
+        GraphicsPipeline::Ptr pipeline;
+    } dirtyMetal;
+
+    struct
+    {
+        Image::Ptr color;
+        Image::Ptr depth;
+    } offscreen;
+
     StaticModel::Ptr sphereModel;
 
-    GraphicsPipeline::Ptr topPipeline, bottomPipeline;
     Sampler::Ptr sampler;
 
     Scene::Ptr scene;

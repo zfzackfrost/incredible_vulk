@@ -1,4 +1,4 @@
-{% extends "lib/lighting/simple.frag.jinja" %}
+{% extends "lib/lighting/physical.frag.jinja" %}
 
 {% block libs %}
     {{ super() }}
@@ -7,9 +7,10 @@
 
 {% block uniforms %}
     {{ super() }}
-    {% call uniform.user(0) -%}sampler2D diffuseTex{%- endcall %}
-    {% call uniform.user(1) -%}sampler2D specularTex{%- endcall %}
-    {% call uniform.user(2) -%}sampler2D normalTex{%- endcall %}
+    {% call uniform.user(0) -%}sampler2D albedoTex{%- endcall %}
+    {% call uniform.user(1) -%}sampler2D normalTex{%- endcall %}
+    {% call uniform.user(2) -%}sampler2D metallicTex{%- endcall %}
+    {% call uniform.user(3) -%}sampler2D roughnessTex{%- endcall %}
 {% endblock %}
 
 {% block io %}
@@ -35,11 +36,12 @@
     vec3 norm = texture(normalTex, getTexCoords()).rgb;
     return flattenNormal(norm, -2.5);
 {%- endblock %}
-{% block matDiffuse -%}
-    vec3 diff = texture(diffuseTex, getTexCoords()).rgb;
-    return diff;
+{% block matAlbedo -%}
+    return texture(albedoTex, getTexCoords()).rgb;
 {%- endblock %}
-{% block matSpecular -%}
-    vec3 spec = texture(specularTex, getTexCoords()).rgb;
-    return spec;
+{% block matMetallic -%}
+    return texture(metallicTex, getTexCoords()).r;
+{%- endblock %}
+{% block matRoughness -%}
+    return texture(roughnessTex, getTexCoords()).r;
 {%- endblock %}

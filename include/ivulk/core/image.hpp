@@ -71,9 +71,15 @@ namespace ivulk {
          */
         VkFormat getFormat() { return m_format; }
 
+        /**
+         * @brief Get the Vulkan image extent.
+         */
+        VkExtent3D getExtent() { return m_extent; }
+
     private:
         friend base_t;
         VkFormat m_format;
+        VkExtent3D m_extent;
 
         Image(VkDevice device, VkImage image, VmaAllocation allocation, VkImageView view);
 

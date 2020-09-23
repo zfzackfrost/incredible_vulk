@@ -207,6 +207,7 @@ namespace ivulk {
         // Create/return new `Image*`
         auto ret      = new Image(device, image, alloc, view);
         ret->m_format = format;
+        ret->m_extent = extent;
         return ret;
     }
 

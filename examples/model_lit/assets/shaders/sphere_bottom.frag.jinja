@@ -1,4 +1,4 @@
-{% extends "lib/lighting/simple.frag.jinja" %}
+{% extends "lib/lighting/physical.frag.jinja" %}
 {% block uniforms %}
     {{ super() }}
 {% endblock %}
@@ -7,12 +7,13 @@
     {{ super() }}
 {% endblock %}
 
-{% block shininess %}
-    return 8.0;
-{% endblock %}
-{% block matDiffuse -%}
+{% block matAlbedo -%}
     return vec3(0.05, 0.1, 1.0);
 {%- endblock %}
-{% block matSpecular -%}
-    return vec3(0.55);
+{% block matRoughness -%}
+    return 0.3;
+{%- endblock %}
+{% block matMetallic -%}
+    return 1.0;
+
 {%- endblock %}
