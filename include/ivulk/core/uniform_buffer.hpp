@@ -96,9 +96,9 @@ namespace ivulk {
         UniformBufferObject::Ref ubo;
         uint32_t binding;
 
-        VkDescriptorSetLayoutBinding getDescriptorSetLayoutBinding()
+        vk::DescriptorSetLayoutBinding getDescriptorSetLayoutBinding()
         {
-            VkDescriptorSetLayoutBinding result;
+            vk::DescriptorSetLayoutBinding result;
             if (auto r = ubo.lock())
             {
                 result = r->getDescriptorSetLayoutBinding(binding);

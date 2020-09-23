@@ -59,37 +59,37 @@ namespace ivulk {
      */
     class GraphicsPipeline : public VulkanResource<GraphicsPipeline,
                                                    GraphicsPipelineInfo,
-                                                   VkPipeline,
-                                                   VkRenderPass,
-                                                   VkPipelineLayout,
-                                                   VkDescriptorSetLayout,
-                                                   std::vector<VkDescriptorSet>>
+                                                   vk::Pipeline,
+                                                   vk::RenderPass,
+                                                   vk::PipelineLayout,
+                                                   vk::DescriptorSetLayout,
+                                                   std::vector<vk::DescriptorSet>>
     {
     public:
         /**
          * @brief Get the Vulkan pipeline handle
          */
-        VkPipeline getPipeline() { return getHandleAt<0>(); }
+        vk::Pipeline getPipeline() { return getHandleAt<0>(); }
         
         /**
          * @brief Get the Vulkan render pass handle
          */
-        VkRenderPass getRenderPass() { return getHandleAt<1>(); }
+        vk::RenderPass getRenderPass() { return getHandleAt<1>(); }
         
         /**
          * @brief Get the Vulkan pipeline layout handle
          */
-        VkPipelineLayout getPipelineLayout() { return getHandleAt<2>(); }
+        vk::PipelineLayout getPipelineLayout() { return getHandleAt<2>(); }
         
         /**
          * @brief Get the Vulkan descriptor set layout handle
          */
-        VkDescriptorSetLayout getDescriptorSetLayout() { return getHandleAt<3>(); }
+        vk::DescriptorSetLayout getDescriptorSetLayout() { return getHandleAt<3>(); }
         
         /**
          * @brief Get the STL vector of Vulkan descriptor set handles
          */
-        std::vector<VkDescriptorSet> getDescriptorSets() { return getHandleAt<4>(); }
+        std::vector<vk::DescriptorSet> getDescriptorSets() { return getHandleAt<4>(); }
 
         /**
          * @brief Get a Vulkan descriptor set by index
@@ -116,12 +116,12 @@ namespace ivulk {
         friend base_t;
         friend class App;
 
-        GraphicsPipeline(VkDevice device,
-                         VkPipeline pipeline,
-                         VkRenderPass renderPass,
-                         VkPipelineLayout pipelineLayout,
-                         VkDescriptorSetLayout descrSetLayout,
-                         std::vector<VkDescriptorSet> descrSets);
+        GraphicsPipeline(vk::Device device,
+                         vk::Pipeline pipeline,
+                         vk::RenderPass renderPass,
+                         vk::PipelineLayout pipelineLayout,
+                         vk::DescriptorSetLayout descrSetLayout,
+                         std::vector<vk::DescriptorSet> descrSets);
 
         std::vector<uint32_t> m_colorAttIndices;
 
@@ -130,7 +130,7 @@ namespace ivulk {
         void destroyImpl();
 
         static std::vector<char> readSPIRVFile(const boost::filesystem::path& fpath);
-        static VkShaderModule createShaderModule(VkDevice device,
+        static vk::ShaderModule createShaderModule(VkDevice device,
                                                  const std::vector<char>& shaderCode,
                                                  const boost::filesystem::path& assetPath);
     };

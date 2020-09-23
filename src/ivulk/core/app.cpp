@@ -28,10 +28,8 @@ namespace ivulk {
     {
         state.cmdArgs.reserve(argc);
         for (int i = 0; i < argc; ++i)
-            state.cmdArgs.push_back({argv[i]});
+            state.cmdArgs.emplace_back(argv[i]);
     }
-
-    App::~App() { }
 
     void App::run()
     {
@@ -138,7 +136,7 @@ namespace ivulk {
     {
 
         // Run subclass cleanup
-        cleanup();
+        cleanup(false);
 
         // =================== Cleanup Vulkan =================== //
 

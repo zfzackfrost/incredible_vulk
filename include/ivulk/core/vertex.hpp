@@ -20,10 +20,10 @@
 #define _IVULK_VERTEX_ATTRIB_EACH(r, data, elem) BOOST_PP_TUPLE_ELEM(0, elem) BOOST_PP_TUPLE_ELEM(1, elem);
 
 #define _IVULK_VERTEX_ATTRIB_DESCR_EACH(r, data, i, elem)                                                    \
-    descrs[i].binding  = binding;                                                                            \
-    descrs[i].format   = ::ivulk::VertexAttribTypeFormat<BOOST_PP_TUPLE_ELEM(0, elem)>::value;               \
-    descrs[i].location = BOOST_PP_TUPLE_ELEM(2, elem);                                                       \
-    descrs[i].offset   = offsetof(data, BOOST_PP_TUPLE_ELEM(1, elem));
+    v[i].binding  = binding;                                                                            \
+    v[i].format   = ::ivulk::VertexAttribTypeFormat<BOOST_PP_TUPLE_ELEM(0, elem)>::value;               \
+    v[i].location = BOOST_PP_TUPLE_ELEM(2, elem);                                                       \
+    v[i].offset   = offsetof(data, BOOST_PP_TUPLE_ELEM(1, elem));
 
 #define IVULK_VERTEX_STRUCT(structName, attribs)                                                             \
     struct structName : public ::ivulk::VertexBase<structName>                                               \
@@ -31,15 +31,16 @@
         static constexpr std::size_t N_ATTRIBS = BOOST_PP_SEQ_SIZE(attribs);                                 \
         BOOST_PP_SEQ_FOR_EACH(_IVULK_VERTEX_ATTRIB_EACH, structName, attribs)                                \
                                                                                                              \
-        static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(uint32_t binding = 0) \
+        static std::vector<vk::VertexInputAttributeDescription>                                              \
+        getAttributeDescriptions(uint32_t binding = 0)                                                       \
         {                                                                                                    \
-            std::vector<VkVertexInputAttributeDescription> descrs(N_ATTRIBS);                                \
+            std::vector<VkVertexInputAttributeDescription> v(N_ATTRIBS);                                     \
             BOOST_PP_SEQ_FOR_EACH_I(_IVULK_VERTEX_ATTRIB_DESCR_EACH, structName, attribs)                    \
-            return descrs;                                                                                   \
+            return std::vector<vk::VertexInputAttributeDescription>(v.begin(), v.end());                     \
         }                                                                                                    \
         static ::ivulk::PipelineVertexInfo                                                                   \
         getPipelineInfo(const uint32_t binding            = 0u,                                              \
-                        const VkVertexInputRate inputRate = VK_VERTEX_INPUT_RATE_VERTEX)                     \
+                        const vk::VertexInputRate inputRate = vk::VertexInputRate::eVertex)                     \
         {                                                                                                    \
             return {                                                                                         \
                 .binding    = getBindingDescription(binding, inputRate),                                     \
@@ -60,14 +61,11 @@ namespace ivulk {
     struct VertexBase
     {
         static VkVertexInputBindingDescription
-        getBindingDescription(const uint32_t binding            = 0u,
-                              const VkVertexInputRate inputRate = VK_VERTEX_INPUT_RATE_VERTEX)
+        getBindingDescription(const uint32_t binding              = 0u,
+                              const vk::VertexInputRate inputRate = vk::VertexInputRate::eVertex)
         {
-            VkVertexInputBindingDescription bindingDescr {
-                .binding   = binding,
-                .stride    = sizeof(Derived),
-                .inputRate = inputRate,
-            };
+            vk::VertexInputBindingDescription bindingDescr {};
+            bindingDescr.setBinding(binding).setStride(sizeof(Derived)).setInputRate(inputRate);
             return bindingDescr;
         }
     };
@@ -98,7 +96,7 @@ namespace ivulk {
 
     struct PipelineVertexInfo
     {
-        VkVertexInputBindingDescription binding                   = {};
-        std::vector<VkVertexInputAttributeDescription> attributes = {};
+        vk::VertexInputBindingDescription binding                 = {};
+        std::vector<vk::VertexInputAttributeDescription> attributes = {};
     };
 } // namespace ivulk

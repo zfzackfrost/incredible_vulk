@@ -46,7 +46,7 @@ namespace ivulk {
         /**
          * @brief Virtual destructor
          */
-        virtual ~App();
+        virtual ~App() = default;
 
         /**
          * @brief Run the application.
@@ -61,12 +61,12 @@ namespace ivulk {
         /**
          * @brief Get the current app state.
          */
-        AppState getState() const;
+        [[nodiscard]] AppState getState() const;
 
         /**
          * @brief Helper method to check if debug printing was enabled in the init args.
          */
-        bool getPrintDbg() const;
+        [[nodiscard]] bool getPrintDbg() const;
 
         /**
          * @brief Get the path to the assets directory
@@ -107,7 +107,7 @@ namespace ivulk {
         /**
          * @brief Perform subclass-specific initialization.
          *
-         * @param swapchainOnly Skip iniitializing anything that doesn't depend on the swapchain.
+         * @param swapchainOnly Skip initializing anything that doesn't depend on the swapchain.
          *                      This is `false` for first-time initialization, and `true` when
          *                      recreating the swapchain.
          *
@@ -123,7 +123,7 @@ namespace ivulk {
          *                      recreating the swapchain.
          * Pure virtual.
          */
-        virtual void cleanup(bool swapchainOnly = false) = 0;
+        virtual void cleanup(bool swapchainOnly) = 0;
 
         /**
          * @brief Perform subclass-specific rendering operations.
@@ -140,11 +140,11 @@ namespace ivulk {
         virtual void update(float deltaSeconds) = 0;
 
         /**
-         * @brief Get the information used to intialize the app.
+         * @brief Get the information used to initialize the app.
          *
          * Pure Virtual.
          */
-        virtual InitArgs getInitArgs() const = 0;
+        [[nodiscard]] virtual InitArgs getInitArgs() const = 0;
 
         /**
          * @brief Rate the suitability of a Vulkan Physical device.
