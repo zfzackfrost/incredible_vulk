@@ -8,8 +8,9 @@
 #pragma once
 
 #include <ivulk/config.hpp>
-
 #include <ivulk/glm.hpp>
+
+#include <ivulk/utils/units/length.hpp>
 
 #include <utility>
 
@@ -22,7 +23,7 @@ namespace ivulk {
         /**
 		 * @brief The translation component of the transform
 		 */
-        glm::vec3 translate = {0, 0, 0};
+        Position translate;
 
         /**
 		 * @brief The rotation component of the transform
@@ -39,30 +40,30 @@ namespace ivulk {
 		 * 
 		 * @return A model matrix created from this transform
 		 */
-        glm::mat4 modelMatrix() const { return matrix(false); }
+        [[nodiscard]] glm::mat4 modelMatrix() const { return matrix(false); }
 
         /**
 		 * @brief Convert to a 4x4 matrix suitable for use as a view matrix in shaders
 		 * 
 		 * @return A view matrix created from this transform
 		 */
-        glm::mat4 viewMatrix() const { return matrix(true); }
+        [[nodiscard]] glm::mat4 viewMatrix() const { return matrix(true); }
 
         /**
 		 * @brief Convert to a 4x4 matrix
 		 * 
 		 * @param localRotation If @c true, treat @c rotation as relative to the transform, 
-		 *                      @c otherwise rotation is in world space.
+		 *                      otherwise @c rotation is in world space.
 		 * @return A matrix created from this transform
 		 */
-        glm::mat4 matrix(bool localRotation) const
+        [[nodiscard]] glm::mat4 matrix(bool localRotation) const
         {
             glm::mat4 m = glm::scale(glm::mat4(1), scale);
             m           = m * glm::mat4(glm::mat3_cast(rotation));
             if (localRotation)
-                m = m * glm::translate(glm::mat4(1), translate);
+                m = m * glm::translate(glm::mat4(1), translate.toVec());
             else
-                m = glm::translate(glm::mat4(1), translate) * m;
+                m = glm::translate(glm::mat4(1), translate.toVec()) * m;
 
             return m;
         }
@@ -72,7 +73,7 @@ namespace ivulk {
 		 * 
 		 * @return The euler angles equivalent of @c rotation.
 		 */
-        const glm::vec3 eulerAngles() const { return glm::eulerAngles(rotation); }
+        [[nodiscard]] const glm::vec3 eulerAngles() const { return glm::eulerAngles(rotation); }
 
         /**
 		 * @brief Get a copy of this @c Transform with a different translation component.
@@ -80,7 +81,7 @@ namespace ivulk {
 		 * @param xlate The value for the translation component of the output.
 		 * @return A copy of this transform with @c translate set to @c xlate.
 		 */
-        const Transform withTranslate(const glm::vec3 xlate) const
+        [[nodiscard]] const Transform withTranslate(const Position xlate) const
         {
             return {
                 .translate = std::move(xlate),
@@ -95,7 +96,7 @@ namespace ivulk {
 		 * @param rot The value for the translation component of the output.
 		 * @return A copy of this transform with @c rotation set to @c rot.
 		 */
-        const Transform withRotation(const glm::quat rot) const
+        [[nodiscard]] const Transform withRotation(const glm::quat rot) const
         {
             return {
                 .translate = translate,
@@ -110,7 +111,7 @@ namespace ivulk {
 		 * @param euler The euler angles to use for the rotation component of the output.
 		 * @return A copy of this transform with @c rotation set a quaternion made from @c euler.
 		 */
-        const Transform withRotation(const glm::vec3 euler) const
+        [[nodiscard]] const Transform withRotation(const glm::vec3 euler) const
         {
             return {
                 .translate = translate,
@@ -125,7 +126,7 @@ namespace ivulk {
 		 * @param scl The value for the scale component of the output.
 		 * @return A copy of this transform with @c scale set to @c scl.
 		 */
-        const Transform withScale(const glm::vec3 scl) const
+        [[nodiscard]] const Transform withScale(const glm::vec3 scl) const
         {
             return {
                 .translate = translate,
@@ -142,7 +143,8 @@ namespace ivulk {
 		 * @return A copy of this transform with @c rotion set to a quaternion 
 		 *         made from @c direction and @up.
 		 */
-        const Transform withDirection(const glm::vec3 direction, const glm::vec3 up = {0, 0, 1}) const
+        [[nodiscard]] const Transform withDirection(const glm::vec3 direction,
+                                                    const glm::vec3 up = {0, 0, 1}) const
         {
             auto _direction = glm::normalize(direction);
             auto _up        = glm::normalize(up);
@@ -161,15 +163,15 @@ namespace ivulk {
 		 * @param up The up direction vector. Defaults to `{0, 0, 1}`.
 		 * @return A copy of this @c Transform with position and rotation components for a look-at transformtion.
 		 */
-        const Transform
-        withLookAt(const glm::vec3 eye, const glm::vec3 target, const glm::vec3 up = {0, 0, 1}) const
+        [[nodiscard]] const Transform
+        withLookAt(const Position eye, const Position target, const glm::vec3 up = {0, 0, 1}) const
         {
             const auto direction = target - eye;
             Transform t {
-                .translate = -eye,
+                .translate = (eye * meter {-1}),
                 .scale     = scale,
             };
-            return t.withDirection(direction, up);
+            return t.withDirection(direction.toVec(), up);
         }
     };
 } // namespace ivulk

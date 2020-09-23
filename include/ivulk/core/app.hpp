@@ -41,7 +41,7 @@ namespace ivulk {
         /**
          * @brief Default constructor
          */
-        App(int argc, char* argv[]);
+        App(int argc, char* argv[]); // NOLINT
 
         /**
          * @brief Virtual destructor

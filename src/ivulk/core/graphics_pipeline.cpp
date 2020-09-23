@@ -6,6 +6,8 @@
 
 #include <ivulk/core/app.hpp>
 
+#include <array>
+
 namespace ivulk {
 
     namespace fs = boost::filesystem;
@@ -296,7 +298,7 @@ namespace ivulk {
             .setAttachmentCount(1u)
             .setPAttachments(&colorBlendAttachment)
             .setBlendConstants({0.0f, 0.0f, 0.0f, 0.0f});
-        
+
         vk::PipelineDepthStencilStateCreateInfo depthStencil {};
         depthStencil.setDepthTestEnable(true)
             .setDepthWriteEnable(true)
@@ -306,21 +308,21 @@ namespace ivulk {
 
         // ============= Pipeline Layout ============== //
 
-        vk::PushConstantRange pushConstantRanges[] = {{}};
+        std::array<vk::PushConstantRange, 1> pushConstantRanges = {{}};
 
-        pushConstantRanges[0].setStageFlags(vk::ShaderStageFlags(E_ShaderStage::All))
+        pushConstantRanges[0]
+            .setStageFlags(vk::ShaderStageFlags(E_ShaderStage::All))
             .setOffset(0u)
             .setSize(sizeof(MatricesPushConstants));
 
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo {};
         pipelineLayoutInfo.setSetLayoutCount(0u)
             .setPSetLayouts(nullptr)
-            .setPushConstantRangeCount(1u)
-            .setPPushConstantRanges(pushConstantRanges);
+            .setPushConstantRangeCount(pushConstantRanges.size())
+            .setPPushConstantRanges(pushConstantRanges.data());
         if (descrSetLayout)
         {
-            pipelineLayoutInfo.setSetLayoutCount(1u)
-                .setPSetLayouts(&descrSetLayout);
+            pipelineLayoutInfo.setSetLayoutCount(1u).setPSetLayouts(&descrSetLayout);
         }
 
         auto _plLayout = device.createPipelineLayout(pipelineLayoutInfo);
@@ -345,7 +347,7 @@ namespace ivulk {
 
         vk::AttachmentReference colorAttachmentRef {};
         colorAttachmentRef.attachment = 0;
-        colorAttachmentRef.layout = vk::ImageLayout::eColorAttachmentOptimal;
+        colorAttachmentRef.layout     = vk::ImageLayout::eColorAttachmentOptimal;
 
         vk::AttachmentDescription depthAttachment {};
         depthAttachment.format         = static_cast<vk::Format>(state.vk.swapChain.depthImage->getFormat());
@@ -370,9 +372,9 @@ namespace ivulk {
         vk::SubpassDependency dependency {};
         dependency.srcSubpass    = VK_SUBPASS_EXTERNAL;
         dependency.dstSubpass    = 0;
-        dependency.srcStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        dependency.srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         dependency.srcAccessMask = static_cast<vk::AccessFlagBits>(0);
-        dependency.dstStageMask = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+        dependency.dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         dependency.dstAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
 
         std::vector<vk::AttachmentDescription> attachments = {
@@ -414,7 +416,7 @@ namespace ivulk {
         pipelineInfo.subpass             = 0;
         pipelineInfo.basePipelineHandle  = nullptr;
         pipelineInfo.basePipelineIndex   = -1;
-        
+
         auto _pl = device.createGraphicsPipelines(nullptr, 1, &pipelineInfo, nullptr, &graphicsPipeline);
         if (_pl != vk::Result::eSuccess)
         {

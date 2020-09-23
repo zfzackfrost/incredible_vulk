@@ -104,17 +104,17 @@ namespace ivulk {
 
         state.vk.sync.imagesInFlight[imageIndex] = state.vk.sync.inFlightFences[m_currentFrame];
 
-        vk::Semaphore signalSemaphores[]    = {state.vk.sync.renderFinishedSems[m_currentFrame]};
-        vk::Semaphore waitSemaphores[]      = {state.vk.sync.imageAvailableSems[m_currentFrame]};
-        vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
+        std::array<vk::Semaphore, 1> signalSemaphores    = {state.vk.sync.renderFinishedSems[m_currentFrame]};
+        std::array<vk::Semaphore, 1> waitSemaphores      = {state.vk.sync.imageAvailableSems[m_currentFrame]};
+        std::array<vk::PipelineStageFlags, 1> waitStages = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
         vk::SubmitInfo submitInfo {};
-        submitInfo.setWaitSemaphoreCount(1)
-            .setPWaitSemaphores(waitSemaphores)
-            .setPWaitDstStageMask(waitStages)
+        submitInfo.setWaitSemaphoreCount(waitSemaphores.size())
+            .setPWaitSemaphores(waitSemaphores.data())
+            .setPWaitDstStageMask(waitStages.data())
             .setCommandBufferCount(1)
             .setPCommandBuffers(&cb0)
-            .setSignalSemaphoreCount(1)
-            .setPSignalSemaphores(signalSemaphores);
+            .setSignalSemaphoreCount(signalSemaphores.size())
+            .setPSignalSemaphores(signalSemaphores.data());
 
         vkResetFences(state.vk.device, 1, &state.vk.sync.inFlightFences[m_currentFrame]);
 
@@ -125,12 +125,12 @@ namespace ivulk {
                 utils::makeErrorMessage("VK::CMD", "Failed to submit Vulkan draw command buffer"));
         }
 
-        vk::SwapchainKHR swapChains[] = {state.vk.swapChain.sc};
+        std::array<vk::SwapchainKHR, 1> swapChains = {state.vk.swapChain.sc};
         vk::PresentInfoKHR presentInfo {};
-        presentInfo.setWaitSemaphoreCount(1)
-            .setPWaitSemaphores(signalSemaphores)
-            .setSwapchainCount(1)
-            .setPSwapchains(swapChains)
+        presentInfo.setWaitSemaphoreCount(signalSemaphores.size())
+            .setPWaitSemaphores(signalSemaphores.data())
+            .setSwapchainCount(swapChains.size())
+            .setPSwapchains(swapChains.data())
             .setPImageIndices(&imageIndex);
 
         state.vk.queues.present.presentKHR(&presentInfo);

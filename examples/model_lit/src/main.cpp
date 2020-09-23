@@ -27,7 +27,7 @@ using namespace ivulk;
 class ModelLitApp : public App
 {
 public:
-    ModelLitApp(int argc, char* argv[])
+    ModelLitApp(int argc, char* argv[]) // NOLINT
         : App(argc, argv)
     {
         elapsedTime     = 0.0f;
@@ -67,7 +67,7 @@ protected:
             pipeline = GraphicsPipeline::create(state.vk.device, createInfo);
         }
     }
-    virtual void initialize(bool swapchainOnly) override
+    void initialize(bool swapchainOnly) override
     {
         if (!swapchainOnly)
         {
@@ -87,8 +87,7 @@ protected:
 
         sphereModel = StaticModel::load("models/unitsphere_splitmat.fbx");
 
-        EventManager::addCallback(E_EventType::KeyDown,
-                                  std::bind(&ModelLitApp::escapeKeyQuit, this, std::placeholders::_1));
+        EventManager::addCallback(E_EventType::KeyDown, [this](Event evt) { escapeKeyQuit(evt); });
         std::vector<GraphicsPipeline::Ref> spherePipelines = {
             topPipeline,
             bottomPipeline,
@@ -110,7 +109,7 @@ protected:
         quit();
     }
 
-    virtual void cleanup(bool swapchainOnly) override
+    void cleanup(bool swapchainOnly) override
     {
 
         // Skip anything that doesn't depend on the swapchain, if requested
@@ -131,7 +130,7 @@ protected:
         bottomPipeline.reset();
     }
 
-    virtual void render(CommandBuffers::Ref cmdBuffer) override
+    void render(CommandBuffers::Ref cmdBuffer) override
     {
         if (auto cb = cmdBuffer.lock())
         {
@@ -140,7 +139,7 @@ protected:
         }
     }
 
-    virtual void update(float deltaSeconds) override
+    void update(float deltaSeconds) override
     {
         elapsedTime += deltaSeconds;
         timeSinceStatus += deltaSeconds;
@@ -161,15 +160,15 @@ protected:
 
         float rotRate = glm::sin((elapsedTime / glm::two_over_pi<float>()) * glm::two_pi<float>()) * 0.5
                         + 0.5;
-        rotRate              = glm::radians(glm::mix(100.0f, 200.0f, rotRate));
-        glm::vec3 deltaEuler = glm::vec3(deltaSeconds * rotRate);
-        deltaEuler.x         = 0.0f;
+        rotRate         = glm::radians(glm::mix(100.0f, 200.0f, rotRate));
+        auto deltaEuler = glm::vec3(deltaSeconds * rotRate);
+        deltaEuler.x    = 0.0f;
         _sphere1->transform.rotation *= glm::quat(deltaEuler);
-        _sphere1->transform.translate.x = glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>());
+        _sphere1->transform.translate.x = meter {glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>())};
 
         float theta                     = (elapsedTime / 2.5f) * glm::two_pi<float>();
-        _sphere2->transform.translate.x = glm::cos(theta) + _sphere1->transform.translate.x;
-        _sphere2->transform.translate.y = glm::sin(theta) + _sphere1->transform.translate.y;
+        _sphere2->transform.translate.x = meter {glm::cos(theta)} + _sphere1->transform.translate.x;
+        _sphere2->transform.translate.y = meter {glm::sin(theta)} + _sphere1->transform.translate.y;
         _sphere2->transform.translate.z = _sphere1->transform.translate.z;
         _sphere2->transform.scale       = glm::vec3(0.35);
 
@@ -178,7 +177,7 @@ protected:
         float aspect = static_cast<float>(state.vk.swapChain.extent.width)
                        / static_cast<float>(state.vk.swapChain.extent.height);
 
-        viewXform     = viewXform.withLookAt(viewPos, {0, 0, 0});
+        viewXform     = viewXform.withLookAt(viewPos, {{}, {}, {}});
         matrices.view = viewXform.viewMatrix();
 
         matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.0001f, 1000.0f);
@@ -197,12 +196,12 @@ protected:
         sceneData.pointLights[0].attenuation = PointLightAttenuation::fromRadius(2.0f);
         sceneData.pointLightCount            = 1;
 
-        sceneData.viewPosition = viewPos;
+        sceneData.viewPosition = viewPos.toVec();
 
         uboScene->setUniforms(sceneData);
     }
 
-    virtual InitArgs getInitArgs() const override
+    [[nodiscard]] InitArgs getInitArgs() const override
     {
         return {
 			.appName = "Lit Sphere Demo",
@@ -218,7 +217,7 @@ protected:
 		};
     }
 
-    virtual int32_t rateDeviceSuitability(vk::PhysicalDevice device) override
+    int32_t rateDeviceSuitability(vk::PhysicalDevice device) override
     {
         auto deviceProperties = device.getProperties();
         // auto deviceFeatures = device.getFeatures();
@@ -228,7 +227,7 @@ protected:
         return result;
     }
 
-    virtual boost::filesystem::path getAssetsDir() override
+    boost::filesystem::path getAssetsDir() override
     {
         boost::filesystem::path execPath {state.cmdArgs[0]};
         execPath = boost::filesystem::absolute(boost::filesystem::system_complete(execPath));
@@ -260,7 +259,7 @@ protected:
     float timeSinceStatus;
 
     glm::vec2 dirKeysInput;
-    glm::vec3 viewPos = {4, 4, 2};
+    Position viewPos = {meter {4}, meter {4}, meter {2}};
 };
 
 int main(int argc, char* argv[])

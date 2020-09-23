@@ -23,6 +23,7 @@ namespace ivulk {
 
     App* s_currentApp = nullptr;
 
+    // NOLINTNEXTLINE
     App::App(int argc, char* argv[])
         : state {}
     {
