@@ -30,6 +30,10 @@ namespace ivulk {
     {
         PipelineVertexInfo vertex; ///< The vertex format for the graphics pipeline
 
+        bool bDepthEnable = true; ///< Enable depth testing (defalt true)
+
+        bool bCullFront = false; ///< Display back faces instead of front faces
+
         /**
          * @brief The paths to load SPIR-V shaders from
          */

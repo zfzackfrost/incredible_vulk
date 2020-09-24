@@ -1,0 +1,35 @@
+{% extends "lib/base_min.glsl.jinja" %}
+
+{% block libs %}
+{% include "lib/texture.glsl.jinja" %}
+{% endblock %}
+
+
+{% block io %}
+layout (location = 0) out vec4 fColor;
+layout (location = 0) in vec3 localPos;
+
+{% endblock %}
+
+{% block uniforms %}
+layout (binding = 4) uniform sampler2D equirectangularMap;
+{% endblock %}
+
+{% block pre %}
+const vec2 invAtan = vec2(0.1591, 0.3183);
+{% endblock %}
+
+{% block funcs %}
+vec2 sampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.y, v.x), asin(-v.z));
+    uv *= invAtan;
+    uv += 0.5;
+    return uv;
+}
+{% endblock %}
+
+{% block main %}
+vec2 uv = sampleSphericalMap(normalize(localPos));
+fColor = vec4(textureBicubic(equirectangularMap, uv).rgb, 1.0);
+{% endblock %}

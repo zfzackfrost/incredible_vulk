@@ -1,0 +1,13 @@
+{% extends "lib/base.vert.jinja" %}
+
+{% import "lib/mesh.glsl.jinja" as mesh %}
+{% block io %}
+{{ mesh.staticMeshAttribs() }}
+layout (location = 0) out vec3 localPos;
+
+{% endblock %}
+
+{% block main %}
+localPos = vPosition.xyz;
+gl_Position = matricesBuf.proj * matricesBuf.view * vPosition;
+{% endblock %}

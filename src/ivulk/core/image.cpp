@@ -236,6 +236,9 @@ namespace ivulk {
 
     Image* Image::createImpl(VkDevice device, ImageInfo createInfo)
     {
+        auto physDevice = App::current()->getState().vk.physicalDevice;
+
+
         VkExtent3D extent = createInfo.extent;
         VkImage image     = VK_NULL_HANDLE;
         VkImageView view  = VK_NULL_HANDLE;
@@ -251,8 +254,18 @@ namespace ivulk {
             }
             auto pStr = p.string();
             int texW, texH, texCh;
-            stbi_uc* pixels        = stbi_load(pStr.c_str(), &texW, &texH, &texCh, STBI_rgb_alpha);
-            VkDeviceSize imageSize = texW * texH * 4;
+            void* pixels = nullptr;
+            VkDeviceSize imageSize;
+            if (createInfo.load.bHDR)
+            {
+                pixels        = stbi_loadf(pStr.c_str(), &texW, &texH, &texCh, STBI_rgb_alpha);
+                imageSize = texW * texH * sizeof(float) * 4;
+            }
+            else
+            {
+                pixels        = stbi_load(pStr.c_str(), &texW, &texH, &texCh, STBI_rgb_alpha);
+                imageSize = texW * texH * 4;
+            }
             if (!pixels)
             {
                 throw std::runtime_error(utils::makeErrorMessage("VK::TEX", "Failed to load texture"));
@@ -276,8 +289,13 @@ namespace ivulk {
 
             if (createInfo.load.bGenMips)
                 mipLevels = calcMipLevels(extent);
-
-            format = (createInfo.load.bSrgb) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
+            
+            if (createInfo.load.bHDR)
+            {
+                format = VK_FORMAT_R32G32B32A32_SFLOAT;
+            }
+            else
+                format = (createInfo.load.bSrgb) ? VK_FORMAT_R8G8B8A8_SRGB : VK_FORMAT_R8G8B8A8_UNORM;
             makeImage(image, alloc, createInfo, extent, format, mipLevels);
 
             transitionImageLayout(
@@ -297,7 +315,7 @@ namespace ivulk {
         {
             makeImage(image, alloc, createInfo, extent, createInfo.format, mipLevels);
         }
-
+        
         VkImageViewCreateInfo viewInfo {
 			.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 			.image = image,

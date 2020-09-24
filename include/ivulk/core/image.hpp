@@ -35,6 +35,7 @@ namespace ivulk {
                 = true; ///< If true (default), use an sRGB format when loading the image. Otherwise use a normalized format.
             bool bGenMips
                 = true; ///< If true (default), generate mipmaps for the loaded image. Otherwise, no mipmaps are generated.
+            bool bHDR = false; ///< If true, load the image as an HDR map. Default is false.
         } load;
 
         VkImageTiling tiling      = VK_IMAGE_TILING_OPTIMAL;    ///< Vulkan image tiling setting

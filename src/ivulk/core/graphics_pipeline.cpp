@@ -265,7 +265,7 @@ namespace ivulk {
         rasterizer.setDepthClampEnable(false)
             .setRasterizerDiscardEnable(false)
             .setPolygonMode(vk::PolygonMode::eFill)
-            .setCullMode(vk::CullModeFlagBits::eBack)
+            .setCullMode(info.bCullFront ? vk::CullModeFlagBits::eFront : vk::CullModeFlagBits::eBack)
             .setFrontFace(vk::FrontFace::eCounterClockwise)
             .setDepthBiasEnable(false)
             .setDepthBiasConstantFactor(0.0f)
@@ -300,8 +300,8 @@ namespace ivulk {
             .setBlendConstants({0.0f, 0.0f, 0.0f, 0.0f});
 
         vk::PipelineDepthStencilStateCreateInfo depthStencil {};
-        depthStencil.setDepthTestEnable(true)
-            .setDepthWriteEnable(true)
+        depthStencil.setDepthTestEnable(info.bDepthEnable)
+            .setDepthWriteEnable(info.bDepthEnable)
             .setDepthCompareOp(vk::CompareOp::eLess)
             .setDepthBoundsTestEnable(false)
             .setStencilTestEnable(false);

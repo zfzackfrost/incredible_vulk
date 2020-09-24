@@ -71,6 +71,15 @@ protected:
                                                   .path    = "textures/DirtyMetal/normal.png",
                                                   .bSrgb   = false,
                                               }});
+        hdri                 = Image::create(state.vk.device,
+                             {
+
+                                 .load = {
+                                     .bEnable = true,
+                                     .path    = "textures/gamrig_2k.hdr",
+                                     .bGenMips = false,
+                                     .bHDR    = true,
+                                 }});
     }
 
     void createOffscreen()
@@ -93,6 +102,42 @@ protected:
                 .depth = 1,
             },
         });
+    }
+    void createHDRIPipeline()
+    {
+        GraphicsPipelineInfo createInfo {
+			.vertex = StaticMeshVertex::getPipelineInfo(),
+            .bDepthEnable = false,
+            .bCullFront = true,
+			.shaderPath = {
+				.vert = "shaders/hdriSkybox.vert.spv",
+				.frag = "shaders/hdriSkybox.frag.spv",
+			},
+			.descriptor = {
+				.uboBindings = {
+					{
+						.ubo     = uboMatrices,
+						.binding = 0u,
+					},
+				},
+                .textureBindings = {
+                    {
+                        .image = hdri,
+                        .sampler = sampler,
+                        .binding = 4u,
+                    },
+                },
+			},
+		};
+        auto& pipeline = hdriPipeline;
+        if (pipeline)
+        {
+            pipeline->recreate(createInfo);
+        }
+        else
+        {
+            pipeline = GraphicsPipeline::create(state.vk.device, createInfo);
+        }
     }
     void createDirtyMetalPipeline()
     {
@@ -152,26 +197,23 @@ protected:
         if (!swapchainOnly)
         {
             loadTextures();
-            sampler  = Sampler::create(state.vk.device, {});
+            sampler  = Sampler::create(state.vk.device, {
+                .filter = {
+                    .min = E_SamplerFilter::Nearest,
+                    .mag = E_SamplerFilter::Nearest,
+                }
+            });
             renderer = Renderer::create<Renderer>(this);
         }
         uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBO)});
         uboScene    = UniformBufferObject::create(state.vk.device, {.size = sizeof(SceneUBOData)});
 
-        createOffscreen();
-        createDirtyMetalPipeline();
+        // createOffscreen();
+        createHDRIPipeline();
+        // createDirtyMetalPipeline();
 
-        state.vk.pipelines.mainGfx = dirtyMetal.pipeline;
+        state.vk.pipelines.mainGfx = hdriPipeline;
         renderer->renderSwapchain();
-        // renderer->renderOffscreen({
-        // .renderContext = dirtyMetal.pipeline,
-        // .attachments = {
-        // offscreen.color,
-        // offscreen.depth,
-        // },
-        // .width = state.vk.swapChain.extent.width,
-        // .height = state.vk.swapChain.extent.height,
-        // });
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
             return;
@@ -179,14 +221,13 @@ protected:
         renderer->activate();
 
         sphereModel = StaticModel::load("models/unitsphere.fbx");
+        cubeModel   = StaticModel::load("models/unitcube.dae");
 
         EventManager::addCallback(E_EventType::KeyDown, [this](Event evt) { escapeKeyQuit(evt); });
-        std::vector<GraphicsPipeline::Ref> spherePipelines = {dirtyMetal.pipeline};
-        scene                                              = Scene::create();
-        sphere1                                            = scene->addRenderable(
-            RenderableInstance::create(sphereModel, _priority = 0, _pipelines = spherePipelines));
-        sphere2 = scene->addRenderable(
-            RenderableInstance::create(sphereModel, _priority = 0, _pipelines = spherePipelines));
+        std::vector<GraphicsPipeline::Ref> hdriPipelines = {hdriPipeline};
+        scene                                            = Scene::create();
+        hdriCube                                         = scene->addRenderable(
+            RenderableInstance::create(cubeModel, _priority = E_RenderPriority::Background, _pipelines = hdriPipelines));
     }
 
     void escapeKeyQuit(Event evt)
@@ -198,7 +239,19 @@ protected:
             return;
         quit();
     }
-
+    void cleanupHDRI()
+    {
+        hdri.reset();
+        hdriPipeline.reset();
+    }
+    void cleanupDirtyMetal()
+    {
+        dirtyMetal.albedo.reset();
+        dirtyMetal.metallic.reset();
+        dirtyMetal.normal.reset();
+        dirtyMetal.roughness.reset();
+        dirtyMetal.pipeline.reset();
+    }
     void cleanup(bool swapchainOnly) override
     {
 
@@ -208,15 +261,13 @@ protected:
 
         scene.reset();
         sphereModel.reset();
+        cubeModel.reset();
         uboMatrices.reset();
         uboScene.reset();
         sampler.reset();
 
-        // Don't destroy pipelines when recreating swapchain
-        // ... instead destroy at the end of the session and
-        //     use the `recreate` method of pipelines when
-        //     recreating the swapchain.
-        dirtyMetal.pipeline.reset();
+        cleanupDirtyMetal();
+        cleanupHDRI();
     }
 
     void render(CommandBuffers::Ref cmdBuffer) override
@@ -240,30 +291,35 @@ protected:
             timeSinceStatus = 0.0f;
         }
 
-        auto _sphere1 = sphere1.lock();
-        if (!_sphere1)
-            return;
-        auto _sphere2 = sphere2.lock();
-        if (!_sphere2)
-            return;
+        // auto _sphere1 = sphere1.lock();
+        // if (!_sphere1)
+        // return;
+        // auto _sphere2 = sphere2.lock();
+        // if (!_sphere2)
+        // return;
 
         auto deltaEuler = glm::vec3(0, 0, deltaSeconds);
-        _sphere1->transform.rotation *= glm::quat(deltaEuler);
+        // _sphere1->transform.rotation *= glm::quat(deltaEuler);
         // _sphere1->transform.translate.x = meter {glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>())};
 
         // float theta                     = (elapsedTime / 2.5f) * glm::two_pi<float>();
         // _sphere2->transform.translate.x = meter {glm::cos(theta)} + _sphere1->transform.translate.x;
         // _sphere2->transform.translate.y = meter {glm::sin(theta)} + _sphere1->transform.translate.y;
         // _sphere2->transform.translate.z = _sphere1->transform.translate.z;
-        _sphere2->transform.scale = glm::vec3(0.35);
+        // _sphere2->transform.scale = glm::vec3(0.35);
 
         // ================= Matrices ================== //
 
         float aspect = static_cast<float>(state.vk.swapChain.extent.width)
                        / static_cast<float>(state.vk.swapChain.extent.height);
 
-        viewXform     = viewXform.withLookAt(viewPos, {{}, {}, {}});
-        matrices.view = viewXform.viewMatrix();
+        {
+            float theta = (elapsedTime / 10.5f) * glm::two_pi<float>();
+            float vx = glm::cos(theta);
+            float vy = glm::sin(theta);
+            viewXform     = viewXform.withLookAt(viewPos, {meter{vx}, meter{vy}, meter{}});
+            matrices.view = viewXform.viewMatrix();
+        }
 
         matrices.proj = glm::perspective(glm::radians(45.0f), aspect, 0.0001f, 1000.0f);
         matrices.proj[1][1] *= -1.0f;
@@ -341,13 +397,18 @@ protected:
         Image::Ptr depth;
     } offscreen;
 
+    Image::Ptr hdri;
+    GraphicsPipeline::Ptr hdriPipeline;
+
     StaticModel::Ptr sphereModel;
+    StaticModel::Ptr cubeModel;
 
     Sampler::Ptr sampler;
 
     Scene::Ptr scene;
     RenderableInstance::Ref sphere1;
     RenderableInstance::Ref sphere2;
+    RenderableInstance::Ref hdriCube;
 
     UniformBufferObject::Ptr uboMatrices;
     MatricesUBO matrices;
@@ -363,7 +424,7 @@ protected:
     float timeSinceStatus;
 
     glm::vec2 dirKeysInput;
-    Position viewPos = {meter {2}, meter {2}, meter {2}};
+    Position viewPos = {meter {0}, meter {0}, meter {0}};
 };
 
 int main(int argc, char* argv[])
