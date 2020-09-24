@@ -83,10 +83,11 @@ namespace ivulk {
 
             // Render frame
             // drawFrame();
+            preRender();
             {
                 if (auto r = Renderer::current().lock())
                 {
-                    r->drawFrame();
+                    r->drawFinalFrame();
                 }
             }
 
@@ -330,6 +331,7 @@ namespace ivulk {
 
     bool App::isDeviceSuitable(vk::PhysicalDevice device)
     {
+        auto features = device.getFeatures();
         QueueFamilyIndices indices = findVkQueueFamilies(device);
         bool extensionsSupported   = checkDeviceExtensions(device);
         bool swapChainOk           = false;
@@ -338,7 +340,7 @@ namespace ivulk {
             SwapChainInfo scInfo = querySwapChainInfo(device);
             swapChainOk          = !scInfo.formats.empty() && !scInfo.presentModes.empty();
         }
-        return indices.isComplete() && extensionsSupported && swapChainOk;
+        return indices.isComplete() && extensionsSupported && swapChainOk && features.geometryShader;
     }
 
     std::vector<const char*> App::getRequiredVkDeviceExtensions()
@@ -578,6 +580,7 @@ namespace ivulk {
 
         vk::PhysicalDeviceFeatures deviceFeatures {};
         deviceFeatures.setSamplerAnisotropy(supportedFeatures.samplerAnisotropy);
+        deviceFeatures.setGeometryShader(true);
 
         // =========== Create logical device =========== //
 
@@ -626,6 +629,10 @@ namespace ivulk {
         if (vmaCreateAllocator(&createInfo, &state.vk.allocator) != VK_SUCCESS)
             throw std::runtime_error(
                 utils::makeErrorMessage("VK::MEM", "Failed to create VMA allocator for Vulkan"));
+    }
+
+    void App::preRender()
+    {
     }
 
 } // namespace ivulk

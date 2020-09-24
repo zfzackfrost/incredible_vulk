@@ -39,24 +39,27 @@ namespace ivulk {
         if (auto img = colorBuf.lock())
         {
             vk::ImageBlit r {};
-            r.dstSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
-            r.srcSubresource = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
+            r.dstSubresource  = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
+            r.srcSubresource  = vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1);
             r.srcOffsets[0].x = 0;
             r.srcOffsets[0].y = 0;
             r.srcOffsets[0].z = 0;
             r.srcOffsets[1].x = state.vk.swapChain.extent.width;
             r.srcOffsets[1].y = state.vk.swapChain.extent.height;
             r.srcOffsets[1].z = 1;
-            r.dstOffsets = r.srcOffsets;
-            
-            cmdBuf.blitImage(img->getImage(), vk::ImageLayout::eTransferSrcOptimal, state.vk.swapChain.images[m_currentFrame], vk::ImageLayout::ePresentSrcKHR, {
-                r
-            }, vk::Filter::eNearest);
+            r.dstOffsets      = r.srcOffsets;
+
+            cmdBuf.blitImage(img->getImage(),
+                             vk::ImageLayout::eTransferSrcOptimal,
+                             state.vk.swapChain.images[m_currentFrame],
+                             vk::ImageLayout::ePresentSrcKHR,
+                             {r},
+                             vk::Filter::eNearest);
         }
         utils::endOneTimeCommands(cmdBuf);
     }
 
-    void Renderer::drawFrame()
+    void Renderer::drawFinalFrame()
     {
         ownerApp->state.vk.queues.graphics.waitIdle();
         vkWaitForFences(
@@ -125,7 +128,6 @@ namespace ivulk {
 
     void Renderer::fillCommandBuffers(std::size_t imageIndex)
     {
-        assert(m_dest != E_RenderDest::Undefined);
         auto& fb = state.vk.swapChain.framebuffers;
         if (!m_cmdBufs)
         {
@@ -151,13 +153,10 @@ namespace ivulk {
                 VkRenderPassBeginInfo renderPassInfo {
 					.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 					.renderPass = pipeline->getRenderPass(),
-					.framebuffer = m_dest == E_RenderDest::SwapChain ? fb[imageIndex]->getFramebuffer() : m_fb->getFramebuffer(),
+					.framebuffer = fb[imageIndex]->getFramebuffer(),
 					.renderArea = {
 						.offset = {0, 0},
-						.extent = m_dest == E_RenderDest::SwapChain ? scExtent : VkExtent2D{
-                            .width = m_fbInfo.width,
-                            .height = m_fbInfo.height,
-                        },
+						.extent = scExtent,
 					},
 					.clearValueCount = static_cast<uint32_t>(clearValues.size()),
 					.pClearValues = clearValues.data(),
@@ -175,17 +174,36 @@ namespace ivulk {
 
     void Renderer::render() { ownerApp->render(m_cmdBufs); }
 
-    void Renderer::renderOffscreen(FramebufferInfo fbInfo)
+    void Renderer::beginOffscreenPass(FramebufferInfo fbInfo) 
     {
-        m_fbInfo = fbInfo;
-        m_fb     = Framebuffer::create(state.vk.device, fbInfo);
-        m_dest   = E_RenderDest::Offscreen;
+        m_fb = Framebuffer::create(state.vk.device, fbInfo);
+
+        m_cb = utils::beginOneTimeCommands();
+
+        std::array<vk::ClearValue, 2> clearValues {};
+        clearValues[0].color        = vk::ClearColorValue(std::array<float, 4>{0.0f, 0.0f, 0.0f, 1.0f});
+        clearValues[1].depthStencil = vk::ClearDepthStencilValue(1.0f, 0);
+
+        vk::RenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.renderPass = m_fb->getRenderPass();
+        renderPassInfo.framebuffer = m_fb->getFramebuffer();
+        renderPassInfo.renderArea.offset = vk::Offset2D(0, 0);
+        renderPassInfo.renderArea.extent = vk::Extent2D(m_fb->getWidth(), m_fb->getHeight());
+        renderPassInfo.clearValueCount = clearValues.size();
+        renderPassInfo.pClearValues = clearValues.data();
+
+        m_cb.beginRenderPass(renderPassInfo, vk::SubpassContents::eInline);
+    }
+    void Renderer::endOffscreenPass() 
+    {
+        m_cb.endRenderPass();
+
+        utils::endOneTimeCommands(m_cb);
     }
 
-    void Renderer::renderSwapchain()
+    vk::CommandBuffer Renderer::getCmdBuf()
     {
-        m_fb.reset();
-        m_dest = E_RenderDest::SwapChain;
+        return m_cb;
     }
 
 } // namespace ivulk

@@ -37,24 +37,16 @@ namespace ivulk {
         static std::weak_ptr<Renderer> current();
 
         void activate();
-
-        void renderOffscreen(FramebufferInfo fbInfo);
-        void renderSwapchain();
         
         void copyToSwapchain(Image::Ref colorBuf);
 
-        virtual void drawFrame();
+        void beginOffscreenPass(FramebufferInfo fbInfo);
+        void endOffscreenPass();
+        vk::CommandBuffer getCmdBuf();
+
+        virtual void drawFinalFrame();
 
     protected:
-        /**
-         * @brief The Vulkan object a renderer will actually render to
-         */
-        enum class E_RenderDest : uint8_t
-        {
-            Undefined,
-            SwapChain, ///< Render directly to swapchain (only used for simple scenes)
-            Offscreen, ///< Render to offscreen images (i.e post-processing, compositing, etc.)
-        };
         virtual void fillCommandBuffers(std::size_t i);
         virtual void render();
 
@@ -67,9 +59,8 @@ namespace ivulk {
         uint32_t m_currentFrame;
         CommandBuffers::Ptr m_cmdBufs;
 
-        E_RenderDest m_dest = E_RenderDest::Undefined;
-
         FramebufferInfo m_fbInfo;
         Framebuffer::Ptr m_fb;
+        vk::CommandBuffer m_cb;
     };
 } // namespace ivulk

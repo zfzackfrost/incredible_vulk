@@ -75,18 +75,18 @@ protected:
                              {
 
                                  .load = {
-                                     .bEnable = true,
-                                     .path    = "textures/gamrig_2k.hdr",
+                                     .bEnable  = true,
+                                     .path     = "textures/gamrig_2k.hdr",
                                      .bGenMips = true,
-                                     .bHDR    = true,
+                                     .bHDR     = true,
                                  }});
     }
 
     void createOffscreen()
     {
         offscreen.color = Image::create(state.vk.device, {
-            .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-            .format = VK_FORMAT_R8G8B8A8_SNORM,
+            .usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+            .format = VK_FORMAT_B8G8R8A8_SRGB,
             .extent = {
                 .width = state.vk.swapChain.extent.width,
                 .height = state.vk.swapChain.extent.height,
@@ -101,6 +101,7 @@ protected:
                 .height = state.vk.swapChain.extent.height,
                 .depth = 1,
             },
+            .aspect = VK_IMAGE_ASPECT_DEPTH_BIT,
         });
     }
     void createHDRIPipeline()
@@ -130,6 +131,36 @@ protected:
 			},
 		};
         auto& pipeline = hdriPipeline;
+        if (pipeline)
+        {
+            pipeline->recreate(createInfo);
+        }
+        else
+        {
+            pipeline = GraphicsPipeline::create(state.vk.device, createInfo);
+        }
+    }
+
+    void createBlitPipeline()
+    {
+        GraphicsPipelineInfo createInfo {
+            .bDepthEnable = false,
+            .bNoVertex = true,
+			.shaderPath = {
+				.vert = "shaders/quad.vert.spv",
+				.frag = "shaders/quad_texture.frag.spv",
+			},
+			.descriptor = {
+                .textureBindings = {
+                    {
+                        .image = offscreen.color,
+                        .sampler = sampler,
+                        .binding = 4u,
+                    },
+                },
+			},
+		};
+        auto& pipeline = blitPipeline;
         if (pipeline)
         {
             pipeline->recreate(createInfo);
@@ -203,12 +234,12 @@ protected:
         uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBO)});
         uboScene    = UniformBufferObject::create(state.vk.device, {.size = sizeof(SceneUBOData)});
 
-        // createOffscreen();
+        createOffscreen();
         createHDRIPipeline();
         createDirtyMetalPipeline();
+        createBlitPipeline();
 
-        state.vk.pipelines.mainGfx = hdriPipeline;
-        renderer->renderSwapchain();
+        state.vk.pipelines.mainGfx = blitPipeline;
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
             return;
@@ -219,13 +250,13 @@ protected:
         cubeModel   = StaticModel::load("models/unitcube.dae");
 
         EventManager::addCallback(E_EventType::KeyDown, [this](Event evt) { escapeKeyQuit(evt); });
-        std::vector<GraphicsPipeline::Ref> hdriPipelines = {hdriPipeline};
+        std::vector<GraphicsPipeline::Ref> hdriPipelines   = {hdriPipeline};
         std::vector<GraphicsPipeline::Ref> spherePipelines = {dirtyMetal.pipeline};
-        scene                                            = Scene::create();
-        hdriCube                                         = scene->addRenderable(
-            RenderableInstance::create(cubeModel, _priority = E_RenderPriority::Background, _pipelines = hdriPipelines));
-        sphere1                                         = scene->addRenderable(
-            RenderableInstance::create(sphereModel, _priority = E_RenderPriority::Normal, _pipelines = spherePipelines));
+        scene                                              = Scene::create();
+        hdriCube                                           = scene->addRenderable(RenderableInstance::create(
+            cubeModel, _priority = E_RenderPriority::Background, _pipelines = hdriPipelines));
+        sphere1                                            = scene->addRenderable(RenderableInstance::create(
+            sphereModel, _priority = E_RenderPriority::Normal, _pipelines = spherePipelines));
     }
 
     void escapeKeyQuit(Event evt)
@@ -250,9 +281,15 @@ protected:
         dirtyMetal.roughness.reset();
         dirtyMetal.pipeline.reset();
     }
+    void cleanupOffscreen()
+    {
+        offscreen.color.reset();
+        offscreen.depth.reset();
+    }
+
     void cleanup(bool swapchainOnly) override
     {
-
+        cleanupOffscreen();
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
             return;
@@ -263,17 +300,47 @@ protected:
         uboMatrices.reset();
         uboScene.reset();
         sampler.reset();
+        renderer.reset();
 
         cleanupDirtyMetal();
         cleanupHDRI();
+
+        blitPipeline.reset();
+    }
+
+    void preRender() override
+    {
+        renderer->beginOffscreenPass({
+            .renderContext = hdriPipeline,
+            .attachments   = {offscreen.color, offscreen.depth},
+            .width         = state.vk.swapChain.extent.width,
+            .height        = state.vk.swapChain.extent.height,
+        });
+        auto cb = CommandBuffers::fromHandles(state.vk.device, state.vk.cmd.gfxPool, {renderer->getCmdBuf()});
+        cb->setDestroyed(true);
+        {
+            cb->clearAttachments(dirtyMetal.pipeline, {.color = clearColor});
+            scene->render(cb);
+        }
+        renderer->endOffscreenPass();
+
+        offscreen.color->changeLayout(vk::PipelineStageFlagBits::eColorAttachmentOutput,
+                                      vk::PipelineStageFlagBits::eFragmentShader,
+                                      vk::ImageLayout::ePresentSrcKHR,
+                                      vk::ImageLayout::eShaderReadOnlyOptimal);
     }
 
     void render(CommandBuffers::Ref cmdBuffer) override
     {
         if (auto cb = cmdBuffer.lock())
         {
+
             cb->clearAttachments(dirtyMetal.pipeline, {.color = clearColor});
-            scene->render(cb);
+            cb->bindPipeline(blitPipeline);
+            cb->draw({
+                .vertices = 6,
+            });
+            // scene->render(cb);
         }
     }
 
@@ -296,14 +363,13 @@ protected:
         auto deltaEuler = glm::vec3(0, 0, deltaSeconds);
         _sphere1->transform.rotation *= glm::quat(deltaEuler);
 
-
         // ================= Matrices ================== //
 
         float aspect = static_cast<float>(state.vk.swapChain.extent.width)
                        / static_cast<float>(state.vk.swapChain.extent.height);
 
         {
-            viewXform     = viewXform.withLookAt(viewPos, {meter{}, meter{}, meter{}});
+            viewXform     = viewXform.withLookAt(viewPos, {meter {}, meter {}, meter {}});
             matrices.view = viewXform.viewMatrix();
         }
 
@@ -385,6 +451,8 @@ protected:
 
     Image::Ptr hdri;
     GraphicsPipeline::Ptr hdriPipeline;
+
+    GraphicsPipeline::Ptr blitPipeline;
 
     StaticModel::Ptr sphereModel;
     StaticModel::Ptr cubeModel;

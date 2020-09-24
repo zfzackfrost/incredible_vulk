@@ -32,7 +32,7 @@ namespace ivulk {
 
         VkDescriptorPoolSize poolSize {
             .type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            .descriptorCount = static_cast<uint32_t>(15),
+            .descriptorCount = static_cast<uint32_t>(35),
         };
         poolSizes[0]  = poolSize;
         poolSize.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;

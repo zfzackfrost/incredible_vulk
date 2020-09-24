@@ -71,7 +71,13 @@ namespace ivulk {
             throw std::runtime_error(utils::makeErrorMessage("VK::CREATE", "Failed to create framebuffer"));
         }
 
-        return new Framebuffer(device, fbuf);
+        auto* res = new Framebuffer(device, fbuf);
+        res->m_renderPass = renderPass;
+        res->m_width = info.width;
+        res->m_height = info.height;
+        res->m_layers = info.layers;
+
+        return res;
     }
 
     void Framebuffer::destroyImpl() { vkDestroyFramebuffer(getDevice(), getFramebuffer(), nullptr); }

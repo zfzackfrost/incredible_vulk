@@ -1,0 +1,15 @@
+{% extends "lib/base.frag.jinja" %}
+
+{% block io%}
+layout (location = 0) out vec4 fColor;
+layout (location = 0) in vec2 texCoords;
+{% endblock %}
+
+{% block uniforms%}
+{% call uniform.user(0) -%}sampler2D tex{% endcall %}
+{% endblock %}
+
+{% block main %}
+fColor.rgb = texture(tex, texCoords).rgb;
+fColor.a = 1;
+{% endblock %}

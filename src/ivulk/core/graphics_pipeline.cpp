@@ -238,10 +238,10 @@ namespace ivulk {
         // ======= Fixed Function Configuration ======= //
 
         vk::PipelineVertexInputStateCreateInfo vertexInputInfo {};
-        vertexInputInfo.setVertexBindingDescriptionCount(1u)
-            .setPVertexBindingDescriptions(&bindingDescr)
-            .setVertexAttributeDescriptionCount(attribDescrs.size())
-            .setPVertexAttributeDescriptions(attribDescrs.data());
+        vertexInputInfo.setVertexBindingDescriptionCount(info.bNoVertex ? 0u : 1u)
+            .setPVertexBindingDescriptions(info.bNoVertex ? nullptr : &bindingDescr)
+            .setVertexAttributeDescriptionCount(info.bNoVertex ? 0u : attribDescrs.size())
+            .setPVertexAttributeDescriptions(info.bNoVertex ? nullptr : attribDescrs.data());
 
         vk::PipelineInputAssemblyStateCreateInfo inputAssembly {};
         inputAssembly.setTopology(vk::PrimitiveTopology::eTriangleList).setPrimitiveRestartEnable(false);

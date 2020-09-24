@@ -1,0 +1,29 @@
+#version 450 core
+#extension GL_ARB_separate_shader_objects : enable
+
+layout({% block inputPrim -%}points{%- endblock %}) in;
+layout({% block outputPrim -%}triangle_strip{%- endblock %}, max_vertices = {% block maxVerts -%}2{%- endblock %}) out;
+
+{% block libs %}
+{% endblock %}
+
+{% block uniforms %}
+{% endblock %}
+
+{% block pre %}
+{% endblock %}
+
+{% block io %}
+{% endblock %}
+
+{% block funcs %}
+{% endblock %}
+
+{% block post %}
+{% endblock %}
+
+void main()
+{
+    {% block main %}
+    {% endblock %}
+}

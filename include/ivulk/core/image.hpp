@@ -79,6 +79,8 @@ namespace ivulk {
          */
         VkExtent3D getExtent() { return m_extent; }
 
+        void changeLayout(vk::PipelineStageFlags srcStage, vk::PipelineStageFlags dstStage, vk::ImageLayout oldLayout,  vk::ImageLayout newLayout);
+
     private:
         friend base_t;
         VkFormat m_format;

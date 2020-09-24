@@ -18,6 +18,33 @@ namespace ivulk {
         , m_mipLevels(1u)
     { }
 
+    void Image::changeLayout(vk::PipelineStageFlags srcStage, vk::PipelineStageFlags dstStage, vk::ImageLayout oldLayout,  vk::ImageLayout newLayout)
+    {
+        vk::CommandBuffer cb = utils::beginOneTimeCommands();
+        vk::ImageMemoryBarrier barrier {};
+        barrier.image                           = getImage();
+        barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+        barrier.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+        barrier.subresourceRange.baseArrayLayer = 0u;
+        barrier.subresourceRange.layerCount     = 1u;
+        barrier.subresourceRange.levelCount     = 1u;
+        barrier.oldLayout = oldLayout;
+        barrier.newLayout = newLayout;
+        
+        cb.pipelineBarrier(srcStage,
+                dstStage,
+                static_cast<vk::DependencyFlags>(0),
+                0,
+                nullptr,
+                0,
+                nullptr,
+                1,
+                &barrier);
+
+        utils::endOneTimeCommands(cb);
+    }
+
     void transitionImageLayout(
         VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
     {

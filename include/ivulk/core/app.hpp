@@ -126,7 +126,15 @@ namespace ivulk {
         virtual void cleanup(bool swapchainOnly) = 0;
 
         /**
-         * @brief Perform subclass-specific rendering operations.
+         * @brief Perform rendering operations that should take place before the
+         *        ones for displaying the frame.
+         *
+         * Virtual.
+         */
+        virtual void preRender();
+
+        /**
+         * @brief Perform subclass-specific rendering operations for displaying the frame.
          *
          * Pure virtual.
          */

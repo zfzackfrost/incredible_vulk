@@ -33,6 +33,7 @@ namespace ivulk {
         bool bDepthEnable = true; ///< Enable depth testing (defalt true)
 
         bool bCullFront = false; ///< Display back faces instead of front faces
+        bool bNoVertex = false;
 
         /**
          * @brief The paths to load SPIR-V shaders from

@@ -118,12 +118,12 @@ namespace ivulk {
         {
             return std::shared_ptr<Derived>(Derived::createImpl(device, createInfo));
         }
+        void setDestroyed(bool bDestroyed) { m_destroyed = bDestroyed; }
 
     protected:
         handles_t handles;
 
         VkDevice getDevice() { return m_device; }
-        void setDestroyed(bool bDestroyed) { m_destroyed = bDestroyed; }
 
     private:
         VkDevice m_device;

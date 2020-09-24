@@ -53,9 +53,21 @@ namespace ivulk {
          * @brief Get the Vulkan framebuffer handle
          */
         vk::Framebuffer getFramebuffer() { return getHandleAt<0>(); }
+        
+        /**
+         * @brief Get the render pass the framebuffer was constructed with
+         */
+        vk::RenderPass getRenderPass() { return m_renderPass; }
+        uint32_t getWidth() { return m_width; }
+        uint32_t getHeight() { return m_height; }
+        uint32_t getLayers() { return m_layers; }
 
     private:
         friend base_t;
+
+        vk::RenderPass m_renderPass;
+        
+        uint32_t m_width, m_height, m_layers;
 
         Framebuffer(VkDevice device, VkFramebuffer fbuf);
 
