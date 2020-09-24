@@ -205,7 +205,7 @@ protected:
 
         // createOffscreen();
         createHDRIPipeline();
-        // createDirtyMetalPipeline();
+        createDirtyMetalPipeline();
 
         state.vk.pipelines.mainGfx = hdriPipeline;
         renderer->renderSwapchain();
@@ -220,9 +220,12 @@ protected:
 
         EventManager::addCallback(E_EventType::KeyDown, [this](Event evt) { escapeKeyQuit(evt); });
         std::vector<GraphicsPipeline::Ref> hdriPipelines = {hdriPipeline};
+        std::vector<GraphicsPipeline::Ref> spherePipelines = {dirtyMetal.pipeline};
         scene                                            = Scene::create();
         hdriCube                                         = scene->addRenderable(
             RenderableInstance::create(cubeModel, _priority = E_RenderPriority::Background, _pipelines = hdriPipelines));
+        sphere1                                         = scene->addRenderable(
+            RenderableInstance::create(sphereModel, _priority = E_RenderPriority::Normal, _pipelines = spherePipelines));
     }
 
     void escapeKeyQuit(Event evt)
@@ -286,22 +289,13 @@ protected:
             timeSinceStatus = 0.0f;
         }
 
-        // auto _sphere1 = sphere1.lock();
-        // if (!_sphere1)
-        // return;
-        // auto _sphere2 = sphere2.lock();
-        // if (!_sphere2)
-        // return;
+        auto _sphere1 = sphere1.lock();
+        if (!_sphere1)
+            return;
 
         auto deltaEuler = glm::vec3(0, 0, deltaSeconds);
-        // _sphere1->transform.rotation *= glm::quat(deltaEuler);
-        // _sphere1->transform.translate.x = meter {glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>())};
+        _sphere1->transform.rotation *= glm::quat(deltaEuler);
 
-        // float theta                     = (elapsedTime / 2.5f) * glm::two_pi<float>();
-        // _sphere2->transform.translate.x = meter {glm::cos(theta)} + _sphere1->transform.translate.x;
-        // _sphere2->transform.translate.y = meter {glm::sin(theta)} + _sphere1->transform.translate.y;
-        // _sphere2->transform.translate.z = _sphere1->transform.translate.z;
-        // _sphere2->transform.scale = glm::vec3(0.35);
 
         // ================= Matrices ================== //
 
@@ -309,10 +303,7 @@ protected:
                        / static_cast<float>(state.vk.swapChain.extent.height);
 
         {
-            float theta = (elapsedTime / 10.5f) * glm::two_pi<float>();
-            float vx = glm::cos(theta);
-            float vy = glm::sin(theta);
-            viewXform     = viewXform.withLookAt(viewPos, {meter{vx}, meter{vy}, meter{}});
+            viewXform     = viewXform.withLookAt(viewPos, {meter{}, meter{}, meter{}});
             matrices.view = viewXform.viewMatrix();
         }
 
@@ -402,7 +393,6 @@ protected:
 
     Scene::Ptr scene;
     RenderableInstance::Ref sphere1;
-    RenderableInstance::Ref sphere2;
     RenderableInstance::Ref hdriCube;
 
     UniformBufferObject::Ptr uboMatrices;
@@ -419,7 +409,7 @@ protected:
     float timeSinceStatus;
 
     glm::vec2 dirKeysInput;
-    Position viewPos = {meter {0}, meter {0}, meter {0}};
+    Position viewPos = {meter {2}, meter {2}, meter {0}};
 };
 
 int main(int argc, char* argv[])
