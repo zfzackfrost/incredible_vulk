@@ -3,6 +3,7 @@
 {% block libs %}
     {{ super() }}
     {% include "lib/math.glsl.jinja" %}
+    {% include "lib/texture.glsl.jinja" %}
 {% endblock %}
 
 {% block uniforms %}
@@ -29,19 +30,16 @@
 {{ super() }}
 {% endblock %}
 
-{% block shininess %}
-    return 8.0;
-{% endblock %}
 {% block matNormal -%}
-    vec3 norm = texture(normalTex, getTexCoords()).rgb;
-    return flattenNormal(norm, -2.5);
+    vec3 norm = textureBicubic(normalTex, getTexCoords()).rgb;
+    return norm;
 {%- endblock %}
 {% block matAlbedo -%}
-    return texture(albedoTex, getTexCoords()).rgb;
+    return textureBicubic(albedoTex, getTexCoords()).rgb;
 {%- endblock %}
 {% block matMetallic -%}
-    return texture(metallicTex, getTexCoords()).r;
+    return textureBicubic(metallicTex, getTexCoords()).r;
 {%- endblock %}
 {% block matRoughness -%}
-    return texture(roughnessTex, getTexCoords()).r;
+    return textureBicubic(roughnessTex, getTexCoords()).r;
 {%- endblock %}

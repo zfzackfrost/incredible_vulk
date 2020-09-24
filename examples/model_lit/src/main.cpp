@@ -52,7 +52,7 @@ protected:
 
                                                 .load = {
                                                     .bEnable = true,
-                                                    .path    = "textures/DirtyMetal/metallic.png",
+                                                    .path    = "textures/DirtyMetal/half/metallic.png",
                                                     .bSrgb   = false,
                                                 }});
         dirtyMetal.roughness = Image::create(state.vk.device,
@@ -60,7 +60,7 @@ protected:
 
                                                  .load = {
                                                      .bEnable = true,
-                                                     .path    = "textures/DirtyMetal/roughness.png",
+                                                     .path    = "textures/DirtyMetal/half/roughness.png",
                                                      .bSrgb   = false,
                                                  }});
         dirtyMetal.normal    = Image::create(state.vk.device,
@@ -71,8 +71,6 @@ protected:
                                                   .path    = "textures/DirtyMetal/normal.png",
                                                   .bSrgb   = false,
                                               }});
-
-
     }
 
     void createOffscreen()
@@ -166,14 +164,14 @@ protected:
         state.vk.pipelines.mainGfx = dirtyMetal.pipeline;
         renderer->renderSwapchain();
         // renderer->renderOffscreen({
-                    // .renderContext = dirtyMetal.pipeline,
-                    // .attachments = {
-                        // offscreen.color,
-                        // offscreen.depth,
-                    // },
-                    // .width = state.vk.swapChain.extent.width,
-                    // .height = state.vk.swapChain.extent.height,
-            // });
+        // .renderContext = dirtyMetal.pipeline,
+        // .attachments = {
+        // offscreen.color,
+        // offscreen.depth,
+        // },
+        // .width = state.vk.swapChain.extent.width,
+        // .height = state.vk.swapChain.extent.height,
+        // });
         // Skip anything that doesn't depend on the swapchain, if requested
         if (swapchainOnly)
             return;
@@ -249,12 +247,8 @@ protected:
         if (!_sphere2)
             return;
 
-        float rotRate = glm::sin((elapsedTime / glm::two_over_pi<float>()) * glm::two_pi<float>()) * 0.5
-                        + 0.5;
-        rotRate         = glm::radians(glm::mix(100.0f, 200.0f, rotRate));
-        auto deltaEuler = glm::vec3(deltaSeconds * rotRate);
-        deltaEuler.x    = 0.0f;
-        // _sphere1->transform.rotation *= glm::quat(deltaEuler);
+        auto deltaEuler = glm::vec3(0, 0, deltaSeconds);
+        _sphere1->transform.rotation *= glm::quat(deltaEuler);
         // _sphere1->transform.translate.x = meter {glm::sin((elapsedTime / 2.0f) * glm::two_pi<float>())};
 
         // float theta                     = (elapsedTime / 2.5f) * glm::two_pi<float>();
@@ -278,14 +272,16 @@ protected:
 
         // ================== Lights =================== //
 
-        sceneData.dirLights[0].color     = glm::vec3(0.6);
-        sceneData.dirLights[0].direction = glm::normalize(glm::vec3(0.1, 0.1, -1));
-        sceneData.dirLightCount          = 0;
-
+        sceneData.dirLights[0].direction     = glm::normalize(glm::vec3(0) - glm::vec3(1, 1, 8));
+        sceneData.dirLights[0].color         = glm::vec4(4);
+        sceneData.dirLightCount              = 1;
         sceneData.pointLights[0].color       = glm::vec3(4);
         sceneData.pointLights[0].position    = glm::vec3(0, 2, 0.1);
         sceneData.pointLights[0].attenuation = PointLightAttenuation::fromRadius(2.0f);
-        sceneData.pointLightCount            = 1;
+        sceneData.pointLights[1].color       = glm::vec3(4);
+        sceneData.pointLights[1].position    = glm::vec3(8, -8, 0.1);
+        sceneData.pointLights[1].attenuation = PointLightAttenuation::fromRadius(12.0f);
+        sceneData.pointLightCount            = 2;
 
         sceneData.viewPosition = viewPos.toVec();
 
@@ -315,6 +311,7 @@ protected:
         int32_t result = 0;
         if (deviceProperties.deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
             result += 1000;
+
         return result;
     }
 
@@ -366,7 +363,7 @@ protected:
     float timeSinceStatus;
 
     glm::vec2 dirKeysInput;
-    Position viewPos = {meter {4}, meter {4}, meter {2}};
+    Position viewPos = {meter {2}, meter {2}, meter {2}};
 };
 
 int main(int argc, char* argv[])
