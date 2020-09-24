@@ -70,10 +70,10 @@ endmacro()
 #   target
 # * AssetSubdir: The current source subdirectory that contain s the assets
 #
-function(ConfigureContent TargetName TargetSuffix AssetSubdir)
+function(ConfigureContentBase TargetName TargetSuffix BaseDir AssetSubdir)
     if(IVULK_BUILD_CONTENT)
 
-        set(TMP_CONTENT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${AssetSubdir})
+        set(TMP_CONTENT_DIR ${BaseDir}/${AssetSubdir})
 
         file(GLOB_RECURSE PROJ_CONTENT "${TMP_CONTENT_DIR}/*.*")
         file(GLOB_RECURSE COMMON_CONTENT "${IVULK_ASSETS_DIR}/*.*")
@@ -97,9 +97,9 @@ function(ConfigureContent TargetName TargetSuffix AssetSubdir)
             list(FIND IVULK_SHADER_SOURCE_EXTENSIONS ${EXT} TMP_IS_SHADER)
 
             if(TMP_IS_SHADER EQUAL -1)
-                processnormalresource()
+                ProcessNormalResource()
             else()
-                processshaderresource()
+                ProcessShaderResource()
             endif()
 
         endforeach()
@@ -109,4 +109,9 @@ function(ConfigureContent TargetName TargetSuffix AssetSubdir)
     else()
         add_custom_target(${TargetName} ALL)
     endif()
+endfunction()
+
+function(ConfigureContent TargetName TargetSuffix AssetSubdir)
+    ConfigureContentBase(${TargetName} ${TargetSuffix}_base ${IncredibleVulk_SOURCE_DIR} assets)
+    ConfigureContentBase(${TargetName} ${TargetSuffix} ${CMAKE_CURRENT_SOURCE_DIR} ${AssetSubdir})
 endfunction()
