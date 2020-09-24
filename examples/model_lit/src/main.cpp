@@ -77,7 +77,7 @@ protected:
                                  .load = {
                                      .bEnable = true,
                                      .path    = "textures/gamrig_2k.hdr",
-                                     .bGenMips = false,
+                                     .bGenMips = true,
                                      .bHDR    = true,
                                  }});
     }
@@ -197,12 +197,7 @@ protected:
         if (!swapchainOnly)
         {
             loadTextures();
-            sampler  = Sampler::create(state.vk.device, {
-                .filter = {
-                    .min = E_SamplerFilter::Nearest,
-                    .mag = E_SamplerFilter::Nearest,
-                }
-            });
+            sampler  = Sampler::create(state.vk.device, {});
             renderer = Renderer::create<Renderer>(this);
         }
         uboMatrices = UniformBufferObject::create(state.vk.device, {.size = sizeof(MatricesUBO)});

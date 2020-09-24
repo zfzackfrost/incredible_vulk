@@ -17,6 +17,7 @@ layout (binding = 4) uniform sampler2D equirectangularMap;
 
 {% block pre %}
 const vec2 invAtan = vec2(0.1591, 0.3183);
+const int blurRadius = 2;
 {% endblock %}
 
 {% block funcs %}
@@ -30,6 +31,17 @@ vec2 sampleSphericalMap(vec3 v)
 {% endblock %}
 
 {% block main %}
-vec2 uv = sampleSphericalMap(normalize(localPos));
-fColor = vec4(textureBicubic(equirectangularMap, uv).rgb, 1.0);
+vec2 uvBase = sampleSphericalMap(normalize(localPos));
+vec3 sum = vec3(0.0);
+int numSamples = 0;
+for (float iy = -blurRadius; iy <= blurRadius; iy += 1.0)
+{
+    for (float ix = -blurRadius; ix <= blurRadius; ix += 1.0)
+    {
+        vec2 uv = uvBase + (vec2(ix, iy) / 2048);
+        sum += texture(equirectangularMap, uv).rgb;
+        numSamples++;
+    }
+}
+fColor = vec4(sum / numSamples, 1.0);
 {% endblock %}
